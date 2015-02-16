@@ -1,0 +1,15 @@
+require "assert.vv"
+
+assert({}.size() == 0, "{}.size() == 0")
+assert({'foo: 'bar}.size() == 1, "{'foo: 'bar}.size() == 1")
+assert({'foo: 'bar, 1: 2}.size() == 2, "{'foo: 'bar, 1: 2}.size() == 2")
+
+let dict = { 'foo: 'bar, 1: 2, "baz": "blah", 1.5: 3.5 }
+
+assert(dict['foo] == 'bar, "dict['foo] == 'bar")
+assert(dict[1] == 2, "dict[1] == 2")
+assert(dict["baz"] == "blah", "dict['baz'] == 'blah'")
+assert(dict[1.5] == 3.5, "dict[1.5] == 3.5}")
+
+dict[2] = 'foo
+assert(dict[2] == 'foo, "dict[2] == 'foo")

@@ -38,3 +38,14 @@ let i = nil
 try: new Uninstantiable()
 catch e: instantiated = false
 assert(!instantiated && i == nil, "returned object from exception in init")
+
+class SelfWrapper
+  fn init(): self.a = 5
+  fn get_a(): self.a
+  fn self_a_getter(): fn (): self.get_a()
+end
+
+fn apply(f): f()
+let obj = new SelfWrapper()
+let five = apply(obj.self_a_getter())
+assert(five == 5, "capturing self in lambdas")

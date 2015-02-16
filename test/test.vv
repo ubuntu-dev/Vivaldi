@@ -2,8 +2,10 @@
 
 require "array.vv"
 require "class.vv"
+require "dict.vv"
 require "except.vv"
 require "float.vv"
 require "integer.vv"
 require "logic.vv"
+require "ranges.vv"
 require "string.vv"
