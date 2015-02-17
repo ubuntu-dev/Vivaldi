@@ -26,8 +26,30 @@ namespace {
 // Helper functions {{{
 
 struct call_result {
-  bool successful;
-  value::base* result;
+  enum class state {
+    excepted,
+    completed,
+    ongoing
+  } result;
+  value::base* value;
+
+  static call_result excepted(value::base* value)
+  {
+    return { state::excepted, value };
+  }
+
+  static call_result completed(value::base* value)
+  {
+    return { state::completed, value };
+  }
+
+  static call_result ongoing(value::base* value)
+  {
+    return { state::ongoing, value };
+  }
+
+  bool successful() { return result != state::excepted; }
+  bool ongoing() { return result == state::ongoing; }
 };
 
 call_result call_method(std::shared_ptr<vm::call_frame> frame,
@@ -40,11 +62,13 @@ call_result call_method(std::shared_ptr<vm::call_frame> frame,
   machine.readm(method);
   machine.call(0);
   machine.run();
-  return { !excepted, machine.retval };
+  if (excepted)
+    return { call_result::state::excepted, machine.retval };
+  return { call_result::state::ongoing, machine.retval };
 }
 
 template <typename F>
-boost::optional<value::base*> fake_for_loop(vm::machine& vm, const F& inner)
+call_result fake_for_loop(vm::machine& vm, const F& inner)
 {
   auto range = get_arg(vm, 0);
   auto supplied_fn = get_arg(vm, 1);
@@ -55,37 +79,37 @@ boost::optional<value::base*> fake_for_loop(vm::machine& vm, const F& inner)
                                                 vector_ref<vm::command>{});
   // Get iterator from range
   auto iter_res = call_method(frame, range, {"start"});
-  if (!iter_res.successful)
-    return iter_res.result;
+  if (!iter_res.successful())
+    return iter_res;
 
-  auto iter = iter_res.result;
+  auto iter = iter_res.value;
 
   for (;;) {
     auto at_end_res = call_method(frame, iter, {"at_end"});
-    if (!at_end_res.successful)
-      return at_end_res.result;
+    if (!at_end_res.successful())
+      return at_end_res;
 
-    if (truthy(at_end_res.result))
-      return {};
+    if (truthy(at_end_res.value))
+      return call_result::completed(at_end_res.value);
 
     auto get_res = call_method(frame, iter, {"get"});
-    if (!get_res.successful)
-      return get_res.result;
+    if (!get_res.successful())
+      return get_res;
 
-    auto next_item = get_res.result;
+    auto next_item = get_res.value;
 
-    auto excepted = inner(frame, supplied_fn, next_item);
-    if (excepted)
-      return *excepted;
+    auto res = inner(frame, supplied_fn, next_item);
+    if (!res.successful() || !res.ongoing())
+      return res;
 
     auto increment_res = call_method(frame, iter, {"increment"});
-    if (!increment_res.successful)
-      return increment_res.result;
+    if (!increment_res.successful())
+      return increment_res;
   }
 }
 
 template <typename F>
-boost::optional<value::base*> transformed_range(vm::machine& vm, const F& inner)
+call_result transformed_range(vm::machine& vm, const F& inner)
 {
   const static std::array<vm::command, 1> transform_call {{
     { vm::instruction::call, 1 }
@@ -100,9 +124,11 @@ boost::optional<value::base*> transformed_range(vm::machine& vm, const F& inner)
     machine.call(1);
     machine.run();
     if (excepted)
-      return boost::optional<value::base*>{machine.retval};
-    inner(orig, machine.retval);
-    return boost::optional<value::base*>{};
+      return call_result::excepted(machine.retval);
+    auto completed = inner(orig, machine.retval);
+    if (completed)
+      return call_result::completed(machine.retval);
+    return call_result::ongoing(machine.retval);
   });
 }
 
@@ -145,13 +171,14 @@ value::base* fn_filter(vm::machine& vm)
   vm.push(); // Avoid GC'ing retval of inactive VM
   auto filtered = static_cast<value::array*>(vm.retval);
 
-  auto excepted = transformed_range(vm, [&](auto* candidate, auto* pred)
-  {
-    if (truthy(pred))
-      filtered->val.push_back(candidate);
-  });
-  if (excepted)
-    return throw_exception(*excepted, vm);
+  auto result = transformed_range(vm, [&](auto* cand, auto* pred)
+                                         {
+                                           if (truthy(pred))
+                                             filtered->val.push_back(cand);
+                                           return false;
+                                         });
+  if (!result.successful())
+    return throw_exception(result.value, vm);
 
   vm.pop(); // filtered
   return filtered;
@@ -164,10 +191,13 @@ value::base* fn_map(vm::machine& vm)
   vm.push(); // Avoid GC'ing retval of inactive VM
   auto mapped = static_cast<value::array*>(vm.retval);
 
-  auto excepted = transformed_range(vm, [&](auto*, auto* val)
-                                           { mapped->val.push_back(val); });
-  if (excepted)
-    return throw_exception(*excepted, vm);
+  auto result = transformed_range(vm, [&](auto*, auto* val)
+                                         {
+                                           mapped->val.push_back(val);
+                                           return false;
+                                         });
+  if (!result.successful())
+    return throw_exception(result.value, vm);
 
   vm.pop(); // filtered
   return mapped;
@@ -177,15 +207,44 @@ value::base* fn_count(vm::machine& vm)
 {
   int count{};
 
-  auto excepted = transformed_range(vm, [&](auto*, auto* pred)
-  {
-    if (truthy(pred))
-      ++count;
-  });
-  if (excepted)
-    return throw_exception(*excepted, vm);
+  auto result = transformed_range(vm, [&](auto*, auto* pred)
+                                         {
+                                           if (truthy(pred))
+                                             ++count;
+                                           return false;
+                                         });
+  if (!result.successful())
+    return throw_exception(result.value, vm);
 
   return gc::alloc<value::integer>( count );
+}
+
+value::base* fn_all(vm::machine& vm)
+{
+  auto all = true;
+  auto result = transformed_range(vm, [&](auto*, auto* pred)
+                                         {
+                                           if (!truthy(pred))
+                                             all = false;
+                                           return !all;
+                                         });
+  if (!result.successful())
+    return throw_exception(result.value, vm);
+  return gc::alloc<value::boolean>( all );
+}
+
+value::base* fn_any(vm::machine& vm)
+{
+  auto found = false;
+  auto result = transformed_range(vm, [&](auto*, auto* pred)
+                                         {
+                                           if (truthy(pred))
+                                             found = true;
+                                           return found;
+                                         });
+  if (!result.successful())
+    return throw_exception(result.value, vm);
+  return gc::alloc<value::boolean>( found );
 }
 
 // }}}
@@ -208,8 +267,8 @@ value::builtin_function function::gets{ fn_gets,  0};
 value::builtin_function function::filter{fn_filter, 2};
 value::builtin_function function::map   {fn_map,    2};
 //value::builtin_function function::reduce{fn_reduce, 2};
-//value::builtin_function function::all   {fn_all,    2};
-//value::builtin_function function::any   {fn_any,    2};
+value::builtin_function function::all   {fn_all,    2};
+value::builtin_function function::any   {fn_any,    2};
 value::builtin_function function::count {fn_count,  2};
 
 
@@ -232,6 +291,8 @@ void builtin::make_base_env(vm::call_frame& base)
     { {"count"},          &builtin::function::count },
     { {"filter"},         &builtin::function::filter },
     { {"map"},            &builtin::function::map },
+    { {"any"},            &builtin::function::any },
+    { {"all"},            &builtin::function::all },
     { {"quit"},           &builtin::function::quit },
     { {"Array"},          &builtin::type::array },
     { {"ArrayIterator"},  &builtin::type::array_iterator },

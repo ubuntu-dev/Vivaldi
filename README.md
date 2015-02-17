@@ -386,7 +386,7 @@ For loops are familiar to anyone who's ever used Python or Ruby:
 
 For more on for loops, see iterators.
 
-Note that while and loops always evaluate to `nil`.
+Note that while and for loops always evaluate to `nil`.
 
 #### Blocks ####
 
@@ -486,6 +486,12 @@ In addition to the above types, Vivaldi has a select few builtin functions:
 
 * `filter(x, y)`&mdash; Returns an Array containing all the members of range `x`
   such that predicate `y` returns true(thy).
+
+* `any(x, y)`&mdash; Returns `true` if any member of range `x` satisfies
+  predicate function `y`, and `false` otherwise.
+
+* `all(x, y)`&mdash; Returns `true` if all members of range `x` satisfy
+  predicate function `y`, and `false` otherwise.
 
 More to come soon.
 
