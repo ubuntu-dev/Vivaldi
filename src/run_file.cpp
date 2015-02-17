@@ -10,17 +10,20 @@
 
 #include <fstream>
 
+using namespace vv;
+
 namespace {
 
-std::string message_for(vv::vector_ref<std::string> tokens,
+std::string message_for(parser::token_string tokens,
                         const std::string& filename,
                         vv::parser::val_res validator)
 {
+  static auto line_test = [](auto i) { return i.which == parser::token::type::newline; };
   if (validator.invalid()) {
-    const std::string* first{tokens.data()};
-    auto line = count(first, begin(*validator), "\n");
+    auto line = std::count_if(tokens.begin(), validator->begin(), line_test);
     auto token = validator->size() == 0 ? "end of input"
-                                        : '\'' + validator->front() + '\'';
+                                        : '\'' + validator->front().str + '\'';
+
     return "Invalid syntax at " + token
            + " in " + filename + " on line " + std::to_string(line + 1) + ": "
            + validator.error();

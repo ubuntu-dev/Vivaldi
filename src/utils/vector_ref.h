@@ -78,9 +78,9 @@ private:
 template <typename T>
 inline vector_ref<T> ltrim(vector_ref<T> vec, const T& item)
 {
-  auto last = find_if(begin(vec), end(vec),
-                      [&](const auto& i) { return i != item; });
-  return vec.subvec(static_cast<size_t>(last - begin(vec)));
+  auto last = std::find_if(std::begin(vec), std::end(vec),
+                           [&](const auto& i) { return i != item; });
+  return vec.subvec(static_cast<size_t>(last - std::begin(vec)));
 }
 
 // Given a vector_ref vec, returns a vector_ref pointing to the first element e
@@ -88,8 +88,8 @@ inline vector_ref<T> ltrim(vector_ref<T> vec, const T& item)
 template <typename T, typename F>
 inline vector_ref<T> ltrim_if(vector_ref<T> vec, const F& pred)
 {
-  auto last = find_if_not(begin(vec), end(vec), pred);
-  return vec.subvec(static_cast<size_t>(last - begin(vec)));
+  auto last = std::find_if_not(std::begin(vec), std::end(vec), pred);
+  return vec.subvec(static_cast<size_t>(last - std::begin(vec)));
 }
 
 }

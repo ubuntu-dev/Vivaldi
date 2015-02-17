@@ -14,11 +14,93 @@ namespace vv {
 
 namespace parser {
 
+struct token {
+  enum class type {
+    newline,
+
+    open_paren,
+    close_paren,
+    open_bracket,
+    close_bracket,
+    open_brace,
+    close_brace,
+
+    dot,
+    quote,
+    semicolon,
+    colon,
+    comma,
+
+    plus,
+    slash,
+    star,
+    dash,
+    bang,
+    tilde,
+    percent,
+    ampersand,
+    pipe,
+    caret,
+    lshift,
+    rshift,
+
+    assignment,
+    equals,
+    unequal,
+    less,
+    greater,
+    less_eq,
+    greater_eq,
+
+    double_star,
+    and_sign,
+    or_sign,
+
+    to,
+
+    key_let,
+    key_new,
+
+    key_class,
+    key_fn,
+
+    key_do,
+    key_end,
+    key_cond,
+    key_while,
+    key_for,
+    key_in,
+    key_return,
+
+    key_require,
+
+    key_try,
+    key_catch,
+    key_except,
+
+    name,
+
+    integer,
+    floating_point,
+    string,
+    boolean,
+    nil,
+
+    invalid
+
+  };
+  type which;
+  std::string str;
+};
+
+using token_string = vector_ref<token>;
+
+// TODO: Make this internal to validator.cpp, and expose a simpler interface
 class val_res {
 public:
-  val_res(vector_ref<std::string> token) : m_tokens{token} { }
+  val_res(token_string token) : m_tokens{token} { }
   val_res() { }
-  val_res(vector_ref<std::string> where, const std::string& what)
+  val_res(token_string where, const std::string& what)
     : m_tokens {where},
       m_error  {what}
   { }
@@ -34,13 +116,11 @@ public:
   bool valid() const { return !m_error; }
 
 private:
-  boost::optional<vector_ref<std::string>> m_tokens;
+  boost::optional<token_string> m_tokens;
   boost::optional<std::string> m_error;
 };
 
-using token_string = vector_ref<std::string>;
-
-std::vector<std::string> tokenize(std::istream& input);
+std::vector<token> tokenize(std::istream& input);
 
 val_res is_valid(token_string tokens);
 

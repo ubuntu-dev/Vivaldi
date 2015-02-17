@@ -35,85 +35,91 @@
 
 using namespace vv;
 using namespace ast;
+using namespace parser;
 
 // Parsing {{{
 
 namespace {
 
-bool trim_test(const std::string& s)
+bool trim_test(const token& t)
 {
-  return s=="\n" || s==";";
-}
+  return t.which == token::type::newline || t.which == token::type::semicolon;
+};
+
+bool newline_test(const token& t)
+{
+  return t.which == token::type::newline;
+};
 
 // Declarations {{{
 
 template <typename T = std::unique_ptr<expression>>
-using parse_res = boost::optional<std::pair<T, vector_ref<std::string>>>;
+using parse_res = boost::optional<std::pair<T, token_string>>;
 
 using arg_t = std::vector<std::unique_ptr<expression>>;
 
-parse_res<> parse_expression(vector_ref<std::string> tokens);
+parse_res<> parse_expression(token_string tokens);
 
-parse_res<> parse_nonop_expression(vector_ref<std::string> tokens);
-parse_res<> parse_prec0(vector_ref<std::string> tokens); // member, call, index
-parse_res<> parse_prec1(vector_ref<std::string> tokens); // monops
-parse_res<> parse_prec2(vector_ref<std::string> tokens); // **
-parse_res<> parse_prec3(vector_ref<std::string> tokens); // *, /, %
-parse_res<> parse_prec4(vector_ref<std::string> tokens); // +, -
-parse_res<> parse_prec5(vector_ref<std::string> tokens); // <<, >>
-parse_res<> parse_prec6(vector_ref<std::string> tokens); // &
-parse_res<> parse_prec7(vector_ref<std::string> tokens); // ^
-parse_res<> parse_prec8(vector_ref<std::string> tokens); // |
-parse_res<> parse_prec9(vector_ref<std::string> tokens); // to
-parse_res<> parse_prec10(vector_ref<std::string> tokens); // <, >, <=, =>
-parse_res<> parse_prec11(vector_ref<std::string> tokens); // ==, !=
-parse_res<> parse_prec12(vector_ref<std::string> tokens); // &&
-parse_res<> parse_prec13(vector_ref<std::string> tokens); // ||
+parse_res<> parse_nonop_expression(token_string tokens);
+parse_res<> parse_prec0(token_string tokens); // member, call, index
+parse_res<> parse_prec1(token_string tokens); // monops
+parse_res<> parse_prec2(token_string tokens); // **
+parse_res<> parse_prec3(token_string tokens); // *, /, %
+parse_res<> parse_prec4(token_string tokens); // +, -
+parse_res<> parse_prec5(token_string tokens); // <<, >>
+parse_res<> parse_prec6(token_string tokens); // &
+parse_res<> parse_prec7(token_string tokens); // ^
+parse_res<> parse_prec8(token_string tokens); // |
+parse_res<> parse_prec9(token_string tokens); // to
+parse_res<> parse_prec10(token_string tokens); // <, >, <=, =>
+parse_res<> parse_prec11(token_string tokens); // ==, !=
+parse_res<> parse_prec12(token_string tokens); // &&
+parse_res<> parse_prec13(token_string tokens); // ||
 
-parse_res<> parse_array_literal(vector_ref<std::string> tokens);
-parse_res<> parse_dict_literal(vector_ref<std::string> tokens);
-parse_res<> parse_assignment(vector_ref<std::string> tokens);
-parse_res<> parse_block(vector_ref<std::string> tokens);
-parse_res<> parse_cond_statement(vector_ref<std::string> tokens);
-parse_res<> parse_except(vector_ref<std::string> tokens);
-parse_res<> parse_for_loop(vector_ref<std::string> tokens);
-parse_res<> parse_function_definition(vector_ref<std::string> tokens);
-parse_res<> parse_literal(vector_ref<std::string> tokens);
-parse_res<> parse_new_obj(vector_ref<std::string> tokens);
-parse_res<> parse_require(vector_ref<std::string> tokens);
-parse_res<> parse_return(vector_ref<std::string> tokens);
-parse_res<> parse_try_catch(vector_ref<std::string> tokens);
-parse_res<> parse_type_definition(vector_ref<std::string> tokens);
-parse_res<> parse_variable_declaration(vector_ref<std::string> tokens);
-parse_res<> parse_variable(vector_ref<std::string> tokens);
-parse_res<> parse_while_loop(vector_ref<std::string> tokens);
+parse_res<> parse_array_literal(token_string tokens);
+parse_res<> parse_dict_literal(token_string tokens);
+parse_res<> parse_assignment(token_string tokens);
+parse_res<> parse_block(token_string tokens);
+parse_res<> parse_cond_statement(token_string tokens);
+parse_res<> parse_except(token_string tokens);
+parse_res<> parse_for_loop(token_string tokens);
+parse_res<> parse_function_definition(token_string tokens);
+parse_res<> parse_literal(token_string tokens);
+parse_res<> parse_new_obj(token_string tokens);
+parse_res<> parse_require(token_string tokens);
+parse_res<> parse_return(token_string tokens);
+parse_res<> parse_try_catch(token_string tokens);
+parse_res<> parse_type_definition(token_string tokens);
+parse_res<> parse_variable_declaration(token_string tokens);
+parse_res<> parse_variable(token_string tokens);
+parse_res<> parse_while_loop(token_string tokens);
 
-parse_res<> parse_symbol(vector_ref<std::string> tokens);
-parse_res<> parse_integer(vector_ref<std::string> tokens);
-parse_res<> parse_float(vector_ref<std::string> tokens);
-parse_res<> parse_bool(vector_ref<std::string> tokens);
-parse_res<> parse_nil(vector_ref<std::string> tokens);
-parse_res<> parse_string(vector_ref<std::string> tokens);
+parse_res<> parse_symbol(token_string tokens);
+parse_res<> parse_integer(token_string tokens);
+parse_res<> parse_float(token_string tokens);
+parse_res<> parse_bool(token_string tokens);
+parse_res<> parse_nil(token_string tokens);
+parse_res<> parse_string(token_string tokens);
 
 template <typename F>
-auto parse_comma_separated_list(vector_ref<std::string> tokens,
+auto parse_comma_separated_list(token_string tokens,
                                const F& parse_item)
     -> parse_res<std::vector<decltype(parse_item(tokens)->first)>>;
 template <typename F>
-auto parse_bracketed_subexpr(vector_ref<std::string> tokens,
+auto parse_bracketed_subexpr(token_string tokens,
                              const F& parse_item,
-                             const std::string& opening,
-                             const std::string& closing)
+                             token::type opening,
+                             token::type closing)
     -> decltype(parse_item(tokens));
-parse_res<arg_t> parse_function_call(vector_ref<std::string> tokens);
+parse_res<arg_t> parse_function_call(token_string tokens);
 parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
-  parse_cond_pair(vector_ref<std::string> tokens);
+  parse_cond_pair(token_string tokens);
 parse_res<std::pair<symbol, function_definition>>
-  parse_method_definition(vector_ref<std::string> tokens);
+  parse_method_definition(token_string tokens);
 // }}}
 // Individual parsing functions {{{
 
-parse_res<> parse_expression(vector_ref<std::string> tokens)
+parse_res<> parse_expression(token_string tokens)
 {
   return parse_prec13(tokens);
 }
@@ -121,7 +127,7 @@ parse_res<> parse_expression(vector_ref<std::string> tokens)
 // Operators {{{
 
 template <typename F1, typename F2, typename Pred, typename Transform>
-parse_res<> parse_operator_expr(vector_ref<std::string> tokens,
+parse_res<> parse_operator_expr(token_string tokens,
                                 const F1& pre,
                                 const F2& post,
                                 const Pred& test,
@@ -132,10 +138,10 @@ parse_res<> parse_operator_expr(vector_ref<std::string> tokens,
     return left_res;
   tokens = left_res->second;
 
-  if (tokens.size() && test(tokens.front())) {
+  if (tokens.size() && test(tokens.front().which)) {
     auto left = move(left_res->first);
 
-    symbol method{convert(tokens.front())};
+    symbol method{convert(tokens.front().which)};
 
     auto right_res = post(tokens.subvec(1)); // method (i.e. binop)
     auto right = move(right_res->first);
@@ -150,14 +156,14 @@ parse_res<> parse_operator_expr(vector_ref<std::string> tokens,
   return left_res;
 }
 
-parse_res<> parse_prec13(vector_ref<std::string> tokens)
+parse_res<> parse_prec13(token_string tokens)
 {
   auto left_res = parse_prec12(tokens);
   if (!left_res)
     return left_res;
   tokens = left_res->second;
 
-  if (tokens.size() && tokens.front() == "||") {
+  if (tokens.size() && tokens.front().which == token::type::or_sign) {
     auto left = move(left_res->first);
 
     auto right_res = parse_prec13(tokens.subvec(1)); // '||'
@@ -169,14 +175,14 @@ parse_res<> parse_prec13(vector_ref<std::string> tokens)
   return left_res;
 }
 
-parse_res<> parse_prec12(vector_ref<std::string> tokens)
+parse_res<> parse_prec12(token_string tokens)
 {
   auto left_res = parse_prec11(tokens);
   if (!left_res)
     return left_res;
   tokens = left_res->second;
 
-  if (tokens.size() && tokens.front() == "&&") {
+  if (tokens.size() && tokens.front().which == token::type::and_sign) {
     auto left = move(left_res->first);
     auto right_res = parse_prec12(tokens.subvec(1)); // '&&'
     auto right = move(right_res->first);
@@ -187,46 +193,47 @@ parse_res<> parse_prec12(vector_ref<std::string> tokens)
   return left_res;
 }
 
-parse_res<> parse_prec11(vector_ref<std::string> tokens)
+parse_res<> parse_prec11(token_string tokens)
 {
   return parse_operator_expr(tokens, parse_prec10, parse_prec11,
-                             [](const auto& s)
+                             [](auto t)
                              {
-                               return s == "==" || s == "!=";
+                               return t == token::type::equals
+                                   || t == token::type::unequal;
                              },
-                             [](const auto& s)
+                             [](auto t)
                              {
-                               return (s == "==") ? "equals" : "unequal";
+                               return (t == token::type::equals) ? "equals" : "unequal";
                              });
 }
 
-parse_res<> parse_prec10(vector_ref<std::string> tokens)
+parse_res<> parse_prec10(token_string tokens)
 {
   return parse_operator_expr(tokens, parse_prec9, parse_prec10,
-                             [](const auto& s)
+                             [](auto t)
                              {
-                               return s == ">"
-                                   || s == "<"
-                                   || s == ">="
-                                   || s == "<=";
+                               return t == token::type::greater
+                                   || t == token::type::less
+                                   || t == token::type::greater_eq
+                                   || t == token::type::less_eq;
                              },
-                             [](const auto& s)
+                             [](auto s)
                              {
-                               return (s == ">")  ? "greater" :
-                                      (s == "<")  ? "less"    :
-                                      (s == ">=") ? "greater_equals" :
-                                                    "less_equals";
+                               return (s == token::type::greater)    ? "greater"        :
+                                      (s == token::type::less)       ? "less"           :
+                                      (s == token::type::greater_eq) ? "greater_equals" :
+                                                                       "less_equals";
                              });
 }
 
-parse_res<> parse_prec9(vector_ref<std::string> tokens)
+parse_res<> parse_prec9(token_string tokens)
 {
   auto left_res = parse_prec8(tokens);
   if (!left_res)
     return left_res;
   tokens = left_res->second;
 
-  if (tokens.size() && tokens.front() == "to") {
+  if (tokens.size() && tokens.front().which == token::type::to) {
     auto left = move(left_res->first);
     auto right_res = parse_prec9(tokens.subvec(1)); // 'to'
     auto right = move(right_res->first);
@@ -243,82 +250,86 @@ parse_res<> parse_prec9(vector_ref<std::string> tokens)
   return left_res;
 }
 
-parse_res<> parse_prec8(vector_ref<std::string> tokens)
+parse_res<> parse_prec8(token_string tokens)
 {
   return parse_operator_expr(tokens, parse_prec7, parse_prec8,
-                             [](const auto& s) { return s == "|"; },
-                             [](const auto&) { return "bitor"; });
+                             [](auto t) { return t == token::type::pipe; },
+                             [](auto) { return "bitor"; });
 }
 
-parse_res<> parse_prec7(vector_ref<std::string> tokens)
+parse_res<> parse_prec7(token_string tokens)
 {
   return parse_operator_expr(tokens, parse_prec6, parse_prec7,
-                             [](const auto& s) { return s == "^"; },
-                             [](const auto&) { return "xor"; });
+                             [](auto t) { return t == token::type::caret; },
+                             [](auto) { return "xor"; });
 }
 
-parse_res<> parse_prec6(vector_ref<std::string> tokens)
+parse_res<> parse_prec6(token_string tokens)
 {
   return parse_operator_expr(tokens, parse_prec5, parse_prec6,
-                             [](const auto& s) { return s == "&"; },
-                             [](const auto&) { return "bitand"; });
+                             [](auto t) { return t == token::type::ampersand; },
+                             [](auto) { return "bitand"; });
 }
 
-parse_res<> parse_prec5(vector_ref<std::string> tokens)
+parse_res<> parse_prec5(token_string tokens)
 {
   return parse_operator_expr(tokens, parse_prec4, parse_prec5,
-                             [](const auto& s)
+                             [](auto t)
                              {
-                               return s == ">>" || s == "<<";
+                               return t == token::type::lshift
+                                   || t == token::type::rshift;
                              },
-                             [](const auto& s)
+                             [](auto t)
                              {
-                               return (s == ">>") ? "rshift" : "lshift";
+                               return (t == token::type::rshift) ? "rshift" : "lshift";
                              });
 }
 
-parse_res<> parse_prec4(vector_ref<std::string> tokens)
+parse_res<> parse_prec4(token_string tokens)
 {
   return parse_operator_expr(tokens, parse_prec3, parse_prec4,
-                             [](const auto& s) { return s == "+" || s == "-"; },
-                             [](const auto& s)
+                             [](auto t) { return t == token::type::plus
+                                              || t == token::type::dash; },
+                             [](auto t)
                              {
-                               return (s == "+") ? "add" : "subtract";
+                               return (t == token::type::plus) ? "add" : "subtract";
                              });
 }
 
-parse_res<> parse_prec3(vector_ref<std::string> tokens)
+parse_res<> parse_prec3(token_string tokens)
 {
   return parse_operator_expr(tokens, parse_prec2, parse_prec3,
-                             [](const auto& s)
+                             [](auto s)
                              {
-                               return s == "*" || s == "/" || s == "%";
+                               return s == token::type::star
+                                   || s == token::type::slash
+                                   || s == token::type::percent;
                              },
-                             [](const auto& s)
+                             [](auto t)
                              {
-                               return (s == "*") ? "times" :
-                                      (s == "/") ? "divides" :
-                                                   "modulo";
+                               return (t == token::type::star)  ? "times"   :
+                                      (t == token::type::slash) ? "divides" :
+                                                                  "modulo";
                              });
 }
 
-parse_res<> parse_prec2(vector_ref<std::string> tokens)
+parse_res<> parse_prec2(token_string tokens)
 {
   return parse_operator_expr(tokens, parse_prec1, parse_prec2,
-                             [](const auto& s) { return s == "**"; },
-                             [](const auto&) { return "pow"; });
+                             [](auto t) { return t == token::type::double_star; },
+                             [](auto) { return "pow"; });
 }
 
-parse_res<> parse_prec1(vector_ref<std::string> tokens)
+parse_res<> parse_prec1(token_string tokens)
 {
-  if (tokens.size() && (tokens.front() == "!"
-                     || tokens.front() == "~"
-                     || tokens.front() == "-")) {
+  if (tokens.size() && (tokens.front().which == token::type::bang
+                     || tokens.front().which == token::type::tilde
+                     || tokens.front().which == token::type::dash)) {
 
 
-    symbol method{(tokens.front() == "!") ? "not" :
-                  (tokens.front() == "~") ? "negate" :
-                                            "negative"};
+    symbol method{(tokens.front().which == token::type::bang)  ? "not" :
+                  (tokens.front().which == token::type::tilde) ? "negate" :
+                                                                 "negative"};
     auto expr_res = parse_prec1(tokens.subvec(1)); // monop
     tokens = expr_res->second;
     auto expr = move(expr_res->first);
@@ -332,7 +343,7 @@ parse_res<> parse_prec1(vector_ref<std::string> tokens)
 
 // TODO: split function calls, members, and indexing into their own functions so
 // this one isn't so monstruously long
-parse_res<> parse_prec0(vector_ref<std::string> tokens)
+parse_res<> parse_prec0(token_string tokens)
 {
   auto expr_res = parse_nonop_expression(tokens);
   if (!expr_res)
@@ -340,22 +351,25 @@ parse_res<> parse_prec0(vector_ref<std::string> tokens)
   tokens = expr_res->second;
 
   auto expr = move(expr_res->first);
-  while (tokens.size() && (tokens.front() == "("
-                        || tokens.front() == "."
-                        || tokens.front() == "[")) {
-    if (tokens.front() == "(") {
+  while (tokens.size() && (tokens.front().which == token::type::open_paren
+                        || tokens.front().which == token::type::dot
+                        || tokens.front().which == token::type::open_bracket)) {
+    if (tokens.front().which == token::type::open_paren) {
       auto list_res = parse_function_call(tokens);
       auto list = move(list_res->first);
       tokens = list_res->second;
 
       expr = std::make_unique<function_call>(move(expr), move(list));
 
-    } else if (tokens.front() == "[") {
-      auto idx_res = parse_bracketed_subexpr(tokens, parse_expression, "[", "]");
+    } else if (tokens.front().which == token::type::open_bracket) {
+      auto idx_res = parse_bracketed_subexpr(tokens,
+                                             parse_expression,
+                                             token::type::open_bracket,
+                                             token::type::close_bracket);
       auto idx = move(idx_res->first);
       tokens = idx_res->second;
 
-      if (tokens.size() && tokens.front() == "=") {
+      if (tokens.size() && tokens.front().which == token::type::assignment) {
         auto value_res = parse_expression(tokens.subvec(1)); // '='
         auto value = move(value_res->first);
         tokens = value_res->second;
@@ -376,10 +390,10 @@ parse_res<> parse_prec0(vector_ref<std::string> tokens)
 
     } else {
       tokens = tokens.subvec(1); // '.'
-      symbol name{tokens.front()};
+      symbol name{tokens.front().str};
       tokens = tokens.subvec(1); // name
 
-      if (tokens.size() && tokens.front() == "=") {
+      if (tokens.size() && tokens.front().which == token::type::assignment) {
         auto value_res = parse_expression(tokens.subvec(1)); // '='
         auto value = move(value_res->first);
         tokens = value_res->second;
@@ -394,10 +408,14 @@ parse_res<> parse_prec0(vector_ref<std::string> tokens)
   return {{ move(expr), tokens }};
 }
 
-parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
+parse_res<> parse_nonop_expression(token_string tokens)
 {
-  if (tokens.size() && tokens.front() == "(")
-    return parse_bracketed_subexpr(tokens, parse_expression, "(", ")");
+  if (tokens.size() && tokens.front().which == token::type::open_paren) {
+    return parse_bracketed_subexpr(tokens,
+                                   parse_expression,
+                                   token::type::open_paren,
+                                   token::type::close_paren);
+  }
 
   parse_res<> res;
   if ((res = parse_array_literal(tokens)))        return res;
@@ -423,28 +441,27 @@ parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
 // }}}
 // Other expressions {{{
 
-parse_res<> parse_assignment(vector_ref<std::string> tokens)
+parse_res<> parse_assignment(token_string tokens)
 {
-  if (tokens.size() < 2 || tokens[1] != "=")
+  if (tokens.size() < 2 || tokens[1].which != token::type::assignment)
     return {};
-  auto name = tokens.front();
+  symbol name{tokens.front().str};
   auto expr_res = parse_expression(tokens.subvec(2)); // name '='
   auto expr = move(expr_res->first);
   tokens = expr_res->second;
   return {{ std::make_unique<assignment>( name, move(expr) ), tokens }};
 }
 
-parse_res<> parse_block(vector_ref<std::string> tokens)
+parse_res<> parse_block(token_string tokens)
 {
-  const static auto trim_test = [](const auto& s) { return s=="\n" || s==";"; };
-
-  if (!tokens.size() || tokens.front() != "do")
+  if (!tokens.size() || tokens.front().which != token::type::key_do)
     return {};
   tokens = tokens.subvec(1); // 'do'
 
   std::vector<std::unique_ptr<expression>> subexprs;
   tokens = ltrim_if(tokens, trim_test);
-  while (tokens.front() != "end") {
+
+  while (tokens.front().which != token::type::key_end) {
     auto expr_res = parse_expression(tokens);
     subexprs.push_back(move(expr_res->first));
     tokens = expr_res->second;
@@ -455,30 +472,30 @@ parse_res<> parse_block(vector_ref<std::string> tokens)
   return {{ std::make_unique<block>( move(subexprs) ), tokens }};
 }
 
-parse_res<> parse_array_literal(vector_ref<std::string> tokens)
+parse_res<> parse_array_literal(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "[")
+  if (!tokens.size() || tokens.front().which != token::type::open_bracket)
     return {};
 
   auto vals_res = parse_bracketed_subexpr(tokens, [](auto t)
   {
     return parse_comma_separated_list(t, parse_expression);
-  }, "[", "]");
+  }, token::type::open_bracket, token::type::close_bracket);
   auto vals = move(vals_res->first);
   tokens = vals_res->second;
 
   return {{ std::make_unique<array>( move(vals) ), tokens }};
 }
 
-parse_res<> parse_dict_literal(vector_ref<std::string> tokens)
+parse_res<> parse_dict_literal(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "{")
+  if (!tokens.size() || tokens.front().which != token::type::open_brace)
     return {};
 
   auto vals_res = parse_bracketed_subexpr(tokens, [](auto t)
   {
     return parse_comma_separated_list(t, parse_cond_pair);
-  }, "{", "}");
+  }, token::type::open_brace, token::type::close_brace);
   auto vals = move(vals_res->first);
   tokens = vals_res->second;
   // inefficient, but do I really care at this point?
@@ -491,11 +508,11 @@ parse_res<> parse_dict_literal(vector_ref<std::string> tokens)
   return {{ std::make_unique<dictionary>( move(flattened) ), tokens }};
 }
 
-parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
+parse_res<> parse_cond_statement(token_string tokens)
 {
-  if (!tokens.size() || (tokens.front() != "cond" && tokens.front() != "if"))
+  if (!tokens.size() || tokens.front().which != token::type::key_cond)
     return {};
-  tokens = ltrim(tokens.subvec(1), {"\n"});
+  tokens = ltrim_if(tokens.subvec(1), newline_test);
 
   auto pairs_res = parse_comma_separated_list(tokens, parse_cond_pair);
   auto pairs = move(pairs_res->first);
@@ -504,9 +521,9 @@ parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
   return {{ std::make_unique<cond_statement>(move(pairs)), tokens }};
 }
 
-parse_res<> parse_except(vector_ref<std::string> tokens)
+parse_res<> parse_except(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "except")
+  if (!tokens.size() || tokens.front().which != token::type::key_except)
     return {};
   tokens = tokens.subvec(1); // 'except'
   auto expr_res = parse_expression(tokens);
@@ -515,13 +532,13 @@ parse_res<> parse_except(vector_ref<std::string> tokens)
   return {{ std::make_unique<except>( move(expr) ), tokens }};
 }
 
-parse_res<> parse_for_loop(vector_ref<std::string> tokens)
+parse_res<> parse_for_loop(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "for")
+  if (!tokens.size() || tokens.front().which != token::type::key_for)
     return {};
   tokens = tokens.subvec(1); // 'for'
 
-  auto iterator = tokens.front();
+  symbol iterator{tokens.front().str};
   tokens = tokens.subvec(2); // iterator 'in'
 
   auto range_res = parse_expression(tokens);
@@ -536,15 +553,15 @@ parse_res<> parse_for_loop(vector_ref<std::string> tokens)
             tokens }};
 }
 
-parse_res<> parse_function_definition(vector_ref<std::string> tokens)
+parse_res<> parse_function_definition(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "fn")
+  if (!tokens.size() || tokens.front().which != token::type::key_fn)
     return {};
   tokens = tokens.subvec(1);
 
   symbol name;
-  if (tokens.front() != "(") {
-    name = tokens.front();
+  if (tokens.front().which != token::type::open_paren) {
+    name = tokens.front().str;
     tokens = tokens.subvec(1); // name
   }
 
@@ -552,11 +569,11 @@ parse_res<> parse_function_definition(vector_ref<std::string> tokens)
   {
     return parse_comma_separated_list(tokens, [](auto t)
     {
-      if (t.front() == ")")
+      if (t.front().which == token::type::close_paren)
         return parse_res<symbol>{};
-      return parse_res<symbol>{{ symbol{t.front()}, t.subvec(1) }}; // arg name
+      return parse_res<symbol>{{ t.front().str, t.subvec(1) }}; // arg name
     });
-  }, "(", ")");
+  }, token::type::open_paren, token::type::close_paren);
   auto args = move(arg_res->first);
   tokens = arg_res->second;
 
@@ -568,7 +585,7 @@ parse_res<> parse_function_definition(vector_ref<std::string> tokens)
             tokens }};
 }
 
-parse_res<> parse_literal(vector_ref<std::string> tokens)
+parse_res<> parse_literal(token_string tokens)
 {
   parse_res<> res;
   if ((res = parse_float(tokens)))   return res;
@@ -580,9 +597,9 @@ parse_res<> parse_literal(vector_ref<std::string> tokens)
   return res;
 }
 
-parse_res<> parse_new_obj(vector_ref<std::string> tokens)
+parse_res<> parse_new_obj(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "new")
+  if (!tokens.size() || tokens.front().which != token::type::key_new)
     return {};
   tokens = tokens.subvec(1); // 'new'
 
@@ -599,19 +616,19 @@ parse_res<> parse_new_obj(vector_ref<std::string> tokens)
             tokens }};
 }
 
-parse_res<> parse_require(vector_ref<std::string> tokens)
+parse_res<> parse_require(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "require")
+  if (!tokens.size() || tokens.front().which != token::type::key_require)
     return {};
   tokens = tokens.subvec(1); // 'require'
-  std::string filename{++begin(tokens.front()), --end(tokens.front())};
+  std::string filename{++begin(tokens.front().str), --end(tokens.front().str)};
   tokens = tokens.subvec(1); // filename
   return {{ std::make_unique<require>( filename ), tokens }};
 }
 
-parse_res<> parse_return(vector_ref<std::string> tokens)
+parse_res<> parse_return(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "return")
+  if (!tokens.size() || tokens.front().which != token::type::key_return)
     return {};
   tokens = tokens.subvec(1); // 'except'
   auto expr_res = parse_expression(tokens);
@@ -620,9 +637,9 @@ parse_res<> parse_return(vector_ref<std::string> tokens)
   return {{ std::make_unique<return_statement>( move(expr) ), tokens }};
 }
 
-parse_res<> parse_try_catch(vector_ref<std::string> tokens)
+parse_res<> parse_try_catch(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "try")
+  if (!tokens.size() || tokens.front().which != token::type::key_try)
     return {};
   tokens = tokens.subvec(2); // 'try' ':'
 
@@ -630,9 +647,9 @@ parse_res<> parse_try_catch(vector_ref<std::string> tokens)
   auto body = move(body_res->first);
   tokens = body_res->second;
 
-  tokens = ltrim(tokens, {"\n"});
+  tokens = ltrim_if(tokens, newline_test);
   tokens = tokens.subvec(1); // 'catch'
-  symbol exception_name{tokens.front()};
+  symbol exception_name{tokens.front().str};
   std::vector<symbol> exception_arg{exception_name};
   tokens = tokens.subvec(2); // name ':
 
@@ -644,22 +661,22 @@ parse_res<> parse_try_catch(vector_ref<std::string> tokens)
            tokens}};
 }
 
-parse_res<> parse_type_definition(vector_ref<std::string> tokens)
+parse_res<> parse_type_definition(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "class")
+  if (!tokens.size() || tokens.front().which != token::type::key_class)
     return{};
-  symbol name{tokens[1]};
+  symbol name{tokens[1].str};
   tokens = tokens.subvec(2); // 'class' name
 
   symbol parent{"Object"};
-  if (tokens.front() == ":") {
-    parent = tokens[1];
+  if (tokens.front().which == token::type::colon) {
+    parent = tokens[1].str;
     tokens = tokens.subvec(2); // ':' parent
   }
 
   std::unordered_map<symbol, function_definition> method_map;
   tokens = ltrim_if(tokens, trim_test);
-  while (tokens.front() != "end") {
+  while (tokens.front().which != token::type::key_end) {
     auto method = parse_method_definition(tokens);
     method_map.insert(std::make_pair(method->first.first,
                                      method->first.second));
@@ -671,29 +688,29 @@ parse_res<> parse_type_definition(vector_ref<std::string> tokens)
             tokens }};
 }
 
-parse_res<> parse_variable_declaration(vector_ref<std::string> tokens)
+parse_res<> parse_variable_declaration(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "let")
+  if (!tokens.size() || tokens.front().which != token::type::key_let)
     return {};
-  auto name = tokens[1];
+  symbol name{tokens[1].str};
   auto expr_res = parse_expression(tokens.subvec(3)); // 'let' name '='
   auto expr = move(expr_res->first);
   tokens = expr_res->second;
   return {{ std::make_unique<variable_declaration>(name, move(expr)), tokens }};
 }
 
-parse_res<> parse_variable(vector_ref<std::string> tokens)
+parse_res<> parse_variable(token_string tokens)
 {
-  if (!tokens.size() || !isnamechar(tokens.front().front()))
+  if (!tokens.size() || tokens.front().which != token::type::name)
     return {};
-  symbol name{tokens.front()};
+  symbol name{tokens.front().str};
   tokens = tokens.subvec(1); // name
   return {{ std::make_unique<variable>(name), tokens }};
 }
 
-parse_res<> parse_while_loop(vector_ref<std::string> tokens)
+parse_res<> parse_while_loop(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "while")
+  if (!tokens.size() || tokens.front().which != token::type::key_while)
     return {};
 
   auto test_res = parse_expression(tokens.subvec(1)); // 'while'
@@ -710,64 +727,58 @@ parse_res<> parse_while_loop(vector_ref<std::string> tokens)
 // }}}
 // Literals {{{
 
-parse_res<> parse_symbol(vector_ref<std::string> tokens)
+parse_res<> parse_symbol(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "'")
+  if (!tokens.size() || tokens.front().which != token::type::quote)
     return {};
-  symbol name{tokens[1]};
+  symbol name{tokens[1].str};
   tokens = tokens.subvec(2); // ''' name
   return {{ std::make_unique<literal::symbol>( name ), tokens }};
 }
 
-parse_res<> parse_integer(vector_ref<std::string> tokens)
+parse_res<> parse_integer(token_string tokens)
 {
-  // parse_float should already be called by the time we get here, so assume
-  // we're an integer
-  if (!tokens.size() || !isdigit(tokens.front().front()))
+  if (!tokens.size() || tokens.front().which != token::type::integer)
     return {};
-  auto str = tokens.front();
+  auto str = tokens.front().str;
   tokens = tokens.subvec(1); // number
 
   return {{ std::make_unique<literal::integer>( to_int(str) ), tokens }};
 }
 
-parse_res<> parse_float(vector_ref<std::string> tokens)
+parse_res<> parse_float(token_string tokens)
 {
-  if (!tokens.size() || !isdigit(tokens.front().front()))
+  if (!tokens.size() || tokens.front().which != token::type::floating_point)
     return {};
-  auto str = tokens.front();
+  auto str = tokens.front().str;
   tokens = tokens.subvec(1); // number
 
-  // Could this instead call parse_integer? Yes. Would that make more sense?
-  // Probably. Oh well.
-  if (find(begin(str), end(str), '.') == end(str))
-    return {};
   return {{ std::make_unique<literal::floating_point>( stod(str) ), tokens }};
 }
 
-parse_res<> parse_bool(vector_ref<std::string> tokens)
+parse_res<> parse_bool(token_string tokens)
 {
-  if (!tokens.size() || (tokens.front() != "true" && tokens.front() != "false"))
+  if (!tokens.size() || tokens.front().which != token::type::boolean)
     return {};
-  bool value{tokens.front() == "true"};
+  bool value{tokens.front().str == "true"};
   tokens = tokens.subvec(1); // value
   return {{ std::make_unique<literal::boolean>( value ), tokens }};
 }
 
-parse_res<> parse_nil(vector_ref<std::string> tokens)
+parse_res<> parse_nil(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "nil")
+  if (!tokens.size() || tokens.front().which != token::type::nil)
     return {};
   tokens = tokens.subvec(1); // 'nil'
   return {{ std::make_unique<literal::nil>( ), tokens }};
 }
 
-parse_res<> parse_string(vector_ref<std::string> tokens)
+parse_res<> parse_string(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().front() != '"')
+  if (!tokens.size() || tokens.front().which != token::type::string)
     return {};
   // inc/decrement to remove quotes
-  std::string val{++begin(tokens.front()), --end(tokens.front())};
+  std::string val{++begin(tokens.front().str), --end(tokens.front().str)};
   tokens = tokens.subvec(1); // val
   return {{ std::make_unique<literal::string>( val ), tokens }};
 }
@@ -776,49 +787,51 @@ parse_res<> parse_string(vector_ref<std::string> tokens)
 // Helpers {{{
 
 template <typename F>
-auto parse_comma_separated_list(vector_ref<std::string> tokens,
+auto parse_comma_separated_list(token_string tokens,
                                const F& parse_item)
     -> parse_res<std::vector<decltype(parse_item(tokens)->first)>>
 {
-  tokens = ltrim(tokens, {"\n"});
+  tokens = ltrim_if(tokens, newline_test);
+
   std::vector<decltype(parse_item(tokens)->first)> items;
   decltype(parse_item(tokens)) item_res = parse_item(tokens);
+
   while (item_res) {
     items.push_back(std::move(item_res->first));
     tokens = item_res->second;
-    if (!tokens.size() || tokens.front() != ",")
+    if (!tokens.size() || tokens.front().which != token::type::comma)
       return {{ move(items), tokens }};
-    tokens = ltrim(tokens.subvec(1), {"\n"}); // ','
+    tokens = ltrim_if(tokens.subvec(1), newline_test); // ','
     item_res = parse_item(tokens);
   }
   return {{ move(items), tokens }};
 }
 
 template <typename F>
-auto parse_bracketed_subexpr(vector_ref<std::string> tokens,
+auto parse_bracketed_subexpr(token_string tokens,
                              const F& parse_item,
-                             const std::string& opening,
-                             const std::string&)
+                             token::type opening,
+                             token::type)
     -> decltype(parse_item(tokens))
 {
-  if (!tokens.size() || tokens.front() != opening)
+  if (!tokens.size() || tokens.front().which != opening)
     return {};
-  tokens = ltrim(tokens.subvec(1), {"\n"}); // opening
+  tokens = ltrim_if(tokens.subvec(1), newline_test); // opening
   auto res = parse_item(tokens);
-  res->second = ltrim(res->second, {"\n"}).subvec(1); // closing
+  res->second = ltrim_if(res->second, newline_test).subvec(1); // closing
   return res;
 }
 
-parse_res<arg_t> parse_function_call(vector_ref<std::string> tokens)
+parse_res<arg_t> parse_function_call(token_string tokens)
 {
   return parse_bracketed_subexpr(tokens, [](auto t)
   {
     return parse_comma_separated_list(t, parse_expression);
-  },"(", ")");
+  }, token::type::open_paren, token::type::close_paren);
 }
 
 parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
-  parse_cond_pair(vector_ref<std::string> tokens)
+  parse_cond_pair(token_string tokens)
 {
   auto test_res = parse_expression(tokens);
   if (!test_res)
@@ -836,24 +849,24 @@ parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
 // Syntactically identical to (named) function definitions, but the returned
 // result is different
 parse_res<std::pair<symbol, function_definition>>
-  parse_method_definition(vector_ref<std::string> tokens)
+  parse_method_definition(token_string tokens)
 {
-  if (!tokens.size() || tokens.front() != "fn")
+  if (!tokens.size() || tokens.front().which != token::type::key_fn)
     return {};
   tokens = tokens.subvec(1); // 'fn'
 
-  symbol name{tokens.front()};
+  symbol name{tokens.front().str};
   tokens = tokens.subvec(1); // name
 
   auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
   {
     return parse_comma_separated_list(tokens, [](auto t)
     {
-      if (t.front() == ")")
+      if (t.front().which == token::type::close_paren)
         return parse_res<symbol>{};
-      return parse_res<symbol>{{ symbol{t.front()}, t.subvec(1) }}; // argname
+      return parse_res<symbol>{{ symbol{t.front().str}, t.subvec(1) }}; // argname
     });
-  }, "(", ")");
+  }, token::type::open_paren, token::type::close_paren);
   auto args = move(arg_res->first);
   tokens = arg_res->second;
 

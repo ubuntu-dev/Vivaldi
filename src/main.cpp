@@ -27,8 +27,10 @@ void repl_catcher(vv::vm::machine& vm)
 std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
 {
   std::cout << ">>> ";
-  std::vector<std::string> tokens;
+
+  std::vector<vv::parser::token> tokens;
   vv::parser::val_res validator;
+
   while (!std::cin.eof()) {
     std::string line;
     getline(std::cin, line);
@@ -44,9 +46,9 @@ std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
       std::string error{"invalid syntax"};
       if (validator.invalid()) {
         error += " at "
-              + (validator->front() == "\n"
+              + (validator->front().which == vv::parser::token::type::newline
                   ? "end of line: "
-                  : '\'' + validator->front() + "': ")
+                  : '\'' + validator->front().str + "': ")
               + validator.error();
       }
       write_error(error);
