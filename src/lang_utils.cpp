@@ -20,6 +20,13 @@ vv::value::base* vv::throw_exception(const std::string& value, vm::machine& vm)
   return vm.retval;
 }
 
+vv::value::base* vv::throw_exception(value::base* value, vm::machine& vm)
+{
+  vm.retval = value;
+  vm.except();
+  return vm.retval;
+}
+
 vv::value::base* vv::get_arg(vm::machine& vm, size_t idx)
 {
   return *(end(vm.frame->parent->pushed) - vm.frame->args + idx);

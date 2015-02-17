@@ -260,8 +260,6 @@ void vm::machine::writem(symbol sym)
 // TODO: make suck less.
 void vm::machine::call(int argc)
 {
-  std::vector<value::base*> args;
-
   if (auto fn = dynamic_cast<value::function*>(retval)) {
     if (argc != fn->argc) {
       push_str("Wrong number of arguments--- expected "
@@ -291,6 +289,7 @@ void vm::machine::call(int argc)
     auto except_flag = frame.get();
     gc::set_current_frame(frame);
     retval = fn->body(*this);
+    gc::set_current_retval(retval); // in case function spun its own VM
     if (except_flag == frame.get())
       ret();
   } else {

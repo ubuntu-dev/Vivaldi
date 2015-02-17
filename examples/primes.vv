@@ -1,9 +1,3 @@
-fn filter(arr, pred): do
-  let new_arr = []
-  for i in arr: if pred(i): new_arr.append(i)
-  new_arr
-end
-
 fn primes(upto): do
   let candidates = (2 to upto).to_arr()
   let found = []

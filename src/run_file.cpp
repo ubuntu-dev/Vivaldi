@@ -3,7 +3,7 @@
 #include "builtins.h"
 #include "gc.h"
 #include "parser.h"
-#include "vm.h"
+#include "vm/run.h"
 #include "value/string.h"
 
 #include <boost/filesystem.hpp>
@@ -46,8 +46,8 @@ vv::run_file_result vv::run_file(const std::string& filename)
              gc::alloc<value::string>(message_for(tokens, filename, validator)),
              {} };
 
-  auto exprs = vv::parser::parse(tokens);
-  std::vector<vv::vm::command> body;
+  auto exprs = parser::parse(tokens);
+  std::vector<vm::command> body;
   for (const auto& i : exprs) {
     auto code = i->generate();
     copy(begin(code), end(code), back_inserter(body));
@@ -60,21 +60,21 @@ vv::run_file_result vv::run_file(const std::string& filename)
     boost::filesystem::current_path(path.parent_path());
 
   // Set up base env
-  auto vm_base = std::make_shared<vm::call_frame>(nullptr, nullptr, 0, body);
+  auto vm_base = std::make_shared<vm::call_frame>(nullptr,
+                                                  nullptr,
+                                                  0,
+                                                  body);
   builtin::make_base_env(*vm_base);
 
-  // Flag to check for exceptions--- slightly hacky, but oh well
-  auto excepted = false;
-  vm::machine machine{vm_base, [&](vm::machine&) { excepted = true; }};
-  machine.run();
+  auto result = run(vm_base);
 
   // reset working directory
   boost::filesystem::current_path(pwd);
 
-  if (excepted)
-    return { run_file_result::result::failure, machine.retval, {} };
+  if (!result.successful)
+    return { run_file_result::result::failure, result.machine.retval, {} };
 
   return { run_file_result::result::success,
            gc::alloc<value::boolean>( true ),
-           vm_base->local.front() };
+           result.machine.frame->local.front() };
 }

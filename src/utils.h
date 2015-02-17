@@ -27,6 +27,12 @@ public:
       m_sz   {vec.size()}
   { }
 
+  template <size_t N>
+  vector_ref(const std::array<T, N>& vec)
+    : m_data {vec.data()},
+      m_sz   {N}
+  { }
+
   template <typename I>
   vector_ref(I first, I last)
   : m_data {&*first},

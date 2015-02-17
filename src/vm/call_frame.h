@@ -45,7 +45,7 @@ public:
 
   // Arguments to be passed in eventual function call, as well as temporaries
   std::vector<value::base*> pushed;
-  // Number of function arguments --- stored in parent's pushed_args
+  // Number of function arguments --- stored in parent's pushed
   size_t args;
   // Self to be passed in eventual method call
   boost::optional<value::base&> pushed_self;

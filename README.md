@@ -208,15 +208,16 @@ Alternatively, the contents of the file can be read in one fell swoop:
 That's basically it for now; expanded methods, plus writing to files, will be
 added later.
 
-* `init(x)` Creates a new File with the filename `x`, where `x` is a String.
-* `start()` Returns `self` (see ranges for why this is needed).
-* `get()` Returns the current line `self` is pointing to.
-* `increment()` Discards the current line and grabs the next, returning `self`;
-  excepts if `self` is already at the end of the file.
-* `at_end()` Returns `true` if `self` is at the end of the file, and `false`
-  otherwise.
-* `contents` Returns the full contents of the file from the current line to the
-  end, incrementing `self` to the end of the file.
+* `init(x)`&mdash; Creates a new File with the filename `x`, where `x` is a
+String.
+* `start()`&mdash; Returns `self` (see ranges for why this is needed).
+* `get()`&mdash; Returns the current line `self` is pointing to.
+* `increment()`&mdash; Discards the current line and grabs the next, returning
+`self`; excepts if `self` is already at the end of the file.
+* `at_end()`&mdash; Returns `true` if `self` is at the end of the file, and
+`false` otherwise.
+* `contents`&mdash; Returns the full contents of the file from the current line
+to the end, incrementing `self` to the end of the file.
 
 #### Functions ####
 Functions! Syntactically, a function is very simple:
@@ -466,12 +467,29 @@ precedence (basically C precedence, with the bitwise mistake fixed and `**` and
 
 In addition to the above types, Vivaldi has a select few builtin functions:
 
+#### I/O ####
+
 * `puts(x)`&mdash; as in Ruby, write the passed value plus a newline. Takes only one
   argument.
 
 * `print(x)`&mdash; identical to `puts`, sans newline.
 
 * `gets()`&mdash; returns a String containing a single line of user input.
+
+#### Functional ####
+
+* `count(x, y)`&mdash; returns the number of members in range `x` such that
+  predicate function `y` returns true (or at least truthy).
+
+* `map(x, y)`&mdash; Applies the function `y` to each member of the range `x`,
+  and returns an Array containing the results.
+
+* `filter(x, y)`&mdash; Returns an Array containing all the members of range `x`
+  such that predicate `y` returns true(thy).
+
+More to come soon.
+
+#### Other ####
 
 * `quit()`&mdash; exits the program unconditionally.
 

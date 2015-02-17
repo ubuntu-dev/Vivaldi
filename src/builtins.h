@@ -10,6 +10,8 @@ namespace builtin {
 
 namespace sym {
 
+// Defined in builtins.cpp
+
 extern vv::symbol self;
 extern vv::symbol call;
 
@@ -17,14 +19,26 @@ extern vv::symbol call;
 
 namespace function {
 
+// Defined in builtins.cpp
+
 extern value::builtin_function print;
 extern value::builtin_function puts;
 extern value::builtin_function gets;
+
+extern value::builtin_function filter;
+extern value::builtin_function map;
+extern value::builtin_function reduce;
+extern value::builtin_function all;
+extern value::builtin_function any;
+extern value::builtin_function count;
+
 extern value::builtin_function quit;
 
 }
 
 namespace type {
+
+// Each class has its own file in the builtins/ directory
 
 extern value::type array;
 extern value::type array_iterator;
