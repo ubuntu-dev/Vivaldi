@@ -579,6 +579,8 @@ val_res val_comma_separated_list(vector_ref<token> tokens,
                                  const F& val_item)
 {
   val_res res{};
+  if (!val_item(tokens))
+    return tokens;
   while ((res = val_item(tokens))) {
     tokens = *res;
     if (!tokens.size() || tokens.front().which != token::type::comma)
@@ -587,7 +589,7 @@ val_res val_comma_separated_list(vector_ref<token> tokens,
   }
   if (res.invalid())
     return res;
-  return tokens;
+  return {tokens, "expected end of comma-separated list"};
 }
 
 template <typename F>
@@ -598,11 +600,11 @@ val_res val_bracketed_subexpr(vector_ref<token> tokens,
 {
   if (!tokens.size() || tokens.front().which != opening)
     return {};
-  tokens = ltrim_if(tokens.subvec(1), trim_test); // opening
+  tokens = ltrim_if(tokens.subvec(1), newline_test); // opening
   auto item = val_item(tokens);
   if (!item)
     return item;
-  tokens = *item;
+  tokens = ltrim_if(*item, newline_test);
   if (!tokens.size() || tokens.front().which != closing)
     return {tokens, "expected closing"};
   return tokens.subvec(1); // closing
