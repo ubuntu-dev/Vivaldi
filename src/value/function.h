@@ -2,7 +2,6 @@
 #define VV_VALUE_FUNCTION_H
 
 #include "value.h"
-#include "utils.h"
 #include "vm/call_frame.h"
 #include "vm/instruction.h"
 

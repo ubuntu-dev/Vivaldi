@@ -1,5 +1,5 @@
-#ifndef VV_UTILS_H
-#define VV_UTILS_H
+#ifndef VV_UTILS_VECTOR_REF_H
+#define VV_UTILS_VECTOR_REF_H
 
 #include <vector>
 #include <boost/utility/string_ref.hpp>
@@ -8,13 +8,13 @@ namespace vv {
 
 // Dumping ground for random, non-component-specific functions, classes, etc.
 
-inline boost::string_ref ltrim(boost::string_ref str)
-{
-  auto last = std::find_if_not(begin(str), end(str), isspace);
-  str.remove_prefix(static_cast<size_t>(last - begin(str)));
-  return str;
-}
-
+// The vector_ref is basically analogous to boost::string_ref (or
+// std::string_view come C++17, but 'ref' is shorter); it provides a non-owning,
+// cheaply copyable handle to a vector. Crucially, the beginning can be lopped
+// off of a vector_ref simply by incrementing a pointer.
+//
+// Alternately, you could think of it as a smart (well, sort of) pointer with an
+// associated size.
 template <typename T>
 class vector_ref {
 public:
@@ -46,11 +46,16 @@ public:
     return {m_data + front, m_data + (back == npos ? m_sz : back)};
   }
 
+  // Can be used to move the beginning of the vector_ref *backwards*. Don't use
+  // this unless you're absolutely certain there's valid data there! As a rule,
+  // don't ever use this function with a negative offset except to counteract a
+  // previous positive offset.
   vector_ref shifted_by(long offset) const
   {
     return {m_data + offset, m_data + m_sz};
   }
 
+  // Imitation vector functions
   const T& front() const { return *m_data; }
   const T& back() const { return m_data[m_sz - 1]; }
 
@@ -68,39 +73,23 @@ private:
   size_t m_sz;
 };
 
-inline bool isnamechar(char c)
-{
-  return isalnum(c) || c == '_';
-}
-
+// Given a vector_ref vec, return a vector_ref pointing to the first element of
+// vec not equal to item
 template <typename T>
-vector_ref<T> ltrim(vector_ref<T> vec, const T& item)
+inline vector_ref<T> ltrim(vector_ref<T> vec, const T& item)
 {
   auto last = find_if(begin(vec), end(vec),
                       [&](const auto& i) { return i != item; });
   return vec.subvec(static_cast<size_t>(last - begin(vec)));
 }
 
+// Given a vector_ref vec, returns a vector_ref pointing to the first element e
+// of vec such that pred(e) returns false
 template <typename T, typename F>
-vector_ref<T> ltrim_if(vector_ref<T> vec, const F& pred)
+inline vector_ref<T> ltrim_if(vector_ref<T> vec, const F& pred)
 {
   auto last = find_if_not(begin(vec), end(vec), pred);
   return vec.subvec(static_cast<size_t>(last - begin(vec)));
-}
-
-// Expanded/smarter version of std::stoi
-inline int to_int(const std::string& str)
-{
-  if (str.front() == '0' && str.size() > 1) {
-    switch (str[1]) {
-    case 'x': return stoi(str.substr(2), nullptr, 16);
-    case 'b': return stoi(str.substr(2), nullptr, 2);
-    default:  return stoi(str.substr(1), nullptr, 8);
-    }
-  }
-  if (isdigit(str.front()))
-     return stoi(str);
-  return 0;
 }
 
 }

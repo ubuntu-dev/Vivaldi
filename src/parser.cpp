@@ -1,7 +1,6 @@
 #include "parser.h"
 
 #include "builtins.h"
-#include "utils.h"
 #include "ast/assignment.h"
 #include "ast/array.h"
 #include "ast/block.h"
@@ -24,6 +23,7 @@
 #include "ast/variable.h"
 #include "ast/variable_declaration.h"
 #include "ast/while_loop.h"
+#include "utils/string_helpers.h"
 #include "value/boolean.h"
 #include "value/floating_point.h"
 #include "value/integer.h"

@@ -63,6 +63,8 @@ add_executable(vivaldi
   src/ast/variable_declaration.cpp
   src/ast/while_loop.cpp
 
+  src/utils/string_helpers.cpp
+
   src/value/array.cpp
   src/value/array_iterator.cpp
   src/value/boolean.cpp

@@ -2,7 +2,7 @@
 #define VV_PARSER_H
 
 #include "expression.h"
-#include "utils.h"
+#include "utils/vector_ref.h"
 
 #include <boost/optional/optional.hpp>
 

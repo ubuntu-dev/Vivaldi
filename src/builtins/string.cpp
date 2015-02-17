@@ -2,7 +2,7 @@
 
 #include "gc.h"
 #include "lang_utils.h"
-#include "utils.h"
+#include "utils/string_helpers.h"
 #include "value/builtin_function.h"
 #include "value/string.h"
 #include "value/string_iterator.h"

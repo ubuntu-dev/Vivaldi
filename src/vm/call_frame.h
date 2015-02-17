@@ -4,8 +4,8 @@
 #include "instruction.h"
 
 #include "symbol.h"
-#include "utils.h"
 #include "value.h"
+#include "utils/vector_ref.h"
 
 #include <boost/optional/optional.hpp>
 

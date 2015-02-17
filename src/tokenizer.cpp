@@ -1,32 +1,32 @@
 #include "parser.h"
 
+#include "utils/string_helpers.h"
+
 using namespace vv;
 
-/**
- * Available tokens:
- * '{', '}'
- * '[', ']'
- * '(', ')'
- * '.'
- * ','
- * ':'
- * '='
- * '=='
- * '+', '-'
- * '*', '/', '%'
- * '!', '~'
- * '^', '&', '|'
- * '&&', '||'
- * '<', '>', '<=', '>='
- * '''
- * (strings)
- * (names)
- * (numbers)
- * (hexadecimal numbers)
- * (binary numbers)
- * (octal numbers)
- * (newline)
- */
+// Available tokens:
+// '{', '}'
+// '[', ']'
+// '(', ')'
+// '.'
+// ','
+// ':'
+// '='
+// '=='
+// '+', '-'
+// '*', '/', '%'
+// '!', '~'
+// '^', '&', '|'
+// '&&', '||'
+// '<', '>', '<=', '>='
+// '''
+// (strings)
+// (names)
+// (numbers)
+// (hexadecimal numbers)
+// (binary numbers)
+// (octal numbers)
+// (newline)
 
 namespace {
 

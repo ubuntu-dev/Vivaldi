@@ -37,6 +37,7 @@ struct string_iterator;
 struct symbol;
 struct type;
 
+// Basic Object class from which all types are derived
 struct base {
   base(type* type);
   base();
@@ -46,12 +47,20 @@ struct base {
 
   virtual ~base() { }
 
+  // Contains local, variable-specific members (methods are stored inside of
+  // their owning classes)
   std::unordered_map<vv::symbol, value::base*> members;
   type* type;
 
+  // Used in Dictionaries; overridden by classes with any useful concept of
+  // equality (as a rule of thumb, if a class has an "equals" method, it should
+  // probably override these two)
   virtual size_t hash() const;
   virtual bool equals(const value::base& other) const;
 
+  // Garbage collection interface. Any class that stores references to GCable
+  // objects *must* override mark()--- but make sure you call base::mark in your
+  // overridden version!
   virtual void mark();
   bool marked() const { return m_marked; }
   void unmark() { m_marked = false; }
@@ -66,8 +75,17 @@ struct type : public base {
        value::base& parent,
        vv::symbol name);
 
+  // Class methods; whenever a object's member is looked for, if it isn't found
+  // locally, the class will search its type's methods, and that type's parent's
+  // methods, and so on recursively until it's found or there are no more
+  // parents left.
   std::unordered_map<vv::symbol, value::base*> methods;
+
+  // Very simple constructor, that just provides an allocated bit of memory of
+  // the appropriate type. Any actual initialization (including reading passed
+  // arguments) has to happen in the class's "init" method.
   std::function<value::base*()> constructor;
+
   // This shim is necessary because, of course, when you create a new object you
   // want to get that object back. Unfortunately it's not possible to guarantee
   // this in the init function, since someone could do something like
@@ -83,10 +101,12 @@ struct type : public base {
   // and the constructor calls that fake init function instead of 'init'
   vm::function_t init_shim;
 
+  // Parent classes are stored as references, since they're unchangeable and
+  // can't ever be null (Object's just points to itself).
   value::base& parent;
+
   // Stored in class so value() can be prettier than just <type>
   vv::symbol name;
-
   std::string value() const override;
 
   void mark() override;
@@ -96,11 +116,12 @@ struct type : public base {
 
 }
 
+// Call virtual hash() and equals() methods instead of just hashing based on
+// pointers
 template <>
 struct std::hash<vv::value::base*> {
   size_t operator()(const vv::value::base* b) const;
 };
-
 template <>
 struct std::equal_to<vv::value::base*> {
   bool operator()(const vv::value::base* left, const vv::value::base* right) const;
