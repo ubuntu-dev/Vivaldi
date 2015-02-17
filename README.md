@@ -97,7 +97,7 @@ Simple, immutable string class. Currently supports:
 * `times(x)`&mdash; Returns a string formed by concatenating `x` copies of `self`,
   leaving `self` unchanged.
 * `start()`&mdash; Returns an iterator pointing to the beginning of `self`.
-* `end()`&mdash; Returns an iterator pointing to the end of `self`.
+* `stop()`&mdash; Returns an iterator pointing to the end of `self`.
 * `to_upper()`&mdash; Returns a copy of `self` with all lowercase letters
   switched with their uppercase equivalents.
 * `to_lower()`&mdash; Returns a copy of `self` with all uppercase letters
@@ -132,7 +132,7 @@ Simple mutable array type:
 * `at(x)`&mdash; Returns the value at index `x`.
 * `set_at(x, y)`&mdash; Sets the value at index `x` to `y`, returning `y`.
 * `start()`&mdash; Returns an iterator pointing to the beginning of `self`.
-* `end()`&mdash; Returns an iterator pointing to the end of `self`.
+* `stop()`&mdash; Returns an iterator pointing to the end of `self`.
 * `add(x)`&mdash; Returns the concatenation of `self` and Array `x`, leaving `self`
   unchanged.
 

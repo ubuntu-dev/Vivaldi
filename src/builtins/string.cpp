@@ -115,7 +115,7 @@ value::base* fn_string_start(vm::machine& vm)
   return gc::alloc<value::string_iterator>(self);
 }
 
-value::base* fn_string_end(vm::machine& vm)
+value::base* fn_string_stop(vm::machine& vm)
 {
   auto& self = static_cast<value::string&>(*vm.frame->self);
   auto end = gc::alloc<value::string_iterator>(self);
@@ -252,7 +252,7 @@ value::builtin_function string_times       {fn_string_times,       1};
 value::builtin_function string_to_int      {fn_string_to_int,      0};
 value::builtin_function string_at          {fn_string_at,          1};
 value::builtin_function string_start       {fn_string_start,       0};
-value::builtin_function string_end         {fn_string_end,         0};
+value::builtin_function string_stop        {fn_string_stop,        0};
 value::builtin_function string_to_upper    {fn_string_to_upper,    0};
 value::builtin_function string_to_lower    {fn_string_to_lower,    0};
 value::builtin_function string_starts_with {fn_string_starts_with, 1};
@@ -279,7 +279,7 @@ value::type type::string {gc::alloc<value::string>, {
   { {"to_int"},      &string_to_int      },
   { {"at"},          &string_at          },
   { {"start"},       &string_start       },
-  { {"end"},         &string_end         },
+  { {"stop"},        &string_stop        },
   { {"to_upper"},    &string_to_upper    },
   { {"to_lower"},    &string_to_lower    },
   { {"starts_with"}, &string_starts_with }

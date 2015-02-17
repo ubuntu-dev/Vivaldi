@@ -78,7 +78,7 @@ value::base* fn_array_start(vm::machine& vm)
   return gc::alloc<value::array_iterator>( self );
 }
 
-value::base* fn_array_end(vm::machine& vm)
+value::base* fn_array_stop(vm::machine& vm)
 {
   auto& self = static_cast<value::array&>(*vm.frame->self);
   auto iter = gc::alloc<value::array_iterator>( self );
@@ -200,7 +200,7 @@ value::builtin_function array_append {fn_array_append, 1};
 value::builtin_function array_at     {fn_array_at,     1};
 value::builtin_function array_set_at {fn_array_set_at, 2};
 value::builtin_function array_start  {fn_array_start,  0};
-value::builtin_function array_end    {fn_array_end,    0};
+value::builtin_function array_stop   {fn_array_stop,   0};
 value::builtin_function array_add    {fn_array_add,    1};
 
 value::builtin_function array_iterator_at_start  {fn_array_iterator_at_start,  0};
@@ -221,7 +221,7 @@ value::type type::array {gc::alloc<value::array>, {
   { {"at"},     &array_at },
   { {"set_at"}, &array_set_at },
   { {"start"},  &array_start },
-  { {"end"},    &array_end },
+  { {"stop"},   &array_stop },
   { {"add"},    &array_add }
 }, builtin::type::object, {"Array"}};
 
