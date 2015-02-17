@@ -7,7 +7,6 @@
 #include "value/function.h"
 #include "value/array.h"
 #include "value/string.h"
-#include "vm/run.h"
 
 #include <iostream>
 
@@ -23,6 +22,92 @@ vv::symbol sym::call{"call"};
 // Freestanding functions {{{
 
 namespace {
+
+// Helper functions {{{
+
+struct call_result {
+  bool successful;
+  value::base* result;
+};
+
+call_result call_method(std::shared_ptr<vm::call_frame> frame,
+                        value::base* self,
+                        symbol method)
+{
+  auto excepted = false;
+  vm::machine machine{frame, [&](vm::machine&) { excepted = true; }};
+  machine.retval = self;
+  machine.readm(method);
+  machine.call(0);
+  machine.run();
+  return { !excepted, machine.retval };
+}
+
+template <typename F>
+boost::optional<value::base*> fake_for_loop(vm::machine& vm, const F& inner)
+{
+  auto range = get_arg(vm, 0);
+  auto supplied_fn = get_arg(vm, 1);
+
+  auto frame = std::make_shared<vm::call_frame>(nullptr,
+                                                vm.frame,
+                                                0,
+                                                vector_ref<vm::command>{});
+  // Get iterator from range
+  auto iter_res = call_method(frame, range, {"start"});
+  if (!iter_res.successful)
+    return iter_res.result;
+
+  auto iter = iter_res.result;
+
+  for (;;) {
+    auto at_end_res = call_method(frame, iter, {"at_end"});
+    if (!at_end_res.successful)
+      return at_end_res.result;
+
+    if (truthy(at_end_res.result))
+      return {};
+
+    auto get_res = call_method(frame, iter, {"get"});
+    if (!get_res.successful)
+      return get_res.result;
+
+    auto next_item = get_res.result;
+
+    auto excepted = inner(frame, supplied_fn, next_item);
+    if (excepted)
+      return *excepted;
+
+    auto increment_res = call_method(frame, iter, {"increment"});
+    if (!increment_res.successful)
+      return increment_res.result;
+  }
+}
+
+template <typename F>
+boost::optional<value::base*> transformed_range(vm::machine& vm, const F& inner)
+{
+  const static std::array<vm::command, 1> transform_call {{
+    { vm::instruction::call, 1 }
+  }};
+
+  return fake_for_loop(vm, [&](auto frame, auto* transform, auto* orig)
+  {
+    frame->pushed.push_back(orig);
+    auto excepted = false;
+    vm::machine machine{frame, [&](vm::machine&) { excepted = true; }};
+    machine.retval = transform;
+    machine.call(1);
+    machine.run();
+    if (excepted)
+      return boost::optional<value::base*>{machine.retval};
+    inner(orig, machine.retval);
+    return boost::optional<value::base*>{};
+  });
+}
+
+// }}}
+// I/O {{{
 
 value::base* fn_print(vm::machine& vm)
 {
@@ -50,84 +135,8 @@ value::base* fn_gets(vm::machine&)
   return gc::alloc<value::string>( str );
 }
 
-template <typename F>
-boost::optional<value::base*> fake_for_loop(vm::machine& vm, const F& inner)
-{
-  const static std::array<vm::command, 2> get_iter_call {{
-    { vm::instruction::readm, symbol{"start"} },
-    { vm::instruction::call, 0 }
-  }};
-  const static std::array<vm::command, 2> at_end_call {{
-    { vm::instruction::readm, symbol{"at_end"} },
-    { vm::instruction::call, 0 }
-  }};
-  const static std::array<vm::command, 2> get_call {{
-    { vm::instruction::readm, symbol{"get"} },
-    { vm::instruction::call, 0 }
-  }};
-  const static std::array<vm::command, 2> increment_call {{
-    { vm::instruction::readm, symbol{"increment"} },
-    { vm::instruction::call, 0 }
-  }};
-
-  auto range = get_arg(vm, 0);
-  auto supplied_fn = get_arg(vm, 1);
-
-  auto frame = std::make_shared<vm::call_frame>(nullptr,
-                                                vm.frame,
-                                                0,
-                                                vector_ref<vm::command>{});
-  // Get iterator from range
-  frame->instr_ptr = get_iter_call;
-  auto iter_res = vm::run(frame, range);
-  if (!iter_res.successful)
-    return iter_res.machine.retval;
-  frame->pushed.push_back(iter_res.machine.retval); // Don't GC iterator!
-  auto iter = iter_res.machine.retval;
-
-  for (;;) {
-    frame->instr_ptr = at_end_call;
-    auto check_end_res = vm::run(frame, iter);
-    if (!check_end_res.successful)
-      return check_end_res.machine.retval;
-    if (truthy(check_end_res.machine.retval))
-      return {};
-
-    frame->instr_ptr = get_call;
-    auto get_res = vm::run(frame, iter);
-    if (!get_res.successful)
-      return get_res.machine.retval;
-    auto next_item = get_res.machine.retval;
-
-    auto excepted = inner(frame, supplied_fn, next_item);
-    if (excepted)
-      return *excepted;
-
-    frame->instr_ptr = increment_call;
-    auto increment_res = vm::run(frame, iter);
-    if (!increment_res.successful)
-      return increment_res.machine.retval;
-  }
-}
-
-template <typename F>
-boost::optional<value::base*> transformed_range(vm::machine& vm, const F& inner)
-{
-  const static std::array<vm::command, 1> transform_call {{
-    { vm::instruction::call, 1 }
-  }};
-
-  return fake_for_loop(vm, [&](auto frame, auto* transform, auto* orig)
-  {
-    frame->pushed.push_back(orig);
-    frame->instr_ptr = transform_call;
-    auto transform_res = vm::run(frame, transform);
-    if (!transform_res.successful)
-      return boost::optional<value::base*>{transform_res.machine.retval};
-    inner(orig, transform_res.machine.retval);
-    return boost::optional<value::base*>{};
-  });
-}
+// }}}
+// Functional stuff {{{
 
 value::base* fn_filter(vm::machine& vm)
 {
@@ -179,11 +188,16 @@ value::base* fn_count(vm::machine& vm)
   return gc::alloc<value::integer>( count );
 }
 
+// }}}
+// Other {{{
+
 value::base* fn_quit(vm::machine&)
 {
   gc::empty();
   exit(0);
 }
+
+// }}}
 
 }
 

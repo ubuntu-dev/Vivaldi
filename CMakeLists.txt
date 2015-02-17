@@ -79,7 +79,6 @@ add_executable(vivaldi
   src/value/symbol.cpp
 
   src/vm/call_frame.cpp
-  src/vm/instruction.cpp
-  src/vm/run.cpp)
+  src/vm/instruction.cpp)
 
 target_link_libraries(vivaldi boost_system boost_filesystem)

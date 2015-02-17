@@ -3,8 +3,8 @@
 #include "builtins.h"
 #include "gc.h"
 #include "parser.h"
-#include "vm/run.h"
 #include "value/string.h"
+#include "vm.h"
 
 #include <boost/filesystem.hpp>
 
@@ -66,15 +66,17 @@ vv::run_file_result vv::run_file(const std::string& filename)
                                                   body);
   builtin::make_base_env(*vm_base);
 
-  auto result = run(vm_base);
+  auto excepted = false;
+  vm::machine machine{vm_base, [&](vm::machine&) { excepted = true; }};
+  machine.run();
 
   // reset working directory
   boost::filesystem::current_path(pwd);
 
-  if (!result.successful)
-    return { run_file_result::result::failure, result.machine.retval, {} };
+  if (excepted)
+    return { run_file_result::result::failure, machine.retval, {} };
 
   return { run_file_result::result::success,
            gc::alloc<value::boolean>( true ),
-           result.machine.frame->local.front() };
+           machine.frame->local.front() };
 }
