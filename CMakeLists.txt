@@ -38,7 +38,7 @@ add_executable(vivaldi
   src/validator.cpp
   src/parser.cpp
 
-  src/run_file.cpp
+  src/get_file_contents.cpp
 
   src/ast/assignment.cpp
   src/ast/array.cpp
