@@ -1,0 +1,54 @@
+// Vivaldi version of a Brainfuck interpreter
+// 
+// Based of Ruby implementation: https://github.com/buren/bf-interpreter/blob/master/bf.rb
+class Brainfuck
+
+  fn init(code): do
+    self.code     = code
+    self.tape     = []
+    self.code_pos = 0
+    self.tape_pos = 0
+  end
+
+  fn run(skip): do
+    while (self.tape_pos >= 0 && self.code_pos < self.code.size()): do
+      if (self.tape_pos >= self.tape.size()): self.tape.append(0)
+      puts(self.code.at(self.code_pos))
+
+      if self.code.at(self.code_pos) == "[": self.do_inc()
+      if self.code.at(self.code_pos) == "]": return self.tape.at(self.tape_pos) != 0
+      if !skip && !self.code.at(self.code_pos) == "]" && !self.code.at(self.code_pos) == "[": self.do_code()
+
+      self.code_pos = self.code_pos + 1
+    end
+  end
+
+  fn do_inc(): do
+    self.code_pos = self.code_pos + 1
+    let old_pos   = self.code_pos
+    while self.run(self.tape.at(self.tape_pos) == 0): do
+      self.code_pos = old_pos
+    end
+  end
+
+  fn do_code(): do
+    let code_char = self.code.at(self.code_pos)
+    if "+": self.tape.set_at(self.tape_pos, self.tape.at(self.tape_pos) + 1) 
+    if "-": self.tape.set_at(self.tape_pos, self.tape.at(self.tape_pos) - 1)
+    if ">": self.tape_pos = self.tape_pos + 1
+    if "<": self.tape_pos = self.tape_pos - 1
+    if ".": self.print_char(self.tape.at(self.tape_pos))
+    if ",": self.tape.set_at(self.tape_pos, next_char_ord)
+  end
+
+  fn print_char(char): do
+    print char      // TODO: Convert integer ASCII value to char
+  end
+
+  fn next_char_ord(): do
+    gets            // TODO: Convert the char to integer ASCII value
+  end
+end
+
+let hello_world = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
+new Brainfuck(hello_world).run(false)
