@@ -40,7 +40,7 @@ public:
 
   void eblk();
   void lblk();
-  void ret();
+  void ret(bool copy);
 
   void push();
   void pop();
@@ -54,6 +54,8 @@ public:
   void push_catch();
   void pop_catch();
   void except();
+
+  void chdir(const std::string& new_dir);
 
   std::shared_ptr<call_frame> frame;
   value::base* retval;

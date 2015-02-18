@@ -1,7 +1,7 @@
 #include "builtins.h"
 #include "gc.h"
+#include "get_file_contents.h"
 #include "parser.h"
-#include "run_file.h"
 #include "vm.h"
 #include "value/builtin_function.h"
 #include "value/nil.h"
@@ -66,11 +66,7 @@ void run_repl()
 {
   vv::gc::init();
 
-  auto base_frame = std::make_shared<vv::vm::call_frame>(
-      std::shared_ptr<vv::vm::call_frame>{},
-      std::shared_ptr<vv::vm::call_frame>{},
-      0,
-      vv::vector_ref<vv::vm::command>{{}} );
+  auto base_frame = std::make_shared<vv::vm::call_frame>( );
   vv::builtin::make_base_env(*base_frame);
 
   while (!std::cin.eof()) {
@@ -99,14 +95,24 @@ int main(int argc, char** argv)
     vv::gc::empty();
 
   } else {
-    auto ret = vv::run_file(argv[1]);
+    auto tok_res = vv::get_file_contents(argv[1]);
+    if (!tok_res.successful()) {
+      std::cerr << tok_res.error() << '\n';
+      vv::gc::empty();
+      return 64; // bad usage
+    }
 
-    if (ret.res == vv::run_file_result::result::file_not_found)
-      std::cerr << argv[1] << ": file not found\n";
-    else if (ret.res == vv::run_file_result::result::failure)
-      std::cerr << "Caught exception: " << ret.val->value() << '\n';
+    auto base_frame = std::make_shared<vv::vm::call_frame>( tok_res.result() );
+    vv::builtin::make_base_env(*base_frame);
+
+    auto excepted = false;
+    vv::vm::machine vm{base_frame, [&](auto&){ excepted = true; }};
+    vm.run();
+
+    if (excepted)
+      std::cerr << "Caught exception: " << vm.retval->value() << '\n';
 
     vv::gc::empty();
-    return ret.res != vv::run_file_result::result::success;
+    return excepted ? 65 : 0; // data err
   }
 }

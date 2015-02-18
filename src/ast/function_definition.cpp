@@ -24,7 +24,7 @@ std::vector<vm::command> ast::function_definition::generate() const
 
   auto body = m_body->generate();
   copy(begin(body), end(body), back_inserter(definition));
-  definition.emplace_back(vm::instruction::ret);
+  definition.emplace_back(vm::instruction::ret, false);
 
   std::vector<vm::command> vec;
   vec.emplace_back( vm::instruction::push_fn,

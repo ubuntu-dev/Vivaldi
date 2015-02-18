@@ -29,10 +29,10 @@ namespace vm {
 // inefficient, or just exists as a hack to prevent GC'ing the wrong things
 class call_frame {
 public:
-  call_frame(std::shared_ptr<call_frame> parent,
-             std::shared_ptr<call_frame> enclosing,
-             size_t                      args,
-             vector_ref<command>         instr_ptr);
+  call_frame(vector_ref<command>         instr_ptr = {},
+             std::shared_ptr<call_frame> parent    = nullptr,
+             std::shared_ptr<call_frame> enclosing = nullptr,
+             size_t                      args      = 0);
 
   // Frame from which current function was called
   const std::shared_ptr<call_frame> parent;

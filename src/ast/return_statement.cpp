@@ -11,6 +11,6 @@ ast::return_statement::return_statement(std::unique_ptr<expression>&& value)
 std::vector<vm::command> ast::return_statement::generate() const
 {
   auto vec = m_value->generate();
-  vec.emplace_back(vm::instruction::ret);
+  vec.emplace_back(vm::instruction::ret, false);
   return vec;
 }

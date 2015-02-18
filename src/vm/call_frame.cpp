@@ -2,10 +2,10 @@
 
 using namespace vv;
 
-vm::call_frame::call_frame(std::shared_ptr<call_frame> new_parent,
+vm::call_frame::call_frame(vector_ref<command>         new_instr_ptr,
+                           std::shared_ptr<call_frame> new_parent,
                            std::shared_ptr<call_frame> new_enclosing,
-                           size_t                      new_args,
-                           vector_ref<command>         new_instr_ptr)
+                           size_t                      new_args)
   : parent    {new_parent},
     enclosing {new_enclosing},
     local     {{}},

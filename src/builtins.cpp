@@ -73,10 +73,9 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
   auto range = get_arg(vm, 0);
   auto supplied_fn = get_arg(vm, 1);
 
-  auto frame = std::make_shared<vm::call_frame>(nullptr,
-                                                vm.frame,
-                                                0,
-                                                vector_ref<vm::command>{});
+  auto frame = std::make_shared<vm::call_frame>(vector_ref<vm::command>{},
+                                                nullptr,
+                                                vm.frame);
   // Get iterator from range
   auto iter_res = call_method(frame, range, {"start"});
   if (!iter_res.successful())

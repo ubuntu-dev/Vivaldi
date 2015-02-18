@@ -76,7 +76,8 @@ enum class instruction {
   eblk,
   /// leaves current block
   lblk,
-  /// returns from a function
+  /// returns from a function; if provided argument is true, copy members of
+  /// local frame to parent
   ret,
 
   /// pushes retval onto the arg/temporary stack
@@ -98,7 +99,10 @@ enum class instruction {
   /// pops an exception catcher and discards it, leaving retval unchanged
   pop_catch,
   /// throws retval as an exception
-  except
+  except,
+
+  /// Changes current directory to that passed as a string literal
+  chdir
 };
 
 struct command {

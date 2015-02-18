@@ -2,9 +2,9 @@
 
 #include "builtins.h"
 #include "gc.h"
+#include "get_file_contents.h"
 #include "lang_utils.h"
 #include "parser.h"
-#include "run_file.h"
 #include "value.h"
 #include "value/array.h"
 #include "value/builtin_function.h"
@@ -18,6 +18,7 @@
 #include "value/symbol.h"
 
 #include <boost/variant/get.hpp>
+#include <boost/filesystem.hpp>
 
 using namespace vv;
 
@@ -77,9 +78,9 @@ void vm::machine::run()
     case instruction::call:     call(get<int>(arg));      break;
     case instruction::new_obj:  new_obj(get<int>(arg));   break;
 
-    case instruction::eblk: eblk(); break;
-    case instruction::lblk: lblk(); break;
-    case instruction::ret:  ret();  break;
+    case instruction::eblk: eblk();              break;
+    case instruction::lblk: lblk();              break;
+    case instruction::ret:  ret(get<bool>(arg)); break;
 
     case instruction::push: push(); break;
     case instruction::pop:  pop();  break;
@@ -90,9 +91,11 @@ void vm::machine::run()
     case instruction::jmp_false: jmp_false(get<int>(arg)); break;
     case instruction::jmp_true:  jmp_true(get<int>(arg));  break;
 
-    case instruction::push_catch: push_catch();            break;
-    case instruction::pop_catch:  pop_catch();             break;
-    case instruction::except:     except();                break;
+    case instruction::push_catch: push_catch(); break;
+    case instruction::pop_catch:  pop_catch();  break;
+    case instruction::except:     except();     break;
+
+    case instruction::chdir:      chdir(get<std::string>(arg)); break;
     }
   }
 }
@@ -269,7 +272,7 @@ void vm::machine::call(int argc)
       return;
     };
 
-    frame = std::make_shared<call_frame>(frame, fn->enclosure, argc, fn->body);
+    frame = std::make_shared<call_frame>(fn->body, frame, fn->enclosure, argc);
     frame->caller = *fn;
 
     gc::set_current_frame(frame);
@@ -283,7 +286,7 @@ void vm::machine::call(int argc)
       return;
     };
 
-    frame = std::make_shared<call_frame>(frame, m_base, argc, frame->instr_ptr);
+    frame = std::make_shared<call_frame>(frame->instr_ptr, frame, m_base, argc);
     frame->caller = *fn;
 
     auto except_flag = frame.get();
@@ -291,7 +294,7 @@ void vm::machine::call(int argc)
     retval = fn->body(*this);
     gc::set_current_retval(retval); // in case function spun its own VM
     if (except_flag == frame.get())
-      ret();
+      ret(false);
   } else {
     push_str("Only functions can be called");
     except();
@@ -339,11 +342,16 @@ void vm::machine::lblk()
   frame->local.pop_back();
 }
 
-void vm::machine::ret()
+void vm::machine::ret(bool copy)
 {
   if (frame->parent) {
     frame->parent->pushed.erase(end(frame->parent->pushed) - frame->args,
                                 end(frame->parent->pushed));
+    if (copy) {
+      for (const auto& i : frame->local)
+        for (const auto& var : i)
+          frame->parent->local.back()[var.first] = var.second;
+    }
     frame = frame->parent;
     gc::set_current_frame(frame);
   } else {
@@ -365,14 +373,17 @@ void vm::machine::pop()
 
 void vm::machine::req(const std::string& filename)
 {
-  auto ret = run_file(filename);
-  retval = ret.val; // this was unintentional, but I'm pretty pleased by it
-  if (ret.res == run_file_result::result::success) {
-    for (const auto& i : ret.frame)
-      m_base->local.front()[i.first] = i.second;
-  } else {
+  auto tok_res = get_file_contents(filename);
+  if (!tok_res.successful()) {
+    push_str(tok_res.error());
     except();
+    return;
   }
+  auto cur = boost::filesystem::current_path();
+  tok_res.result().emplace_back(instruction::chdir, cur.native());
+  tok_res.result().emplace_back(instruction::ret, true);
+  push_fn({ 0, move(tok_res.result()) });
+  call(0);
 }
 
 void vm::machine::jmp(int offset)
@@ -418,6 +429,11 @@ void vm::machine::except()
     call(1);
     pop_catch();
   }
+}
+
+void vm::machine::chdir(const std::string& dir)
+{
+  boost::filesystem::current_path(dir);
 }
 
 // }}}

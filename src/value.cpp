@@ -70,13 +70,13 @@ value::type::type(
     init_shim.body.emplace_back( vm::instruction::readm, vv::symbol{"init"} );
     init_shim.body.emplace_back( vm::instruction::call, init_shim.argc );
     init_shim.body.emplace_back( vm::instruction::self );
-    init_shim.body.emplace_back( vm::instruction::ret );
+    init_shim.body.emplace_back( vm::instruction::ret, false );
 
   } else {
     init_shim.argc = 0;
     init_shim.body = {
       { vm::instruction::self },
-      { vm::instruction::ret }
+      { vm::instruction::ret, false }
     };
   }
 }
