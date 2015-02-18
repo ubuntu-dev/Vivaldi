@@ -150,6 +150,14 @@ value::base* fn_string_starts_with(vm::machine& vm)
   return gc::alloc<value::boolean>( true );
 }
 
+value::base* fn_string_ord(vm::machine& vm)
+{
+  auto str = static_cast<value::string&>(*vm.frame->self).val;
+  if (!str.size())
+    return throw_exception("Cannot call ord on an empty string", vm);
+  return gc::alloc<value::integer>( str[0] );
+}
+
 // }}}
 // string_iterator {{{
 
@@ -256,6 +264,7 @@ value::builtin_function string_stop        {fn_string_stop,        0};
 value::builtin_function string_to_upper    {fn_string_to_upper,    0};
 value::builtin_function string_to_lower    {fn_string_to_lower,    0};
 value::builtin_function string_starts_with {fn_string_starts_with, 1};
+value::builtin_function string_ord         {fn_string_ord,         0};
 
 value::builtin_function string_iterator_at_start  {fn_string_iterator_at_start,  0};
 value::builtin_function string_iterator_at_end    {fn_string_iterator_at_end,    0};
@@ -282,7 +291,8 @@ value::type type::string {gc::alloc<value::string>, {
   { {"stop"},        &string_stop        },
   { {"to_upper"},    &string_to_upper    },
   { {"to_lower"},    &string_to_lower    },
-  { {"starts_with"}, &string_starts_with }
+  { {"starts_with"}, &string_starts_with },
+  { {"ord"},         &string_ord }
 }, builtin::type::object, {"String"}};
 
 value::type type::string_iterator {[]{ return nullptr; }, {

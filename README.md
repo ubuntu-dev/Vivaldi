@@ -85,6 +85,17 @@ octal, or binary:
     eighteen == 022
     eighteen == 0b10010
 
+* `sqrt()`&mdash; Returns the square root of `self`.
+* `sin()`&mdash; Returns the sine of `self` in radians.
+* `cos()`&mdash; Returns the cosine of `self` in radians.
+* `tan()`&mdash; Returns the tangent of `self` in radians.
+* `chr()`&mdash; Returns a String containing one character `x`, with the
+  character value of `self`; `an_int.chr().ord()` should always equal `an_int`,
+  unless it's out of the range [0, 256) (in which case it'll except).
+
+In addition, all mathematical and bitwise (i.e. not indexing-related) operators
+apply to Integers.
+
 #### Strings ####
 Simple, immutable string class. Currently supports:
 
@@ -104,6 +115,8 @@ Simple, immutable string class. Currently supports:
   switched with their lowercase equivalents.
 * `starts_with(x)`&mdash; Returns `true` if `self` begins with the string `x`,
   and `false` otherwise.
+* `ord()`&mdash; Returns the integer value of `self.at(0)` (unless `self` is
+  empty, which results in an exception).
 * `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a String equal in value
   to `self`, and `false` otherwise (vice versa for `unequal`).
 
@@ -213,11 +226,11 @@ String.
 * `start()`&mdash; Returns `self` (see ranges for why this is needed).
 * `get()`&mdash; Returns the current line `self` is pointing to.
 * `increment()`&mdash; Discards the current line and grabs the next, returning
-`self`; excepts if `self` is already at the end of the file.
+  `self`; excepts if `self` is already at the end of the file.
 * `at_end()`&mdash; Returns `true` if `self` is at the end of the file, and
-`false` otherwise.
-* `contents`&mdash; Returns the full contents of the file from the current line
-to the end, incrementing `self` to the end of the file.
+  `false` otherwise.
+* `contents()`&mdash; Returns the full contents of the file from the current
+  line to the end, incrementing `self` to the end of the file.
 
 #### Functions ####
 Functions! Syntactically, a function is very simple:

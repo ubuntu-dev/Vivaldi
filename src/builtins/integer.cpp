@@ -5,6 +5,7 @@
 #include "value/builtin_function.h"
 #include "value/integer.h"
 #include "value/floating_point.h"
+#include "value/string.h"
 
 using namespace vv;
 using namespace builtin;
@@ -157,6 +158,14 @@ value::base* fn_integer_pow(vm::machine& vm)
   return gc::alloc<value::integer>( static_cast<int>(pow(left, right)) );
 }
 
+value::base* fn_integer_chr(vm::machine& vm)
+{
+  auto self = to_int(&*vm.frame->self);
+  if (self < 0 || self > 255)
+    return throw_exception("Chr can only be called on integers between 0 to 256", vm);
+  return gc::alloc<value::string>( std::string{static_cast<char>(self)} );
+}
+
 builtin_function int_add      {fn_int_or_flt_op([](auto a, auto b){ return a + b; }), 1};
 builtin_function int_subtract {fn_int_or_flt_op([](auto a, auto b){ return a - b; }), 1};
 builtin_function int_times    {fn_int_or_flt_op([](auto a, auto b){ return a * b; }), 1};
@@ -180,6 +189,7 @@ builtin_function int_sqrt     {fn_int_to_flt_monop(sqrt),                       
 builtin_function int_sin      {fn_int_to_flt_monop(sin),                              0};
 builtin_function int_cos      {fn_int_to_flt_monop(cos),                              0};
 builtin_function int_tan      {fn_int_to_flt_monop(tan),                              0};
+builtin_function int_chr      {fn_integer_chr,                                        0};
 
 }
 
@@ -206,5 +216,6 @@ value::type type::integer{[]{ return nullptr; }, {
   { {"sqrt"},           &int_sqrt     },
   { {"sin"},            &int_sin      },
   { {"cos"},            &int_cos      },
-  { {"tan"},            &int_tan      }
+  { {"tan"},            &int_tan      },
+  { {"chr"},            &int_chr      }
 }, builtin::type::object, {"Integer"}};
