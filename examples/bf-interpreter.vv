@@ -13,11 +13,11 @@ class Brainfuck
   fn run(skip): do
     while (self.tape_pos >= 0 && self.code_pos < self.code.size()): do
       if (self.tape_pos >= self.tape.size()): self.tape.append(0)
-      puts(self.code.at(self.code_pos))
 
-      if self.code.at(self.code_pos) == "[": self.do_inc()
-      if self.code.at(self.code_pos) == "]": return self.tape.at(self.tape_pos) != 0
-      if !skip && !self.code.at(self.code_pos) == "]" && !self.code.at(self.code_pos) == "[": self.do_code()
+      cond
+        self.code.at(self.code_pos) == "[": self.do_inc(),
+        self.code.at(self.code_pos) == "]": return self.tape.at(self.tape_pos) != 0,
+        !skip:                              self.do_code()
 
       self.code_pos = self.code_pos + 1
     end
@@ -33,20 +33,21 @@ class Brainfuck
 
   fn do_code(): do
     let code_char = self.code.at(self.code_pos)
-    if "+": self.tape.set_at(self.tape_pos, self.tape.at(self.tape_pos) + 1) 
-    if "-": self.tape.set_at(self.tape_pos, self.tape.at(self.tape_pos) - 1)
-    if ">": self.tape_pos = self.tape_pos + 1
-    if "<": self.tape_pos = self.tape_pos - 1
-    if ".": self.print_char(self.tape.at(self.tape_pos))
-    if ",": self.tape.set_at(self.tape_pos, next_char_ord)
+    cond
+      code_char == "+": self.tape.set_at(self.tape_pos, self.tape.at(self.tape_pos) + 1),
+      code_char == "-": self.tape.set_at(self.tape_pos, self.tape.at(self.tape_pos) - 1),
+      code_char == ">": self.tape_pos = self.tape_pos + 1,
+      code_char == "<": self.tape_pos = self.tape_pos - 1,
+      code_char == ".": self.print_char(self.tape.at(self.tape_pos)),
+      code_char == ",": self.tape.set_at(self.tape_pos, next_char_ord)
   end
 
   fn print_char(char): do
-    print char      // TODO: Convert integer ASCII value to char
+    print(char.chr())
   end
 
   fn next_char_ord(): do
-    gets            // TODO: Convert the char to integer ASCII value
+    gets().ord()
   end
 end
 
