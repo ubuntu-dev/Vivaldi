@@ -13,6 +13,7 @@ public:
           const std::function<void(vm::machine&)>& exception_handler);
 
   void run();
+  void run_cur_scope();
 
   void push_bool(bool val);
   void push_flt(double val);
@@ -61,6 +62,10 @@ public:
   value::base* retval;
 
 private:
+  void run_single_command(const vm::command& command);
+
+  void except_until(call_frame* frame);
+
   std::shared_ptr<call_frame> m_base;
   std::function<void(machine&)> m_exception_handler;
 };

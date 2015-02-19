@@ -32,6 +32,7 @@ value::base* fn_range_size(vm::machine& vm)
   vm.retval = rng.end;
   vm.readm({"subtract"});
   vm.call(1);
+  vm.run_cur_scope();
   return vm.retval;
 }
 
@@ -43,8 +44,10 @@ value::base* fn_range_at_end(vm::machine& vm)
   vm.retval = rng.end;
   vm.readm({"greater"});
   vm.call(1);
+  vm.run_cur_scope();
   vm.readm({"not"});
   vm.call(0);
+  vm.run_cur_scope();
   return vm.retval;
 }
 
@@ -61,6 +64,7 @@ value::base* fn_range_increment(vm::machine& vm)
   vm.retval = rng.start;
   vm.readm({"add"});
   vm.call(1);
+  vm.run_cur_scope();
   rng.start = vm.retval;
   return &rng;
 }
@@ -75,6 +79,7 @@ value::base* fn_range_to_arr(vm::machine& vm)
     vm.retval = rng.end;
     vm.readm({"greater"});
     vm.call(1);
+    vm.run_cur_scope();
     if (!truthy(vm.retval))
       break;
     vals.push_back(iter);
@@ -85,6 +90,7 @@ value::base* fn_range_to_arr(vm::machine& vm)
     vm.retval = iter;
     vm.readm({"add"});
     vm.call(1);
+    vm.run_cur_scope();
     iter = vm.retval;
   }
 

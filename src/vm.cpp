@@ -6,6 +6,7 @@
 #include "lang_utils.h"
 #include "parser.h"
 #include "value.h"
+#include "utils/error.h"
 #include "value/array.h"
 #include "value/builtin_function.h"
 #include "value/boolean.h"
@@ -35,67 +36,32 @@ vm::machine::machine(std::shared_ptr<call_frame> frame,
 
 void vm::machine::run()
 {
-  using boost::get;
+  while (frame->instr_ptr.size()) {
+    // Get next instruction (and argument, if it exists), and increment the
+    // instruction pointer
+    auto command = frame->instr_ptr.front();
+    frame->instr_ptr = frame->instr_ptr.subvec(1);
+    run_single_command(command);
+  }
+}
+
+void vm::machine::run_cur_scope()
+{
+  auto* exit_scope = frame.get();
 
   while (frame->instr_ptr.size()) {
     // Get next instruction (and argument, if it exists), and increment the
     // instruction pointer
-    auto instr = frame->instr_ptr.front().instr;
-    const auto& arg = frame->instr_ptr.front().arg;
+    auto command = frame->instr_ptr.front();
     frame->instr_ptr = frame->instr_ptr.subvec(1);
 
-    // HACK--- avoid weirdness like the following:
-    //   let i = 1
-    //   let add = i.add // pushed_self is now i
-    //   add(2)          // => 3
-    //   5 + 1           // pushed self is now 5
-    //   add(2)          // => 7
-    if (instr != instruction::call)
-      frame->pushed_self = {};
-
-    switch (instr) {
-    case instruction::push_bool: push_bool(get<bool>(arg));       break;
-    case instruction::push_flt:  push_flt(get<double>(arg));      break;
-    case instruction::push_fn:   push_fn(get<function_t>(arg));   break;
-    case instruction::push_int:  push_int(get<int>(arg));         break;
-    case instruction::push_nil:  push_nil();                      break;
-    case instruction::push_str:  push_str(get<std::string>(arg)); break;
-    case instruction::push_sym:  push_sym(get<symbol>(arg));      break;
-    case instruction::push_type: push_type(get<type_t>(arg));     break;
-
-    case instruction::make_arr:  make_arr(get<int>(arg));  break;
-    case instruction::make_dict: make_dict(get<int>(arg)); break;
-
-    case instruction::read:  read(get<symbol>(arg));  break;
-    case instruction::write: write(get<symbol>(arg)); break;
-    case instruction::let:   let(get<symbol>(arg));   break;
-
-    case instruction::self:     self();                   break;
-    case instruction::push_arg: push_arg();               break;
-    case instruction::arg:      this->arg(get<int>(arg)); break;
-    case instruction::readm:    readm(get<symbol>(arg));  break;
-    case instruction::writem:   writem(get<symbol>(arg)); break;
-    case instruction::call:     call(get<int>(arg));      break;
-    case instruction::new_obj:  new_obj(get<int>(arg));   break;
-
-    case instruction::eblk: eblk();              break;
-    case instruction::lblk: lblk();              break;
-    case instruction::ret:  ret(get<bool>(arg)); break;
-
-    case instruction::push: push(); break;
-    case instruction::pop:  pop();  break;
-
-    case instruction::req: req(get<std::string>(arg)); break;
-
-    case instruction::jmp:       jmp(get<int>(arg));       break;
-    case instruction::jmp_false: jmp_false(get<int>(arg)); break;
-    case instruction::jmp_true:  jmp_true(get<int>(arg));  break;
-
-    case instruction::push_catch: push_catch(); break;
-    case instruction::pop_catch:  pop_catch();  break;
-    case instruction::except:     except();     break;
-
-    case instruction::chdir:      chdir(get<std::string>(arg)); break;
+    if (command.instr == vm::instruction::ret && frame.get() == exit_scope) {
+      ret(boost::get<bool>(command.arg));
+      return;
+    } else if (command.instr == vm::instruction::except) {
+      except_until(exit_scope);
+    } else {
+      run_single_command(command);
     }
   }
 }
@@ -263,6 +229,7 @@ void vm::machine::writem(symbol sym)
 // TODO: make suck less.
 void vm::machine::call(int argc)
 {
+  const static std::array<vm::command, 1> com{{ {vm::instruction::ret, false} }};
   if (auto fn = dynamic_cast<value::function*>(retval)) {
     if (argc != fn->argc) {
       push_str("Wrong number of arguments--- expected "
@@ -289,12 +256,16 @@ void vm::machine::call(int argc)
     frame = std::make_shared<call_frame>(frame->instr_ptr, frame, m_base, argc);
     frame->caller = *fn;
 
-    auto except_flag = frame.get();
-    gc::set_current_frame(frame);
-    retval = fn->body(*this);
-    gc::set_current_retval(retval); // in case function spun its own VM
-    if (except_flag == frame.get())
-      ret(false);
+    try {
+      gc::set_current_frame(frame);
+      retval = fn->body(*this);
+      frame->instr_ptr = com;
+    } catch (const vm_error& err) {
+      retval = err.error();
+      except();
+      return;
+    }
+
   } else {
     push_str("Only functions can be called");
     except();
@@ -426,14 +397,102 @@ void vm::machine::except()
   } else {
     push_arg();
     retval = &*frame->catcher;
-    call(1);
     pop_catch();
+    call(1);
   }
 }
 
 void vm::machine::chdir(const std::string& dir)
 {
   boost::filesystem::current_path(dir);
+}
+
+size_t depth(vm::call_frame* frame)
+{
+  size_t depth{0};
+  while (frame->parent) {
+    ++depth;
+    frame = frame->parent.get();
+  }
+  return depth;
+}
+
+void vm::machine::run_single_command(const vm::command& command)
+{
+  using boost::get;
+
+  auto instr = command.instr;
+  const auto& arg = command.arg;
+
+  // HACK--- avoid weirdness like the following:
+  //   let i = 1
+  //   let add = i.add // pushed_self is now i
+  //   add(2)          // => 3
+  //   5 + 1           // pushed self is now 5
+  //   add(2)          // => 7
+  if (instr != instruction::call)
+    frame->pushed_self = {};
+
+  switch (instr) {
+  case instruction::push_bool: push_bool(get<bool>(arg));       break;
+  case instruction::push_flt:  push_flt(get<double>(arg));      break;
+  case instruction::push_fn:   push_fn(get<function_t>(arg));   break;
+  case instruction::push_int:  push_int(get<int>(arg));         break;
+  case instruction::push_nil:  push_nil();                      break;
+  case instruction::push_str:  push_str(get<std::string>(arg)); break;
+  case instruction::push_sym:  push_sym(get<symbol>(arg));      break;
+  case instruction::push_type: push_type(get<type_t>(arg));     break;
+
+  case instruction::make_arr:  make_arr(get<int>(arg));  break;
+  case instruction::make_dict: make_dict(get<int>(arg)); break;
+
+  case instruction::read:  read(get<symbol>(arg));  break;
+  case instruction::write: write(get<symbol>(arg)); break;
+  case instruction::let:   let(get<symbol>(arg));   break;
+
+  case instruction::self:     self();                   break;
+  case instruction::push_arg: push_arg();               break;
+  case instruction::arg:      this->arg(get<int>(arg)); break;
+  case instruction::readm:    readm(get<symbol>(arg));  break;
+  case instruction::writem:   writem(get<symbol>(arg)); break;
+  case instruction::call:     call(get<int>(arg));      break;
+  case instruction::new_obj:  new_obj(get<int>(arg));   break;
+
+  case instruction::eblk: eblk();              break;
+  case instruction::lblk: lblk();              break;
+  case instruction::ret:  ret(get<bool>(arg)); break;
+
+  case instruction::push: push(); break;
+  case instruction::pop:  pop();  break;
+
+  case instruction::req: req(get<std::string>(arg)); break;
+
+  case instruction::jmp:       jmp(get<int>(arg));       break;
+  case instruction::jmp_false: jmp_false(get<int>(arg)); break;
+  case instruction::jmp_true:  jmp_true(get<int>(arg));  break;
+
+  case instruction::push_catch: push_catch(); break;
+  case instruction::pop_catch:  pop_catch();  break;
+  case instruction::except:     except();     break;
+
+  case instruction::chdir:      chdir(get<std::string>(arg)); break;
+  }
+}
+
+void vm::machine::except_until(vm::call_frame* until)
+{
+  while (frame.get() != until && !frame->catcher)
+    frame = frame->parent;
+
+  if (!frame->catcher) {
+    throw vm_error{retval};
+
+  } else {
+    push_arg();
+    retval = &*frame->catcher;
+    pop_catch();
+    call(1);
+  }
 }
 
 // }}}

@@ -36,7 +36,7 @@ auto fn_int_or_flt_op(const F& op)
       return gc::alloc<value::floating_point>( op(left, to_float(arg)) );
 
     if (arg->type != &type::integer)
-      return throw_exception("Right-hand argument is not an Integer", vm);
+      return throw_exception("Right-hand argument is not an Integer");
     // Apparently moving from integers is a bad idea; without the explicit int&&
     // template parameter, 0 is always passed to value::integer::integer
     return gc::alloc<value::integer, int&&>( op(left, to_int(arg)) );
@@ -50,7 +50,7 @@ auto fn_integer_op(const F& op)
   {
     auto left = to_int(&*vm.frame->self);
     if (get_arg(vm, 0)->type != &type::integer)
-      return throw_exception("Right-hand argument is not an Integer", vm);
+      return throw_exception("Right-hand argument is not an Integer");
     auto right = to_int(get_arg(vm, 0));
 
     return gc::alloc<value::integer, int&&>( op(left, right) );
@@ -88,7 +88,7 @@ auto fn_int_bool_op(const F& op)
       return gc::alloc<value::boolean>( op(left, right) );
     }
     if (arg->type != &type::integer)
-      return throw_exception("Right-hand argument is not an Integer", vm);
+      return throw_exception("Right-hand argument is not an Integer");
 
     auto left = to_int(&*vm.frame->self);
     auto right = to_int(arg);
@@ -102,14 +102,14 @@ value::base* fn_integer_divides(vm::machine& vm)
   auto arg = get_arg(vm, 0);
   if (arg->type == &type::floating_point) {
     if (to_float(arg) == 0.0)
-      return throw_exception("cannot divide by zero", vm);
+      return throw_exception("cannot divide by zero");
     return gc::alloc<value::floating_point>( left / to_float(arg) );
   }
 
   if (arg->type != &type::integer)
-    return throw_exception("Right-hand argument is not an Integer", vm);
+    return throw_exception("Right-hand argument is not an Integer");
   if (to_int(arg) == 0)
-    return throw_exception("cannot divide by zero", vm);
+    return throw_exception("cannot divide by zero");
   return gc::alloc<value::integer>( left / to_int(arg));
 }
 
@@ -150,7 +150,7 @@ value::base* fn_integer_pow(vm::machine& vm)
 
   auto left = to_int(&*vm.frame->self);
   if (arg->type != &type::integer)
-    return throw_exception("Right-hand argument is not an Integer", vm);
+    return throw_exception("Right-hand argument is not an Integer");
   auto right = to_int(arg);
 
   if (right < 0)
@@ -162,7 +162,7 @@ value::base* fn_integer_chr(vm::machine& vm)
 {
   auto self = to_int(&*vm.frame->self);
   if (self < 0 || self > 255)
-    return throw_exception("Chr can only be called on integers between 0 to 256", vm);
+    return throw_exception("Chr can only be called on integers between 0 to 256");
   return gc::alloc<value::string>( std::string{static_cast<char>(self)} );
 }
 

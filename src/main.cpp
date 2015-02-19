@@ -72,10 +72,10 @@ void run_repl()
   vv::builtin::make_base_env(*base_frame);
 
   while (!std::cin.eof()) {
+    vv::vm::machine machine{base_frame, repl_catcher};
     for (const auto& expr : get_valid_line()) {
       auto body = expr->generate();
       base_frame->instr_ptr = vv::vector_ref<vv::vm::command>{body};
-      vv::vm::machine machine{base_frame, repl_catcher};
       machine.run();
       std::cout << "=> " << machine.retval->value() << '\n';
     }

@@ -30,8 +30,7 @@ value::base* fn_symbol_init(vm::machine& vm)
   if (arg->type == &type::string)
     sym.val = vv::symbol{to_string(arg)};
   else
-    return throw_exception("Symbols can only be constructed a String or another Symbol",
-                           vm);
+    return throw_exception("Symbols can only be constructed a String or another Symbol");
   return &sym;
 }
 

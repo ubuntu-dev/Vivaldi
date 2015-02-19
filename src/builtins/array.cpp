@@ -18,7 +18,7 @@ value::base* fn_array_init(vm::machine& vm)
   auto arr = static_cast<value::array*>(&*vm.frame->self);
   auto arg = get_arg(vm, 0);
   if (arg->type != &type::array)
-    return throw_exception("Arrays can only be constructed from other Arrays", vm);
+    return throw_exception("Arrays can only be constructed from other Arrays");
   arr->val = static_cast<value::array*>( arg )->val;
   return arr;
 }
@@ -46,14 +46,13 @@ value::base* fn_array_at(vm::machine& vm)
 {
   auto arg = get_arg(vm, 0);
   if (arg->type != &type::integer)
-    return throw_exception("Index must be an Integer", vm);
+    return throw_exception("Index must be an Integer");
   auto val = static_cast<value::integer*>(arg)->val;
   const auto& arr = static_cast<value::array&>(*vm.frame->self).val;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
     return throw_exception("Out of range (expected 0-"
                            + std::to_string(arr.size()) + ", got "
-                           + std::to_string(val) + ")",
-                           vm);
+                           + std::to_string(val) + ")");
   return arr[static_cast<unsigned>(val)];
 }
 
@@ -61,14 +60,13 @@ value::base* fn_array_set_at(vm::machine& vm)
 {
   auto arg = get_arg(vm, 0);
   if (arg->type != &type::integer)
-    return throw_exception("Index must be an Integer", vm);
+    return throw_exception("Index must be an Integer");
   auto val = static_cast<value::integer*>(arg)->val;
   auto& arr = static_cast<value::array&>(*vm.frame->self).val;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
     return throw_exception("Out of range (expected 0-"
                            + std::to_string(arr.size()) + ", got "
-                           + std::to_string(val) + ")",
-                           vm);
+                           + std::to_string(val) + ")");
   return arr[static_cast<unsigned>(val)] = get_arg(vm, 1);
 }
 
@@ -91,7 +89,7 @@ value::base* fn_array_add(vm::machine& vm)
   auto arr = static_cast<value::array*>(&*vm.frame->self);
   auto arg = get_arg(vm, 0);
   if (arg->type != &type::array)
-    return throw_exception("Only Arrays can be added to other Arrays", vm);
+    return throw_exception("Only Arrays can be added to other Arrays");
   auto other = static_cast<value::array*>(arg);
   copy(begin(other->val), end(other->val), back_inserter(arr->val));
   return arr;
@@ -116,7 +114,7 @@ value::base* fn_array_iterator_get(vm::machine& vm)
 {
   auto iter = static_cast<value::array_iterator*>(&*vm.frame->self);
   if (iter->idx == iter->arr.val.size())
-    return throw_exception("ArrayIterator is at end of array", vm);
+    return throw_exception("ArrayIterator is at end of array");
   return iter->arr.val[iter->idx];
 }
 
@@ -124,7 +122,7 @@ value::base* fn_array_iterator_increment(vm::machine& vm)
 {
   auto iter = static_cast<value::array_iterator*>(&*vm.frame->self);
   if (iter->idx == iter->arr.val.size())
-    return throw_exception("ArrayIterators cannot be incremented past end", vm);
+    return throw_exception("ArrayIterators cannot be incremented past end");
   iter->idx += 1;
   return iter;
 }
@@ -133,7 +131,7 @@ value::base* fn_array_iterator_decrement(vm::machine& vm)
 {
   auto iter = static_cast<value::array_iterator*>(&*vm.frame->self);
   if (iter->idx == 0)
-    return throw_exception("ArrayIterators cannot be decremented past start", vm);
+    return throw_exception("ArrayIterators cannot be decremented past start");
   iter->idx -= 1;
   return iter;
 }
@@ -143,13 +141,13 @@ value::base* fn_array_iterator_add(vm::machine& vm)
   auto iter = static_cast<value::array_iterator*>(&*vm.frame->self);
   auto arg = get_arg(vm, 0);
   if (arg->type != &builtin::type::integer)
-    return throw_exception("Only Integers can be added to ArrayIterators", vm);
+    return throw_exception("Only Integers can be added to ArrayIterators");
   auto offset = static_cast<value::integer*>(arg)->val;
 
   if (static_cast<int>(iter->idx) + offset < 0)
-    return throw_exception("ArrayIterators cannot be decremented past start", vm);
+    return throw_exception("ArrayIterators cannot be decremented past start");
   if (iter->idx + offset > iter->arr.val.size())
-    return throw_exception("ArrayIterators cannot be incremented past end", vm);
+    return throw_exception("ArrayIterators cannot be incremented past end");
 
   auto other = gc::alloc<value::array_iterator>( *iter );
   static_cast<value::array_iterator*>(other)->idx = iter->idx + offset;
@@ -161,15 +159,15 @@ value::base* fn_array_iterator_subtract(vm::machine& vm)
   auto iter = static_cast<value::array_iterator*>(&*vm.frame->self);
   auto arg = get_arg(vm, 0);
   if (arg->type != &builtin::type::integer)
-    return throw_exception("Only Integers can be added to ArrayIterators", vm);
+    return throw_exception("Only Integers can be added to ArrayIterators");
   auto offset = static_cast<value::integer*>(arg)->val;
 
   if (!offset)
-    return throw_exception("Only numeric types can be added to ArrayIterators", vm);
+    return throw_exception("Only numeric types can be added to ArrayIterators");
   if (static_cast<int>(iter->idx) - offset < 0)
-    return throw_exception("ArrayIterators cannot be decremented past start", vm);
+    return throw_exception("ArrayIterators cannot be decremented past start");
   if (iter->idx - offset > iter->arr.val.size())
-    return throw_exception("ArrayIterators cannot be incremented past end", vm);
+    return throw_exception("ArrayIterators cannot be incremented past end");
 
   auto other = gc::alloc<value::array_iterator>( *iter );
   static_cast<value::array_iterator*>(other)->idx = iter->idx - offset;

@@ -30,7 +30,7 @@ auto fn_floating_point_op(const F& op)
   return [=](vm::machine& vm)
   {
     if (!is_float(get_arg(vm, 0)))
-      return throw_exception("Right-hand argument is not a Float", vm);
+      return throw_exception("Right-hand argument is not a Float");
     return gc::alloc<value::floating_point>( op(to_float(&*vm.frame->self),
                                                 to_float(get_arg(vm, 0))) );
   };
@@ -42,7 +42,7 @@ auto fn_float_bool_op(const F& op)
   return [=](vm::machine& vm)
   {
     if (!is_float(get_arg(vm, 0)))
-      return throw_exception("Right-hand argument is not a Float", vm);
+      return throw_exception("Right-hand argument is not a Float");
     return gc::alloc<value::boolean>( op(to_float(&*vm.frame->self),
                                          to_float(get_arg(vm, 0))) );
   };
@@ -60,9 +60,9 @@ auto fn_floating_point_monop(const F& op)
 value::base* fn_floating_point_divides(vm::machine& vm)
 {
   if (!is_float(get_arg(vm, 0)))
-    return throw_exception("Right-hand argument is not a Float", vm);
+    return throw_exception("Right-hand argument is not a Float");
   if (to_float(get_arg(vm, 0)) == 0)
-    return throw_exception("Cannot divide by zero", vm);
+    return throw_exception("Cannot divide by zero");
   return gc::alloc<value::floating_point>( to_float(&*vm.frame->self) /
                                            to_float(get_arg(vm, 0)) );
 }

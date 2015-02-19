@@ -8,8 +8,10 @@ namespace vv {
 
 bool truthy(const value::base* value);
 
-value::base* throw_exception(const std::string& value, vm::machine& vm);
-value::base* throw_exception(value::base* value, vm::machine& vm);
+[[noreturn]]
+value::base* throw_exception(const std::string& value);
+[[noreturn]]
+value::base* throw_exception(value::base* value);
 
 value::base* get_arg(vm::machine& vm, size_t idx);
 

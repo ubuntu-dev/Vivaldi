@@ -17,8 +17,7 @@ value::base* fn_dictionary_init(vm::machine& vm)
   auto dict = static_cast<value::dictionary*>(&*vm.frame->self);
   auto arg = get_arg(vm, 0);
   if (arg->type != &type::dictionary)
-    return throw_exception("Dictionaries can only be constructed from other Dictionaries",
-                           vm);
+    return throw_exception("Dictionaries can only be constructed from other Dictionaries");
   dict->val = static_cast<value::dictionary*>( arg )->val;
   return dict;
 }

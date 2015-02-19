@@ -18,7 +18,7 @@ value::base* fn_file_init(vm::machine& vm)
 {
   auto arg = get_arg(vm, 0);
   if (arg->type != &type::string)
-    return throw_exception("Files can only be constructed from Strings", vm);
+    return throw_exception("Files can only be constructed from Strings");
   auto& self = static_cast<value::file&>(*vm.frame->self);
   const auto& filename = static_cast<value::string*>(arg)->val;
   self.val = std::fstream{filename};
@@ -52,7 +52,7 @@ value::base* fn_file_increment(vm::machine& vm)
 {
   auto& self = static_cast<value::file&>(*vm.frame->self);
   if (self.val.peek() == EOF)
-    return throw_exception("Cannot read past end of File", vm);
+    return throw_exception("Cannot read past end of File");
   std::getline(self.val, self.cur_line);
   return &self;
 }

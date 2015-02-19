@@ -26,45 +26,19 @@ namespace {
 // Helper functions {{{
 
 struct call_result {
-  enum class state {
-    excepted,
-    completed,
-    ongoing
-  } result;
+  bool completed;
   value::base* value;
-
-  static call_result excepted(value::base* value)
-  {
-    return { state::excepted, value };
-  }
-
-  static call_result completed(value::base* value)
-  {
-    return { state::completed, value };
-  }
-
-  static call_result ongoing(value::base* value)
-  {
-    return { state::ongoing, value };
-  }
-
-  bool successful() { return result != state::excepted; }
-  bool ongoing() { return result == state::ongoing; }
 };
 
-call_result call_method(std::shared_ptr<vm::call_frame> frame,
+call_result call_method(vm::machine& vm,
                         value::base* self,
                         symbol method)
 {
-  auto excepted = false;
-  vm::machine machine{frame, [&](vm::machine&) { excepted = true; }};
-  machine.retval = self;
-  machine.readm(method);
-  machine.call(0);
-  machine.run();
-  if (excepted)
-    return { call_result::state::excepted, machine.retval };
-  return { call_result::state::ongoing, machine.retval };
+  vm.retval = self;
+  vm.readm(method);
+  vm.call(0);
+  vm.run_cur_scope();
+  return { true, vm.retval };
 }
 
 template <typename F>
@@ -73,61 +47,35 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
   auto range = get_arg(vm, 0);
   auto supplied_fn = get_arg(vm, 1);
 
-  auto frame = std::make_shared<vm::call_frame>(vector_ref<vm::command>{},
-                                                nullptr,
-                                                vm.frame);
   // Get iterator from range
-  auto iter_res = call_method(frame, range, {"start"});
-  if (!iter_res.successful())
-    return iter_res;
-
-  auto iter = iter_res.value;
+  auto iter = call_method(vm, range, {"start"}).value;
 
   for (;;) {
-    auto at_end_res = call_method(frame, iter, {"at_end"});
-    if (!at_end_res.successful())
-      return at_end_res;
+    auto at_end = call_method(vm, iter, {"at_end"}).value;
+    if (truthy(at_end))
+      return { true, at_end };
 
-    if (truthy(at_end_res.value))
-      return call_result::completed(at_end_res.value);
+    auto next_item = call_method(vm, iter, {"get"}).value;
 
-    auto get_res = call_method(frame, iter, {"get"});
-    if (!get_res.successful())
-      return get_res;
-
-    auto next_item = get_res.value;
-
-    auto res = inner(frame, supplied_fn, next_item);
-    if (!res.successful() || !res.ongoing())
+    auto res = inner(vm, supplied_fn, next_item);
+    if (res.completed)
       return res;
 
-    auto increment_res = call_method(frame, iter, {"increment"});
-    if (!increment_res.successful())
-      return increment_res;
+    call_method(vm, iter, {"increment"});
   }
 }
 
 template <typename F>
 call_result transformed_range(vm::machine& vm, const F& inner)
 {
-  const static std::array<vm::command, 1> transform_call {{
-    { vm::instruction::call, 1 }
-  }};
-
-  return fake_for_loop(vm, [&](auto frame, auto* transform, auto* orig)
+  return fake_for_loop(vm, [&](auto vm, auto* transform, auto* orig)
   {
-    frame->pushed.push_back(orig);
-    auto excepted = false;
-    vm::machine machine{frame, [&](vm::machine&) { excepted = true; }};
-    machine.retval = transform;
-    machine.call(1);
-    machine.run();
-    if (excepted)
-      return call_result::excepted(machine.retval);
-    auto completed = inner(orig, machine.retval);
-    if (completed)
-      return call_result::completed(machine.retval);
-    return call_result::ongoing(machine.retval);
+    vm.frame->pushed.push_back(orig);
+    vm.retval = transform;
+    vm.call(1);
+    vm.run_cur_scope();
+    auto completed = inner(orig, vm.retval);
+    return call_result{ completed, vm.retval };
   });
 }
 
@@ -170,14 +118,12 @@ value::base* fn_filter(vm::machine& vm)
   vm.push(); // Avoid GC'ing retval of inactive VM
   auto filtered = static_cast<value::array*>(vm.retval);
 
-  auto result = transformed_range(vm, [&](auto* cand, auto* pred)
-                                         {
-                                           if (truthy(pred))
-                                             filtered->val.push_back(cand);
-                                           return false;
-                                         });
-  if (!result.successful())
-    return throw_exception(result.value, vm);
+  transformed_range(vm, [&](auto* cand, auto* pred)
+                           {
+                             if (truthy(pred))
+                               filtered->val.push_back(cand);
+                             return false;
+                           });
 
   vm.pop(); // filtered
   return filtered;
@@ -190,13 +136,8 @@ value::base* fn_map(vm::machine& vm)
   vm.push(); // Avoid GC'ing retval of inactive VM
   auto mapped = static_cast<value::array*>(vm.retval);
 
-  auto result = transformed_range(vm, [&](auto*, auto* val)
-                                         {
-                                           mapped->val.push_back(val);
-                                           return false;
-                                         });
-  if (!result.successful())
-    return throw_exception(result.value, vm);
+  transformed_range(vm, [&](auto*, auto* val)
+                           { mapped->val.push_back(val); return false; });
 
   vm.pop(); // filtered
   return mapped;
@@ -205,44 +146,24 @@ value::base* fn_map(vm::machine& vm)
 value::base* fn_count(vm::machine& vm)
 {
   int count{};
-
-  auto result = transformed_range(vm, [&](auto*, auto* pred)
-                                         {
-                                           if (truthy(pred))
-                                             ++count;
-                                           return false;
-                                         });
-  if (!result.successful())
-    return throw_exception(result.value, vm);
-
+  transformed_range(vm, [&](auto*, auto* pred)
+                           { if (truthy(pred)) ++count; return false; });
   return gc::alloc<value::integer>( count );
 }
 
 value::base* fn_all(vm::machine& vm)
 {
   auto all = true;
-  auto result = transformed_range(vm, [&](auto*, auto* pred)
-                                         {
-                                           if (!truthy(pred))
-                                             all = false;
-                                           return !all;
-                                         });
-  if (!result.successful())
-    return throw_exception(result.value, vm);
+  transformed_range(vm, [&](auto*, auto* pred)
+                           { if (!truthy(pred)) all = false; return !all; });
   return gc::alloc<value::boolean>( all );
 }
 
 value::base* fn_any(vm::machine& vm)
 {
   auto found = false;
-  auto result = transformed_range(vm, [&](auto*, auto* pred)
-                                         {
-                                           if (truthy(pred))
-                                             found = true;
-                                           return found;
-                                         });
-  if (!result.successful())
-    return throw_exception(result.value, vm);
+  transformed_range(vm, [&](auto*, auto* pred)
+                           { if (truthy(pred)) found = true; return found; });
   return gc::alloc<value::boolean>( found );
 }
 
