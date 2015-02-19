@@ -9,6 +9,16 @@ fn primes(upto): do
   found + candidates
 end
 
-let p = primes(10000)
+if argv.size() == 0: do
+  puts("Expected number as command-line argument")
+  quit()
+end
+let upto = argv[0].to_int()
+if upto <= 2: do
+  puts("Expected number greater than two")
+  quit()
+end
+
+let p = primes(upto)
 puts(p)
 puts(p.size())

@@ -478,7 +478,7 @@ precedence (basically C precedence, with the bitwise mistake fixed and `**` and
 
 ### Builtins ###
 
-In addition to the above types, Vivaldi has a select few builtin functions:
+In addition to the above types, Vivaldi has a select few miscellaneous builtins:
 
 #### I/O ####
 
@@ -488,6 +488,15 @@ In addition to the above types, Vivaldi has a select few builtin functions:
 * `print(x)`&mdash; identical to `puts`, sans newline.
 
 * `gets()`&mdash; returns a String containing a single line of user input.
+
+* `argv`&mdash; when run from a file, contains an Array of all commend-line
+  arguments as Strings. The executable and script names are left off; `argv[0]`
+  is the first command-line argument explicitly provided by the user:
+
+        $ cat myfile.vv
+        puts(argv[0])
+        $ vivaldi ./myfile.vv foo
+        foo
 
 #### Functional ####
 

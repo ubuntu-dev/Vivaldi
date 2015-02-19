@@ -3,8 +3,10 @@
 #include "get_file_contents.h"
 #include "parser.h"
 #include "vm.h"
+#include "value/array.h"
 #include "value/builtin_function.h"
 #include "value/nil.h"
+#include "value/string.h"
 
 #include <iostream>
 #include <sstream>
@@ -83,11 +85,6 @@ void run_repl()
 
 int main(int argc, char** argv)
 {
-  if (argc > 2) {
-    std::cerr << "Usage: " << argv[0] << " [file]\n";
-    return 1;
-  }
-
   vv::gc::init();
 
   if (argc == 1) {
@@ -103,10 +100,19 @@ int main(int argc, char** argv)
     }
 
     auto base_frame = std::make_shared<vv::vm::call_frame>( tok_res.result() );
+    vv::gc::set_current_frame(base_frame);
+
     vv::builtin::make_base_env(*base_frame);
+    auto arg_array = vv::gc::alloc<vv::value::array>( );
+    base_frame->local.back()[{"argv"}] = arg_array;
+
+    auto cast_argv = static_cast<vv::value::array*>( arg_array );
+    transform(argv + 2, argv + argc, back_inserter(cast_argv->val),
+              vv::gc::alloc<vv::value::string, std::string>);
 
     auto excepted = false;
     vv::vm::machine vm{base_frame, [&](auto&){ excepted = true; }};
+
     vm.run();
 
     if (excepted)
