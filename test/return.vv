@@ -1,0 +1,13 @@
+require "assert.vv"
+
+fn early_return(text, flag): do
+  let i = text + "!"
+  if flag: return i
+  return "!" + i
+end
+
+let t = "foo"
+let post = early_return(t, false)
+assert(post == "!foo!", "unintended early return")
+let post = early_return(t, true)
+assert(post == "foo!", "unintended lack of early return")

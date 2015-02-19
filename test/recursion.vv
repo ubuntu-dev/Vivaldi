@@ -1,0 +1,12 @@
+require "assert.vv"
+
+// As stupid as possible, to maximize pressure on VM
+fn factorial(x): do
+  if x == 0: return 1
+  x * factorial(x - 1)
+end
+
+let i = factorial(10)
+assert(i == 3628800, "factorial(10) == 3628800")
+let j = factorial(11)
+assert(j == i * 11, "factorial(11) == factorial(10) * 11")

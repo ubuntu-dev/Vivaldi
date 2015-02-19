@@ -1,0 +1,38 @@
+require "assert.vv"
+
+class Decrementer
+  fn init(x): self._x = x
+
+  fn start(): self
+  fn get(): self._x
+  fn at_end(): self._x == 0
+  fn increment(): do
+    self._x = self._x - 1
+    self
+  end
+end
+
+class Inverted
+  fn init(x): self._x = x
+
+  fn greater(y): try: except "hello"
+    catch e: self._x < y._x
+  fn add(x): new Inverted(self._x - x)
+end
+
+let arr = []
+for i in new Decrementer(5): arr.append(i)
+assert(arr[0] == 5, "arr[0] == 5")
+assert(arr[1] == 4, "arr[1] == 4")
+assert(arr[2] == 3, "arr[2] == 3")
+assert(arr[3] == 2, "arr[3] == 2")
+assert(arr[4] == 1, "arr[4] == 1")
+
+let inv_arr = []
+try: for i in new Inverted(10) to new Inverted(5): inv_arr.append(i._x)
+catch e: assert(false, "failed to catch exception inside of Range")
+assert(inv_arr[0] == 10, "inv_arr[0] == 10")
+assert(inv_arr[1] == 9, "inv_arr[1] == 9")
+assert(inv_arr[2] == 8, "inv_arr[2] == 8")
+assert(inv_arr[3] == 7, "inv_arr[3] == 7")
+assert(inv_arr[4] == 6, "inv_arr[4] == 6")
