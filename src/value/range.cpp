@@ -24,8 +24,10 @@ std::string value::range::value() const
 void value::range::mark()
 {
   base::mark();
-  if (!start->marked())
+  // We need to ensure neither start not end are nullptr, since this could be
+  // happening between allocation and initialization
+  if (start && !start->marked())
     start->mark();
-  if (!end->marked())
+  if (end && !end->marked())
     end->mark();
 }
