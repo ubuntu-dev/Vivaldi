@@ -1,17 +1,29 @@
 require "assert.vv"
 
-let i = false
-try: i = true
-catch _: assert(false, "exceptionless try body")
-assert(i, "assigning from try body")
+fn unused_try_catch(): do
+  let i = false
+  try: i = true
+  catch _: assert(false, "exceptionless try body")
+  assert(i, "assigning from try body")
+end
 
-let i = false
-try: do
-  except 55
-  assert(false, "except")
-end catch e: i = e
-assert(i == 55, "assigning from catch body")
+fn used_try_catch(): do
+  let i = false
+  try: do
+    except 55
+    assert(false, "except")
+  end catch e: i = e
+  assert(i == 55, "assigning from catch body")
+end
 
-try: 1 + "foo"
-catch _: i = 12
-assert(i = 12, "triggering builtin exception")
+fn builtin_exception(): do
+  let i = false
+  try: 1 + "foo"
+  catch _: i = 12
+  assert(i == 12, "triggering builtin exception")
+end
+
+section("Exceptions")
+test(unused_try_catch, "untriggered try...catch block")
+test(used_try_catch, "triggered try...catch block")
+test(builtin_exception, "builtin exception")

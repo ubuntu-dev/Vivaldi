@@ -1,28 +1,45 @@
 require "assert.vv"
 
-assert("".size() == 0, "''.size() == 0")
-assert(" ".size() == 1, "' '.size() == 1")
-assert("foo".size() == 3, "'foo'.size() == 2")
+fn size(): do
+  assert("".size() == 0, "''.size() == 0")
+  assert(" ".size() == 1, "' '.size() == 1")
+  assert("foo".size() == 3, "'foo'.size() == 2")
+end
 
 let str = "foo"
 
-assert(str[0] == "f", "(str[0] == 'f'");
-assert(str[2] == "o", "(str[2] == 'o'");
+fn indexing(): do
+  assert(str[0] == "f", "(str[0] == 'f'");
+  assert(str[2] == "o", "(str[2] == 'o'");
 
-let excepted = false
-try: str[128]
-catch e: excepted = true
-assert(excepted, "string accepted index past end")
+  let excepted = false
+  try: str[128]
+  catch e: excepted = true
+  assert(excepted, "string accepted index past end")
+end
 
 let other = str + "bar"
 
-assert(str == "foo", "assignment mutated original")
-assert(other == "foobar", "assignment didn't concatenate")
+fn addition(): do
+  assert(str == "foo", "assignment mutated original")
+  assert(other == "foobar", "assignment didn't concatenate")
+end
 
-assert(other.starts_with(str), "'foobar'.starts_with('foo')")
-assert(!str.starts_with(other), "!'foo'.starts_with('foobar')")
-assert(!other.starts_with("wat"), "!'foobar'.starts_with('wat')")
+fn starts_with(): do
+  assert(other.starts_with(str), "'foobar'.starts_with('foo')")
+  assert(!str.starts_with(other), "!'foo'.starts_with('foobar')")
+  assert(!other.starts_with("wat"), "!'foobar'.starts_with('wat')")
+end
 
-let upper = "FOO"
-assert(str.to_upper() == upper, "'foo'.to_upper() == 'FOO'")
-assert(upper.to_lower() == str, "'FOO'.to_lower() == 'foo'")
+fn case(): do
+  let upper = "FOO"
+  assert(str.to_upper() == upper, "'foo'.to_upper() == 'FOO'")
+  assert(upper.to_lower() == str, "'FOO'.to_lower() == 'foo'")
+end
+
+section("Strings")
+test(size, "size")
+test(indexing, "indexing")
+test(addition, "addition")
+test(starts_with, "starts_with")
+test (case, "case-changing")

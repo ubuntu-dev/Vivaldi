@@ -6,8 +6,14 @@ fn early_return(text, flag): do
   return "!" + i
 end
 
-let t = "foo"
-let post = early_return(t, false)
-assert(post == "!foo!", "unintended early return")
-let post = early_return(t, true)
-assert(post == "foo!", "unintended lack of early return")
+fn early_ret_test(): do
+  let t = "foo"
+  let post = early_return(t, false)
+  assert(post == "!foo!", "unintended early return")
+  let post = early_return(t, true)
+  assert(post == "foo!", "unintended lack of early return")
+end
+
+section("Early Returns")
+
+test(early_ret_test, "early returns")

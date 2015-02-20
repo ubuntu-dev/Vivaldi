@@ -1,17 +1,32 @@
 require "assert.vv"
 
-assert(true && true,      "true && true")
-assert(!(true && false),  "!(true && false)")
-assert(!(false && false), "!(false && false)")
-assert(!(false && true),  "!(false && true)")
+fn ands(): do
+  assert(true && true,      "true && true")
+  assert(!(true && false),  "!(true && false)")
+  assert(!(false && false), "!(false && false)")
+  assert(!(false && true),  "!(false && true)")
+end
 
-assert(1 && 0,         "1 && 0")
-assert(!(nil && true), "!(nil && true)")
+fn and_truthiness(): do
+  assert(1 && 0,         "1 && 0")
+  assert(!(nil && true), "!(nil && true)")
+end
 
-assert(true || true,      "true || true")
-assert(true || false,     "true || false")
-assert(!(false || false), "!(false || false)")
-assert(false || true,     "false || true")
+fn ors(): do
+  assert(true || true,      "true || true")
+  assert(true || false,     "true || false")
+  assert(!(false || false), "!(false || false)")
+  assert(false || true,     "false || true")
+end
 
-assert(1 || 0,        "1 || 0")
-assert(!(nil || nil), "!(nil || nil)")
+fn or_truthiness(): do
+  assert(1 || 0,        "1 || 0")
+  assert(!(nil || nil), "!(nil || nil)")
+end
+
+section("Boolean Logic")
+
+test(ands, "&&")
+test(and_truthiness, "truthiness in &&")
+test(ors, "||")
+test(or_truthiness, "truthiness in ||")

@@ -1,18 +1,32 @@
 require "assert.vv"
 
-assert([].size() == 0, "[].size() == 0")
-assert([1].size() == 1, "[1].size() == 1")
-assert([1, 2].size() == 2, "[1, 2].size() == 2")
-
-let arr = [1, 2, 3, 4, 5]
-for i in 0 to 5: do
-  let str = new String(i)
-  assert(arr[i] == i + 1, "arr[" + str + "] == " + str + " + 1")
+fn arr_size(): do
+  assert([].size() == 0, "[].size() == 0")
+  assert([1].size() == 1, "[1].size() == 1")
+  assert([1, 2].size() == 2, "[1, 2].size() == 2")
 end
 
-arr[2] = 'foo
-assert(arr[2] == 'foo, "arr[2] == 'foo")
+let arr = [1, 2, 3, 4, 5]
+fn arr_order(): do
+  for i in 0 to 5: do
+    let str = new String(i)
+    assert(arr[i] == i + 1, "arr[" + str + "] == " + str + " + 1")
+  end
+end
 
-let combined = arr + [6, 7, 8]
-assert(combined.size() == 8, "combined.size() == 8")
-assert(combined[6] == 7, "combined[6] == 7")
+fn arr_indexing(): do
+  arr[2] = 'foo
+  assert(arr[2] == 'foo, "arr[2] == 'foo")
+end
+
+fn arr_addition(): do
+  let combined = arr + [6, 7, 8]
+  assert(combined.size() == 8, "combined.size() == 8")
+  assert(combined[6] == 7, "combined[6] == 7")
+end
+
+section("Arrays")
+test(arr_size, "size")
+test(arr_order, "order")
+test(arr_indexing, "indexing")
+test(arr_addition, "addition")

@@ -20,19 +20,27 @@ class Inverted
   fn add(x): new Inverted(self._x - x)
 end
 
-let arr = []
-for i in new Decrementer(5): arr.append(i)
-assert(arr[0] == 5, "arr[0] == 5")
-assert(arr[1] == 4, "arr[1] == 4")
-assert(arr[2] == 3, "arr[2] == 3")
-assert(arr[3] == 2, "arr[3] == 2")
-assert(arr[4] == 1, "arr[4] == 1")
+fn for_loop(): do
+  let arr = []
+  for i in new Decrementer(5): arr.append(i)
+  assert(arr[0] == 5, "arr[0] == 5")
+  assert(arr[1] == 4, "arr[1] == 4")
+  assert(arr[2] == 3, "arr[2] == 3")
+  assert(arr[3] == 2, "arr[3] == 2")
+  assert(arr[4] == 1, "arr[4] == 1")
+end
 
-let inv_arr = []
-try: for i in new Inverted(10) to new Inverted(5): inv_arr.append(i._x)
-catch e: assert(false, "failed to catch exception inside of Range")
-assert(inv_arr[0] == 10, "inv_arr[0] == 10")
-assert(inv_arr[1] == 9, "inv_arr[1] == 9")
-assert(inv_arr[2] == 8, "inv_arr[2] == 8")
-assert(inv_arr[3] == 7, "inv_arr[3] == 7")
-assert(inv_arr[4] == 6, "inv_arr[4] == 6")
+fn range_test(): do
+  let inv_arr = []
+  try: for i in new Inverted(10) to new Inverted(5): inv_arr.append(i._x)
+  catch e: assert(false, "failed to catch exception inside of Range")
+  assert(inv_arr[0] == 10, "inv_arr[0] == 10")
+  assert(inv_arr[1] == 9, "inv_arr[1] == 9")
+  assert(inv_arr[2] == 8, "inv_arr[2] == 8")
+  assert(inv_arr[3] == 7, "inv_arr[3] == 7")
+  assert(inv_arr[4] == 6, "inv_arr[4] == 6")
+end
+
+section("Iteration")
+test(for_loop, "custom type in for loop")
+test(range_test, "custom type in Range")

@@ -161,20 +161,33 @@ tok_res gt_tokens(boost::string_ref line)
 
 // }}}
 // '"' {{{
+std::pair<char, boost::string_ref> escaped_oct(boost::string_ref line)
+{
+  auto last = std::find_if_not(begin(line),
+                               begin(line) + std::min(line.size(), size_t{3}),
+                               [](auto c) { return '0' <= c && c < '8'; });
 
-char escaped(char nonescaped) {
+  auto val = stoi(std::string{begin(line), last}, nullptr, 8);
+  return { static_cast<char>(val), line.substr(last - begin(line)) };
+}
+
+std::pair<char, boost::string_ref> escaped(boost::string_ref line)
+{
+  auto nonescaped = line.front();
+  if (isdigit(nonescaped))
+    return escaped_oct(line);
+  line = line.substr(1);
   switch (nonescaped) {
-  case 'a':  return '\a';
-  case 'b':  return '\b';
-  case 'n':  return '\n';
-  case 'f':  return '\f';
-  case 'r':  return '\r';
-  case 't':  return '\t';
-  case 'v':  return '\v';
-  case '"':  return '"';
-  case '\\': return '\\';
-  case '0':  return '\0';
-  default:   return nonescaped;
+  case 'a':  return { '\a', line };
+  case 'b':  return { '\b', line };
+  case 'n':  return { '\n', line };
+  case 'f':  return { '\f', line };
+  case 'r':  return { '\r', line };
+  case 't':  return { '\t', line };
+  case 'v':  return { '\v', line };
+  case '"':  return { '"',  line };
+  case '\\': return { '\\', line };
+  default:   return { nonescaped, line };
   }
 }
 
@@ -185,11 +198,15 @@ tok_res string_token(boost::string_ref line)
   while (line.front() != '"') {
     if (line.front() == '\\') {
       line.remove_prefix(1);
-      token += escaped(line.front());
+      char chr;
+      tie(chr, line) = escaped(line);
+      token += chr;
     } else {
       token += line.front();
+      line.remove_prefix(1);
     }
-    line.remove_prefix(1);
+    if (!line.size())
+      return { {token::type::invalid, token}, line };
   }
   return { {token::type::string, token += '"'}, ltrim(line.substr(1))};
 }
@@ -300,7 +317,6 @@ tok_res first_token(boost::string_ref line)
 // }}}
 
 }
-#include <iostream>
 
 std::vector<token> parser::tokenize(std::istream& input)
 {

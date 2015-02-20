@@ -1,4 +1,11 @@
 fn assert(test, err): if !test: do
-  puts("failed: " + err)
+  puts("\033[91m✗\033[39m " + err)
   quit()
+end
+
+fn section(name): puts("\033[94m===\033[39m " + name + " \033[94m===\033[39m")
+
+fn test(code, name): do
+  code()
+  puts("\033[92m✓\033[39m " + name)
 end
