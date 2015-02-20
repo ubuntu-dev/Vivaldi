@@ -30,9 +30,7 @@ struct call_result {
   value::base* value;
 };
 
-call_result call_method(vm::machine& vm,
-                        value::base* self,
-                        symbol method)
+call_result call_method(vm::machine& vm, value::base* self, symbol method)
 {
   vm.retval = self;
   vm.readm(method);
@@ -44,11 +42,11 @@ call_result call_method(vm::machine& vm,
 template <typename F>
 call_result fake_for_loop(vm::machine& vm, const F& inner)
 {
-  auto range = get_arg(vm, 0);
-  auto supplied_fn = get_arg(vm, 1);
-
   // Get iterator from range
+  auto range = get_arg(vm, 0);
   auto iter = call_method(vm, range, {"start"}).value;
+
+  auto supplied_fn = get_arg(vm, 1);
 
   for (;;) {
     auto at_end = call_method(vm, iter, {"at_end"}).value;
@@ -167,6 +165,37 @@ value::base* fn_any(vm::machine& vm)
   return gc::alloc<value::boolean>( found );
 }
 
+value::base* fn_reduce(vm::machine& vm)
+{
+  // Get iterator from range
+  auto range = get_arg(vm, 0);
+  auto iter = call_method(vm, range, {"start"}).value;
+
+  vm.arg(1);
+  vm.push(); // store total locally
+  auto supplied_fn = get_arg(vm, 2);
+
+  for (;;) {
+    auto at_end = call_method(vm, iter, {"at_end"}).value;
+    if (truthy(at_end)) {
+      vm.pop(); // get total
+      return vm.retval;
+    }
+
+    auto next_item = call_method(vm, iter, {"get"}).value;
+    vm.pop(); // get total
+    vm.push_arg();
+    vm.retval = next_item;
+    vm.push_arg();
+    vm.retval = supplied_fn;
+    vm.call(2);
+    vm.run_cur_scope();
+    vm.push(); // push total
+
+    call_method(vm, iter, {"increment"});
+  }
+}
+
 // }}}
 // Other {{{
 
@@ -186,7 +215,7 @@ value::builtin_function function::gets{ fn_gets,  0};
 
 value::builtin_function function::filter{fn_filter, 2};
 value::builtin_function function::map   {fn_map,    2};
-//value::builtin_function function::reduce{fn_reduce, 2};
+value::builtin_function function::reduce{fn_reduce, 3};
 value::builtin_function function::all   {fn_all,    2};
 value::builtin_function function::any   {fn_any,    2};
 value::builtin_function function::count {fn_count,  2};
@@ -211,6 +240,7 @@ void builtin::make_base_env(vm::call_frame& base)
     { {"count"},          &builtin::function::count },
     { {"filter"},         &builtin::function::filter },
     { {"map"},            &builtin::function::map },
+    { {"reduce"},         &builtin::function::reduce },
     { {"any"},            &builtin::function::any },
     { {"all"},            &builtin::function::all },
     { {"quit"},           &builtin::function::quit },

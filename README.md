@@ -509,6 +509,15 @@ In addition to the above types, Vivaldi has a select few miscellaneous builtins:
 * `filter(x, y)`&mdash; Returns an Array containing all the members of range `x`
   such that predicate `y` returns true(thy).
 
+* `reduce(x, y, z)`&mdash; Iteratively applies the binary function `z` to the
+  result of the computation (starting with `y`) and each value in the range `x`;
+  conceptually it looks something like
+
+        fn reduce(x, y, z): do
+          for i in x: y = z(y, i)
+          y
+        end
+
 * `any(x, y)`&mdash; Returns `true` if any member of range `x` satisfies
   predicate function `y`, and `false` otherwise.
 
