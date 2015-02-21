@@ -6,6 +6,9 @@ end
 fn section(name): puts("\033[94m===\033[39m " + name + " \033[94m===\033[39m")
 
 fn test(code, name): do
-  code()
-  puts("\033[92m✓\033[39m " + name)
+  try: do
+    code()
+    puts("\033[92m✓\033[39m " + name)
+  end
+  catch e: assert(false, "caught exception: " + e)
 end
