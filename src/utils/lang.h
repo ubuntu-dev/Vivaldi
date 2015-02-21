@@ -1,5 +1,5 @@
-#ifndef LANG_UTILS_H
-#define LANG_UTILS_H
+#ifndef VV_UTILS_LANG_H
+#define VV_UTILS_LANG_H
 
 #include "value.h"
 #include "vm.h"

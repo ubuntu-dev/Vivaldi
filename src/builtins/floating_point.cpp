@@ -1,6 +1,6 @@
 #include "builtins.h"
 
-#include "lang_utils.h"
+#include "utils/lang.h"
 #include "gc.h"
 #include "value/builtin_function.h"
 #include "value/floating_point.h"

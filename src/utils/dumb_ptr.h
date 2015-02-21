@@ -1,5 +1,5 @@
-#ifndef VV_DUMB_PTR_H
-#define VV_DUMB_PTR_H
+#ifndef VV_UTILS_DUMB_PTR_H
+#define VV_UTILS_DUMB_PTR_H
 
 namespace vv {
 

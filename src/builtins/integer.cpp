@@ -1,7 +1,7 @@
 #include "builtins.h"
 
 #include "gc.h"
-#include "lang_utils.h"
+#include "utils/lang.h"
 #include "value/builtin_function.h"
 #include "value/integer.h"
 #include "value/floating_point.h"

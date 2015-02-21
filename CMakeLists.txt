@@ -13,7 +13,6 @@ add_executable(vivaldi
   src/main.cpp
 
   src/gc.cpp
-  src/lang_utils.cpp
   src/symbol.cpp
   src/value.cpp
   src/vm.cpp
@@ -63,6 +62,7 @@ add_executable(vivaldi
   src/ast/variable_declaration.cpp
   src/ast/while_loop.cpp
 
+  src/utils/lang.cpp
   src/utils/string_helpers.cpp
 
   src/value/array.cpp

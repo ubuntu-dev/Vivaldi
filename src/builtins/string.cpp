@@ -1,7 +1,7 @@
 #include "builtins.h"
 
 #include "gc.h"
-#include "lang_utils.h"
+#include "utils/lang.h"
 #include "utils/string_helpers.h"
 #include "value/builtin_function.h"
 #include "value/string.h"
