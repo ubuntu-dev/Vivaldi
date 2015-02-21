@@ -14,7 +14,7 @@ namespace {
 
 value::base* fn_dictionary_init(vm::machine& vm)
 {
-  auto dict = static_cast<value::dictionary*>(vm.frame->self.get());
+  auto dict = static_cast<value::dictionary*>(get_self(vm));
   auto arg = get_arg(vm, 0);
   if (arg->type != &type::dictionary)
     return throw_exception("Dictionaries can only be constructed from other Dictionaries");
@@ -24,13 +24,13 @@ value::base* fn_dictionary_init(vm::machine& vm)
 
 value::base* fn_dictionary_size(vm::machine& vm)
 {
-  auto sz = static_cast<value::dictionary&>(*vm.frame->self).val.size();
+  auto sz = static_cast<value::dictionary&>(*get_self(vm)).val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
 value::base* fn_dictionary_at(vm::machine& vm)
 {
-  auto& dict = static_cast<value::dictionary&>(*vm.frame->self);
+  auto& dict = static_cast<value::dictionary&>(*get_self(vm));
   auto arg = get_arg(vm, 0);
   if (!dict.val.count(arg))
     dict.val[arg] = gc::alloc<value::nil>( );
@@ -39,7 +39,7 @@ value::base* fn_dictionary_at(vm::machine& vm)
 
 value::base* fn_dictionary_set_at(vm::machine& vm)
 {
-  auto& dict = static_cast<value::dictionary&>(*vm.frame->self);
+  auto& dict = static_cast<value::dictionary&>(*get_self(vm));
   auto arg = get_arg(vm, 0);
   return dict.val[arg] = get_arg(vm, 1);
 }

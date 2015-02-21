@@ -1,5 +1,6 @@
 #include "builtins.h"
 
+#include "utils/lang.h"
 #include "value/builtin_function.h"
 
 using namespace vv;
@@ -11,7 +12,7 @@ namespace {
 
 value::base* fn_custom_type_parent(vm::machine& vm)
 {
-  return &static_cast<value::type&>(*vm.frame->self).parent;
+  return &static_cast<value::type&>(*get_self(vm)).parent;
 }
 
 // }}}

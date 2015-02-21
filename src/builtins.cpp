@@ -68,10 +68,13 @@ call_result transformed_range(vm::machine& vm, const F& inner)
 {
   return fake_for_loop(vm, [&](auto vm, auto* transform, auto* orig)
   {
-    vm.frame->pushed.push_back(orig);
+    vm.retval = orig;
+    vm.push();
+
     vm.retval = transform;
     vm.call(1);
     vm.run_cur_scope();
+
     auto completed = inner(orig, vm.retval);
     return call_result{ completed, vm.retval };
   });

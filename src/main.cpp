@@ -21,8 +21,6 @@ void repl_catcher(vv::vm::machine& vm)
   write_error("caught exception: " + vm.retval->value());
 
   // Clear out remaining instructions once the current line's borked
-  auto remaining = vm.frame->instr_ptr.size();
-  vm.frame->instr_ptr = vm.frame->instr_ptr.subvec(remaining);
   vm.retval = vv::gc::alloc<vv::value::nil>( );
 }
 
@@ -100,7 +98,6 @@ int main(int argc, char** argv)
     }
 
     auto base_frame = std::make_shared<vv::vm::call_frame>( tok_res.result() );
-    vv::gc::set_current_frame(base_frame);
 
     vv::builtin::make_base_env(*base_frame);
     auto arg_array = vv::gc::alloc<vv::value::array>( );

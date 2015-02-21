@@ -5,9 +5,9 @@
 
 using namespace vv;
 
-value::symbol::symbol(vv::symbol val)
+value::symbol::symbol(vv::symbol new_val)
   : base {&builtin::type::symbol},
-    val  {val}
+    val  {new_val}
 { }
 
 std::string value::symbol::value() const { return '\'' + to_string(val); }

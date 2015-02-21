@@ -14,6 +14,7 @@ value::base* throw_exception(const std::string& value);
 value::base* throw_exception(value::base* value);
 
 value::base* get_arg(vm::machine& vm, size_t idx);
+value::base* get_self(vm::machine& vm);
 
 value::base* find_method(value::type* type, symbol name);
 

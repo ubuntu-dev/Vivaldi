@@ -23,7 +23,7 @@ vv::symbol to_symbol(dumb_ptr<value::base> boxed)
 
 value::base* fn_symbol_init(vm::machine& vm)
 {
-  auto& sym = static_cast<value::symbol&>(*vm.frame->self);
+  auto& sym = static_cast<value::symbol&>(*get_self(vm));
   auto arg = get_arg(vm, 0);
   if (arg->type == &type::symbol)
     sym.val = to_symbol(arg);
@@ -40,7 +40,7 @@ value::base* fn_symbol_equals(vm::machine& vm)
 
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( false );
-  return gc::alloc<value::boolean>(to_symbol(vm.frame->self) == to_symbol(arg));
+  return gc::alloc<value::boolean>(to_symbol(get_self(vm)) == to_symbol(arg));
 }
 
 value::base* fn_symbol_unequal(vm::machine& vm)
@@ -49,7 +49,7 @@ value::base* fn_symbol_unequal(vm::machine& vm)
 
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( true );
-  return gc::alloc<value::boolean>(to_symbol(vm.frame->self) != to_symbol(arg));
+  return gc::alloc<value::boolean>(to_symbol(get_self(vm)) != to_symbol(arg));
 }
 
 // }}}
