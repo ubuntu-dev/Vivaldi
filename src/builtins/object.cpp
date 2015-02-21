@@ -21,7 +21,7 @@ value::base* fn_object_unequal(vm::machine& vm)
 
 value::base* fn_object_not(vm::machine& vm)
 {
-  return gc::alloc<value::boolean>( !truthy(&*vm.frame->self) );
+  return gc::alloc<value::boolean>( !truthy(vm.frame->self.get()) );
 }
 
 value::base* fn_object_type(vm::machine& vm)

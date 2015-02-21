@@ -21,7 +21,7 @@ value::base* fn_range_init(vm::machine& vm)
 
 value::base* fn_range_start(vm::machine& vm)
 {
-  return &*vm.frame->self;
+  return vm.frame->self.get();
 }
 
 value::base* fn_range_size(vm::machine& vm)

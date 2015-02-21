@@ -183,7 +183,7 @@ void vm::machine::self()
   while (cur_frame && !cur_frame->self)
     cur_frame = cur_frame->enclosing;
   if (cur_frame) {
-    retval = &*cur_frame->self;
+    retval = cur_frame->self.get();
   } else {
     push_str("self does not exist outside of objects");
     except();
@@ -202,7 +202,7 @@ void vm::machine::arg(int idx)
 
 void vm::machine::readm(symbol sym)
 {
-  frame->pushed_self = *retval;
+  frame->pushed_self = retval;
   if (retval->members.count(sym)) {
     retval = retval->members[sym];
     return;
@@ -240,7 +240,7 @@ void vm::machine::call(int argc)
     };
 
     frame = std::make_shared<call_frame>(fn->body, frame, fn->enclosure, argc);
-    frame->caller = *fn;
+    frame->caller = fn;
 
     gc::set_current_frame(frame);
 
@@ -254,7 +254,7 @@ void vm::machine::call(int argc)
     };
 
     frame = std::make_shared<call_frame>(frame->instr_ptr, frame, m_base, argc);
-    frame->caller = *fn;
+    frame->caller = fn;
 
     try {
       gc::set_current_frame(frame);
@@ -298,7 +298,7 @@ void vm::machine::new_obj(int argc)
   }
   retval->type = type;
 
-  frame->pushed_self = *retval;
+  frame->pushed_self = retval;
   push_fn(type->init_shim);
   call(argc);
 }
@@ -376,7 +376,7 @@ void vm::machine::jmp_true(int offset)
 
 void vm::machine::push_catch()
 {
-  frame->catcher = *retval;
+  frame->catcher = retval;
 }
 
 void vm::machine::pop_catch()
@@ -396,7 +396,7 @@ void vm::machine::except()
     frame->instr_ptr = frame->instr_ptr.subvec(frame->instr_ptr.size());
   } else {
     push_arg();
-    retval = &*frame->catcher;
+    retval = frame->catcher.get();
     pop_catch();
     call(1);
   }
@@ -489,7 +489,7 @@ void vm::machine::except_until(vm::call_frame* until)
 
   } else {
     push_arg();
-    retval = &*frame->catcher;
+    retval = frame->catcher.get();
     pop_catch();
     call(1);
   }

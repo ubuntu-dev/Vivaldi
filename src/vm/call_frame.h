@@ -5,9 +5,8 @@
 
 #include "symbol.h"
 #include "value.h"
+#include "utils/dumb_ptr.h"
 #include "utils/vector_ref.h"
-
-#include <boost/optional/optional.hpp>
 
 #include <unordered_map>
 
@@ -41,20 +40,20 @@ public:
   // Local variables
   std::vector<std::unordered_map<symbol, value::base*>> local;
   // self, if this is a method call
-  boost::optional<value::base&> self;
+  dumb_ptr<value::base> self;
 
   // Arguments to be passed in eventual function call, as well as temporaries
   std::vector<value::base*> pushed;
   // Number of function arguments --- stored in parent's pushed
   size_t args;
   // Self to be passed in eventual method call
-  boost::optional<value::base&> pushed_self;
+  dumb_ptr<value::base> pushed_self;
 
   // Catch expression provided by try...catch blocks
-  boost::optional<value::base&> catcher;
+  dumb_ptr<value::base> catcher;
   // Function from whom the current instruction pointer originates (stored here
   // solely to avoid GC'ing it)
-  boost::optional<value::base&> caller;
+  dumb_ptr<value::base> caller;
 
   // Current instruction pointer
   vector_ref<command> instr_ptr;

@@ -13,19 +13,19 @@ using namespace builtin;
 
 namespace {
 
-int to_int(value::base* boxed)
+int to_int(dumb_ptr<value::base> boxed)
 {
-  return static_cast<value::integer*>(boxed)->val;
+  return static_cast<value::integer&>(*boxed).val;
 }
 
-const std::string& to_string(const value::base* boxed)
+const std::string& to_string(dumb_ptr<value::base> boxed)
 {
-  return static_cast<const value::string*>(boxed)->val;
+  return static_cast<const value::string&>(*boxed).val;
 }
 
-vv::symbol to_symbol(const value::base* boxed)
+vv::symbol to_symbol(dumb_ptr<value::base> boxed)
 {
-  return static_cast<const value::symbol*>(boxed)->val;
+  return static_cast<const value::symbol&>(*boxed).val;
 }
 
 // string {{{
@@ -55,7 +55,7 @@ value::base* fn_string_equals(vm::machine& vm)
   if (arg->type != &type::string)
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>(
-      to_string(&*vm.frame->self) == to_string(arg) );
+      to_string(vm.frame->self) == to_string(arg) );
 }
 
 value::base* fn_string_unequal(vm::machine& vm)
@@ -63,8 +63,7 @@ value::base* fn_string_unequal(vm::machine& vm)
   auto arg = get_arg(vm, 0);
   if (arg->type != &type::string)
     return gc::alloc<value::boolean>( false );
-  return gc::alloc<value::boolean>(
-      to_string(&*vm.frame->self) != to_string(arg) );
+  return gc::alloc<value::boolean>(to_string(vm.frame->self) != to_string(arg));
 }
 
 value::base* fn_string_add(vm::machine& vm)
@@ -91,7 +90,7 @@ value::base* fn_string_times(vm::machine& vm)
 
 value::base* fn_string_to_int(vm::machine& vm)
 {
-  return gc::alloc<value::integer>( vv::to_int(to_string(&*vm.frame->self)) );
+  return gc::alloc<value::integer>(vv::to_int(to_string(vm.frame->self)));
 }
 
 value::base* fn_string_at(vm::machine& vm)
@@ -162,19 +161,19 @@ value::base* fn_string_ord(vm::machine& vm)
 
 value::base* fn_string_iterator_at_start(vm::machine& vm)
 {
-  auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
+  auto iter = static_cast<value::string_iterator*>(vm.frame->self.get());
   return gc::alloc<value::boolean>( iter->idx == 0 );
 }
 
 value::base* fn_string_iterator_at_end(vm::machine& vm)
 {
-  auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
+  auto iter = static_cast<value::string_iterator*>(vm.frame->self.get());
   return gc::alloc<value::boolean>( iter->idx == iter->str.val.size() );
 }
 
 value::base* fn_string_iterator_get(vm::machine& vm)
 {
-  auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
+  auto iter = static_cast<value::string_iterator*>(vm.frame->self.get());
   if (iter->idx == iter->str.val.size())
     return throw_exception("StringIterator is at end of string");
   return gc::alloc<value::string>( std::string{iter->str.val[iter->idx]} );
@@ -182,7 +181,7 @@ value::base* fn_string_iterator_get(vm::machine& vm)
 
 value::base* fn_string_iterator_increment(vm::machine& vm)
 {
-  auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
+  auto iter = static_cast<value::string_iterator*>(vm.frame->self.get());
   if (iter->idx == iter->str.val.size())
     return throw_exception("StringIterators cannot be incremented past end");
   iter->idx += 1;
@@ -191,7 +190,7 @@ value::base* fn_string_iterator_increment(vm::machine& vm)
 
 value::base* fn_string_iterator_decrement(vm::machine& vm)
 {
-  auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
+  auto iter = static_cast<value::string_iterator*>(vm.frame->self.get());
   if (iter->idx == 0)
     return throw_exception("StringIterators cannot be decremented past start");
   iter->idx -= 1;
@@ -200,7 +199,7 @@ value::base* fn_string_iterator_decrement(vm::machine& vm)
 
 value::base* fn_string_iterator_add(vm::machine& vm)
 {
-  auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
+  auto iter = static_cast<value::string_iterator*>(vm.frame->self.get());
   if (get_arg(vm, 0)->type != &type::integer)
     return throw_exception("Only numeric types can be added to StringIterators");
   auto offset = to_int(get_arg(vm, 0));
@@ -217,7 +216,7 @@ value::base* fn_string_iterator_add(vm::machine& vm)
 
 value::base* fn_string_iterator_subtract(vm::machine& vm)
 {
-  auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
+  auto iter = static_cast<value::string_iterator*>(vm.frame->self.get());
   if (get_arg(vm, 0)->type != &type::integer)
     return throw_exception("Only numeric types can be added to StringIterators");
   auto offset = to_int(get_arg(vm, 0));
@@ -234,7 +233,7 @@ value::base* fn_string_iterator_subtract(vm::machine& vm)
 
 value::base* fn_string_iterator_equals(vm::machine& vm)
 {
-  auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
+  auto iter = static_cast<value::string_iterator*>(vm.frame->self.get());
   auto other = static_cast<value::string_iterator*>(get_arg(vm, 0));
   return gc::alloc<value::boolean>( &iter->str == &other->str
                                   && iter->idx == other->idx );
@@ -242,7 +241,7 @@ value::base* fn_string_iterator_equals(vm::machine& vm)
 
 value::base* fn_string_iterator_unequal(vm::machine& vm)
 {
-  auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
+  auto iter = static_cast<value::string_iterator*>(vm.frame->self.get());
   auto other = static_cast<value::string_iterator*>(get_arg(vm, 0));
   return gc::alloc<value::boolean>( &iter->str != &other->str
                                   || iter->idx != other->idx );

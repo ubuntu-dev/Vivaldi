@@ -11,14 +11,14 @@ using namespace builtin;
 
 namespace {
 
-const std::string& to_string(const value::base* boxed)
+const std::string& to_string(dumb_ptr<value::base> boxed)
 {
-  return static_cast<const value::string*>(boxed)->val;
+  return static_cast<const value::string&>(*boxed).val;
 }
 
-vv::symbol to_symbol(const value::base* boxed)
+vv::symbol to_symbol(dumb_ptr<value::base> boxed)
 {
-  return static_cast<const value::symbol*>(boxed)->val;
+  return static_cast<const value::symbol&>(*boxed).val;
 }
 
 value::base* fn_symbol_init(vm::machine& vm)
@@ -40,7 +40,7 @@ value::base* fn_symbol_equals(vm::machine& vm)
 
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( false );
-  return gc::alloc<value::boolean>(to_symbol(&*vm.frame->self)==to_symbol(arg));
+  return gc::alloc<value::boolean>(to_symbol(vm.frame->self) == to_symbol(arg));
 }
 
 value::base* fn_symbol_unequal(vm::machine& vm)
@@ -49,7 +49,7 @@ value::base* fn_symbol_unequal(vm::machine& vm)
 
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( true );
-  return gc::alloc<value::boolean>(to_symbol(&*vm.frame->self)!=to_symbol(arg));
+  return gc::alloc<value::boolean>(to_symbol(vm.frame->self) != to_symbol(arg));
 }
 
 // }}}

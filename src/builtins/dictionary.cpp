@@ -14,7 +14,7 @@ namespace {
 
 value::base* fn_dictionary_init(vm::machine& vm)
 {
-  auto dict = static_cast<value::dictionary*>(&*vm.frame->self);
+  auto dict = static_cast<value::dictionary*>(vm.frame->self.get());
   auto arg = get_arg(vm, 0);
   if (arg->type != &type::dictionary)
     return throw_exception("Dictionaries can only be constructed from other Dictionaries");

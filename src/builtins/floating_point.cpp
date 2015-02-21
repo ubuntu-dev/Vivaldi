@@ -12,16 +12,16 @@ using value::builtin_function;
 
 namespace {
 
-bool is_float(value::base* boxed) noexcept
+bool is_float(dumb_ptr<value::base> boxed) noexcept
 {
   return boxed->type == &type::floating_point || boxed->type == &type::integer;
 }
 
-double to_float(value::base* boxed) noexcept
+double to_float(dumb_ptr<value::base> boxed) noexcept
 {
   if (boxed->type == &type::floating_point)
-    return static_cast<const value::floating_point*>(boxed)->val;
-  return static_cast<double>(static_cast<value::integer*>(boxed)->val);
+    return static_cast<const value::floating_point&>(*boxed).val;
+  return static_cast<double>(static_cast<value::integer&>(*boxed).val);
 }
 
 template <typename F>
@@ -31,7 +31,7 @@ auto fn_floating_point_op(const F& op)
   {
     if (!is_float(get_arg(vm, 0)))
       return throw_exception("Right-hand argument is not a Float");
-    return gc::alloc<value::floating_point>( op(to_float(&*vm.frame->self),
+    return gc::alloc<value::floating_point>( op(to_float(vm.frame->self),
                                                 to_float(get_arg(vm, 0))) );
   };
 }
@@ -43,7 +43,7 @@ auto fn_float_bool_op(const F& op)
   {
     if (!is_float(get_arg(vm, 0)))
       return throw_exception("Right-hand argument is not a Float");
-    return gc::alloc<value::boolean>( op(to_float(&*vm.frame->self),
+    return gc::alloc<value::boolean>( op(to_float(vm.frame->self),
                                          to_float(get_arg(vm, 0))) );
   };
 }
@@ -53,7 +53,7 @@ auto fn_floating_point_monop(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    return gc::alloc<value::floating_point>( op(to_float(&*vm.frame->self)) );
+    return gc::alloc<value::floating_point>( op(to_float(vm.frame->self)) );
   };
 }
 
@@ -63,7 +63,7 @@ value::base* fn_floating_point_divides(vm::machine& vm)
     return throw_exception("Right-hand argument is not a Float");
   if (to_float(get_arg(vm, 0)) == 0)
     return throw_exception("Cannot divide by zero");
-  return gc::alloc<value::floating_point>( to_float(&*vm.frame->self) /
+  return gc::alloc<value::floating_point>( to_float(vm.frame->self) /
                                            to_float(get_arg(vm, 0)) );
 }
 

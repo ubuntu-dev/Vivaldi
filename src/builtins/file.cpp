@@ -39,7 +39,7 @@ value::base* fn_file_contents(vm::machine& vm)
 
 value::base* fn_file_start(vm::machine& vm)
 {
-  return &*vm.frame->self;
+  return vm.frame->self.get();
 }
 
 value::base* fn_file_get(vm::machine& vm)

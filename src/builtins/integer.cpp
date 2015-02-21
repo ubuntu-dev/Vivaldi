@@ -13,14 +13,14 @@ using value::builtin_function;
 
 namespace {
 
-int to_int(value::base* boxed)
+int to_int(dumb_ptr<value::base> boxed)
 {
-  return static_cast<value::integer*>(boxed)->val;
+  return static_cast<value::integer&>(*boxed).val;
 }
 
-double to_float(value::base* boxed)
+double to_float(dumb_ptr<value::base> boxed)
 {
-  return static_cast<value::floating_point*>(boxed)->val;
+  return static_cast<value::floating_point&>(*boxed).val;
 }
 
 // Generic binop generators, if the operator doesn't require any special casing
@@ -30,7 +30,7 @@ auto fn_int_or_flt_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    auto left = to_int(&*vm.frame->self);
+    auto left = to_int(vm.frame->self);
     auto arg = get_arg(vm, 0);
     if (arg->type == &type::floating_point)
       return gc::alloc<value::floating_point>( op(left, to_float(arg)) );
@@ -48,7 +48,7 @@ auto fn_integer_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    auto left = to_int(&*vm.frame->self);
+    auto left = to_int(vm.frame->self);
     if (get_arg(vm, 0)->type != &type::integer)
       return throw_exception("Right-hand argument is not an Integer");
     auto right = to_int(get_arg(vm, 0));
@@ -62,7 +62,7 @@ auto fn_integer_monop(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    return gc::alloc<value::integer, int&&>( op(to_int(&*vm.frame->self)) );
+    return gc::alloc<value::integer, int&&>( op(to_int(vm.frame->self)) );
   };
 }
 
@@ -71,7 +71,7 @@ auto fn_int_to_flt_monop(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    return gc::alloc<value::floating_point>( op(to_int(&*vm.frame->self)) );
+    return gc::alloc<value::floating_point>( op(to_int(vm.frame->self)) );
   };
 }
 
@@ -83,14 +83,14 @@ auto fn_int_bool_op(const F& op)
 
     auto arg = get_arg(vm, 0);
     if (arg->type == &type::floating_point) {
-      auto left = to_int(&*vm.frame->self);
+      auto left = to_int(vm.frame->self);
       auto right = to_float(arg);
       return gc::alloc<value::boolean>( op(left, right) );
     }
     if (arg->type != &type::integer)
       return throw_exception("Right-hand argument is not an Integer");
 
-    auto left = to_int(&*vm.frame->self);
+    auto left = to_int(vm.frame->self);
     auto right = to_int(arg);
     return gc::alloc<value::boolean>( op(left, right) );
   };
@@ -98,7 +98,7 @@ auto fn_int_bool_op(const F& op)
 
 value::base* fn_integer_divides(vm::machine& vm)
 {
-  auto left = to_int(&*vm.frame->self);
+  auto left = to_int(vm.frame->self);
   auto arg = get_arg(vm, 0);
   if (arg->type == &type::floating_point) {
     if (to_float(arg) == 0.0)
@@ -117,14 +117,14 @@ bool boxed_integer_equal(vm::machine& vm)
 {
   auto arg = get_arg(vm, 0);
   if (arg->type == &type::floating_point) {
-    auto left = to_int(&*vm.frame->self);
+    auto left = to_int(vm.frame->self);
     auto right = to_float(arg);
     return left == right;
   }
   if (arg->type != &type::integer)
     return false;
 
-  auto left = to_int(&*vm.frame->self);
+  auto left = to_int(vm.frame->self);
   auto right = to_int(arg);
   return left == right;
 }
@@ -143,12 +143,12 @@ value::base* fn_integer_pow(vm::machine& vm)
 {
   auto arg = get_arg(vm, 0);
   if (arg->type == &type::floating_point) {
-    auto left = to_int(&*vm.frame->self);
+    auto left = to_int(vm.frame->self);
     auto right = to_float(arg);
     return gc::alloc<value::floating_point>( pow(left, right) );
   }
 
-  auto left = to_int(&*vm.frame->self);
+  auto left = to_int(vm.frame->self);
   if (arg->type != &type::integer)
     return throw_exception("Right-hand argument is not an Integer");
   auto right = to_int(arg);
@@ -160,7 +160,7 @@ value::base* fn_integer_pow(vm::machine& vm)
 
 value::base* fn_integer_chr(vm::machine& vm)
 {
-  auto self = to_int(&*vm.frame->self);
+  auto self = to_int(vm.frame->self);
   if (self < 0 || self > 255)
     return throw_exception("Chr can only be called on integers between 0 to 256");
   return gc::alloc<value::string>( std::string{static_cast<char>(self)} );
