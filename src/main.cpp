@@ -86,7 +86,6 @@ void run_repl()
 int main(int argc, char** argv)
 {
   vv::gc::init();
-  std::cerr << "!!" << sizeof(vv::vm::call_frame) << '\n';
 
   if (argc == 1) {
     run_repl();
