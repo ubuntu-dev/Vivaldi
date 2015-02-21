@@ -17,7 +17,7 @@ public:
   T* operator->() const { return m_ptr; }
 
   template <typename O>
-  operator dumb_ptr<O>() const { return static_cast<O>(m_ptr); }
+  operator dumb_ptr<O>() const { return static_cast<O*>(m_ptr); }
 
 private:
   T* m_ptr;
