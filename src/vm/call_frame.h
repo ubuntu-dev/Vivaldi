@@ -46,8 +46,6 @@ public:
   std::vector<value::base*> pushed;
   // Number of function arguments --- stored in parent's pushed
   size_t args;
-  // Self to be passed in eventual method call
-  dumb_ptr<value::base> pushed_self;
 
   // Catch expression provided by try...catch blocks
   dumb_ptr<value::base> catcher;

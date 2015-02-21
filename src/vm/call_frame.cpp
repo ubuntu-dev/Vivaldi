@@ -11,10 +11,7 @@ vm::call_frame::call_frame(vector_ref<command>         new_instr_ptr,
     local     {{}},
     args      {new_args},
     instr_ptr {new_instr_ptr}
-{
-  if (parent)
-    self = parent->pushed_self;
-}
+{ }
 
 void vm::mark(call_frame& frame)
 {
@@ -40,6 +37,4 @@ void vm::mark(call_frame& frame)
     frame.catcher->mark();
   if (frame.caller && !frame.caller->marked())
     frame.caller->mark();
-  if (frame.pushed_self && !frame.pushed_self->marked())
-    frame.pushed_self->mark();
 }

@@ -68,6 +68,8 @@ private:
 
   std::shared_ptr<call_frame> m_base;
   std::function<void(machine&)> m_exception_handler;
+
+  value::base* m_pushed_self;
 };
 
 }

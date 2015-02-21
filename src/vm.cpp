@@ -202,7 +202,7 @@ void vm::machine::arg(int idx)
 
 void vm::machine::readm(symbol sym)
 {
-  frame->pushed_self = retval;
+  m_pushed_self = retval;
   if (retval->members.count(sym)) {
     retval = retval->members[sym];
     return;
@@ -240,6 +240,7 @@ void vm::machine::call(int argc)
     };
 
     frame = std::make_shared<call_frame>(fn->body, frame, fn->enclosure, argc);
+    frame->self = m_pushed_self;
     frame->caller = fn;
 
     gc::set_current_frame(frame);
@@ -254,6 +255,7 @@ void vm::machine::call(int argc)
     };
 
     frame = std::make_shared<call_frame>(frame->instr_ptr, frame, m_base, argc);
+    frame->self = m_pushed_self;
     frame->caller = fn;
 
     try {
@@ -298,7 +300,7 @@ void vm::machine::new_obj(int argc)
   }
   retval->type = type;
 
-  frame->pushed_self = retval;
+  m_pushed_self = retval;
   push_fn(type->init_shim);
   call(argc);
 }
@@ -431,7 +433,7 @@ void vm::machine::run_single_command(const vm::command& command)
   //   5 + 1           // pushed self is now 5
   //   add(2)          // => 7
   if (instr != instruction::call)
-    frame->pushed_self = {};
+    m_pushed_self = nullptr;
 
   switch (instr) {
   case instruction::push_bool: push_bool(get<bool>(arg));       break;
