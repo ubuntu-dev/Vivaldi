@@ -1,0 +1,16 @@
+fn gcd(a,b): do
+   while b != 0: do
+     let t = b
+     b = a % b
+     a = t
+   end
+   a
+end
+
+if argv.size() != 2: do
+  puts("Expected two numbers as command-line argument")
+  quit()
+end
+let a = argv[0].to_int()
+let b = argv[1].to_int()
+puts(gcd(a,b))
