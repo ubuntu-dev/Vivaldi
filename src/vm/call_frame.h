@@ -14,18 +14,13 @@ namespace vv {
 
 namespace vm {
 
-// Vivaldi's call 'stack' is something vaguely like a cactus stack. It's
-// basically a singly-linked list (the "parent" pointer in the below
-// definition), but closures require their own frame pointer, so it ends up
-// being a strange sort of tree where each branch connects back to the trunk at
-// some point. The only way I've figured out how to memory-manage this
-// ridiculous data structure is via reference counting, hence all the
-// shared_ptr's below. Unsurprisingly, using this system, the majority of
-// execution time is spent allocating or deallocating stack frames. If a better
-// approach to closures presents itself, I'll jump on it.
+// Vivaldi's call 'stack' is very loosely based on Python's; it consists of a
+// vector of shared_ptr<call_frame>'s (as defined below). Obviously this is
+// pretty much worse in every respect than just a vector<call_frame>, but
+// closures mess this up by possibly requiring access to frames no longer on the
+// call stack. This approach is pretty slow, but unless a better means of
+// managing closures presents iteslf we're stuck with it.
 
-// TODO: simplify radically; a lot of stuff in here is either redundant,
-// inefficient, or just exists as a hack to prevent GC'ing the wrong things
 class call_frame {
 public:
   call_frame(vector_ref<command>         instr_ptr = {},
