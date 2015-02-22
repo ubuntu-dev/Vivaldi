@@ -122,20 +122,24 @@ value::base* fn_gets(vm::machine&)
 
 value::base* fn_filter(vm::machine& vm)
 {
-  // Get pointer to empty Array
   vm.make_arr(0);
-  vm.push(); // Avoid GC'ing retval of inactive VM
-  auto filtered = static_cast<value::array*>(vm.retval);
+  auto array = static_cast<value::array*>(vm.retval);
+  vm.push(); // store array locally
 
-  transformed_range(vm, [&](auto* cand, auto* pred)
-                           {
-                             if (truthy(pred))
-                               filtered->val.push_back(cand);
-                             return false;
-                           });
+  fake_for_loop(vm, [array](auto& vm, auto* pred_fn, auto* item)
+  {
+    vm.retval = item;
+    vm.push_arg();
+    vm.retval = pred_fn;
+    vm.call(1);
+    vm.run_cur_scope();
+    if (truthy(vm.retval))
+      array->val.push_back(item);
+    return call_result{ false, nullptr };
+  });
 
-  vm.pop(); // filtered
-  return filtered;
+  vm.pop(); // array
+  return vm.retval;
 }
 
 value::base* fn_map(vm::machine& vm)
