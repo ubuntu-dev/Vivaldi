@@ -29,12 +29,9 @@ namespace vm {
 class call_frame {
 public:
   call_frame(vector_ref<command>         instr_ptr = {},
-             std::shared_ptr<call_frame> parent    = nullptr,
              std::shared_ptr<call_frame> enclosing = nullptr,
              size_t                      args      = 0);
 
-  // Frame from which current function was called
-  const std::shared_ptr<call_frame> parent;
   // Frame in which current function (ie closure) was defined
   const std::shared_ptr<call_frame> enclosing;
   // Local variables

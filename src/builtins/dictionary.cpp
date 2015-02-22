@@ -14,8 +14,10 @@ namespace {
 
 value::base* fn_dictionary_init(vm::machine& vm)
 {
-  auto dict = static_cast<value::dictionary*>(get_self(vm));
-  auto arg = get_arg(vm, 0);
+  vm.self();
+  auto dict = static_cast<value::dictionary*>(vm.retval);
+  vm.arg(0);
+  auto arg = vm.retval;
   if (arg->type != &type::dictionary)
     return throw_exception("Dictionaries can only be constructed from other Dictionaries");
   dict->val = static_cast<value::dictionary*>( arg )->val;
@@ -24,14 +26,17 @@ value::base* fn_dictionary_init(vm::machine& vm)
 
 value::base* fn_dictionary_size(vm::machine& vm)
 {
-  auto sz = static_cast<value::dictionary&>(*get_self(vm)).val.size();
+  vm.self();
+  auto sz = static_cast<value::dictionary&>(*vm.retval).val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
 value::base* fn_dictionary_at(vm::machine& vm)
 {
-  auto& dict = static_cast<value::dictionary&>(*get_self(vm));
-  auto arg = get_arg(vm, 0);
+  vm.self();
+  auto& dict = static_cast<value::dictionary&>(*vm.retval);
+  vm.arg(0);
+  auto arg = vm.retval;
   if (!dict.val.count(arg))
     dict.val[arg] = gc::alloc<value::nil>( );
   return dict.val[arg];
@@ -39,9 +44,12 @@ value::base* fn_dictionary_at(vm::machine& vm)
 
 value::base* fn_dictionary_set_at(vm::machine& vm)
 {
-  auto& dict = static_cast<value::dictionary&>(*get_self(vm));
-  auto arg = get_arg(vm, 0);
-  return dict.val[arg] = get_arg(vm, 1);
+  vm.self();
+  auto& dict = static_cast<value::dictionary&>(*vm.retval);
+  vm.arg(0);
+  auto arg = vm.retval;
+  vm.arg(1);
+  return dict.val[arg] = vm.retval;
 }
 
 // }}}

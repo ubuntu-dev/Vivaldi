@@ -15,3 +15,10 @@ value::function::function(int new_argc,
 { }
 
 std::string value::function::value() const { return "<function>"; }
+
+void value::function::mark()
+{
+  base::mark();
+  if (enclosure)
+    vm::mark(*enclosure);
+}

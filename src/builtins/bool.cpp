@@ -12,10 +12,10 @@ namespace {
 
 value::base* fn_bool_init(vm::machine& vm)
 {
-  auto arg = get_arg(vm, 0);
-  if (arg->type == &type::boolean)
-    return arg;
-  return gc::alloc<value::boolean>( truthy(arg) );
+  vm.arg(0);
+  if (vm.retval->type == &type::boolean)
+    return vm.retval;
+  return gc::alloc<value::boolean>( truthy(vm.retval) );
 }
 
 value::builtin_function bool_init {fn_bool_init, 1};

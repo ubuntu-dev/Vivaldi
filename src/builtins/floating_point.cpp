@@ -29,10 +29,13 @@ auto fn_floating_point_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    if (!is_float(get_arg(vm, 0)))
+    vm.self();
+    auto self = vm.retval;
+    vm.arg(0);
+    auto other = vm.retval;
+    if (!is_float(other))
       return throw_exception("Right-hand argument is not a Float");
-    return gc::alloc<value::floating_point>( op(to_float(get_self(vm)),
-                                                to_float(get_arg(vm, 0))) );
+    return gc::alloc<value::floating_point>(op(to_float(self), to_float(other)));
   };
 }
 
@@ -41,10 +44,13 @@ auto fn_float_bool_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    if (!is_float(get_arg(vm, 0)))
+    vm.self();
+    auto self = vm.retval;
+    vm.arg(0);
+    auto other = vm.retval;
+    if (!is_float(other))
       return throw_exception("Right-hand argument is not a Float");
-    return gc::alloc<value::boolean>( op(to_float(get_self(vm)),
-                                         to_float(get_arg(vm, 0))) );
+    return gc::alloc<value::boolean>( op(to_float(self), to_float(other)) );
   };
 }
 
@@ -53,18 +59,22 @@ auto fn_floating_point_monop(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    return gc::alloc<value::floating_point>( op(to_float(get_self(vm))) );
+    vm.self();
+    return gc::alloc<value::floating_point>( op(to_float(vm.retval)) );
   };
 }
 
 value::base* fn_floating_point_divides(vm::machine& vm)
 {
-  if (!is_float(get_arg(vm, 0)))
+  vm.self();
+  auto self = vm.retval;
+  vm.arg(0);
+  auto other = vm.retval;
+  if (!is_float(other))
     return throw_exception("Right-hand argument is not a Float");
-  if (to_float(get_arg(vm, 0)) == 0)
+  if (to_float(other) == 0)
     return throw_exception("Cannot divide by zero");
-  return gc::alloc<value::floating_point>( to_float(get_self(vm)) /
-                                           to_float(get_arg(vm, 0)) );
+  return gc::alloc<value::floating_point>( to_float(self) / to_float(other) );
 }
 
 builtin_function flt_add      {fn_floating_point_op(std::plus<double>{}),       1};

@@ -43,21 +43,28 @@ template <typename F>
 call_result fake_for_loop(vm::machine& vm, const F& inner)
 {
   // Get iterator from range
-  auto range = get_arg(vm, 0);
+  vm.arg(0);
+  auto range = vm.retval;
   auto iter = call_method(vm, range, {"start"}).value;
+  vm.push();
 
-  auto supplied_fn = get_arg(vm, 1);
+  vm.arg(1);
+  auto supplied_fn = vm.retval;
 
   for (;;) {
     auto at_end = call_method(vm, iter, {"at_end"}).value;
-    if (truthy(at_end))
+    if (truthy(at_end)) {
+      vm.pop(); // iter
       return { true, at_end };
+    }
 
     auto next_item = call_method(vm, iter, {"get"}).value;
 
     auto res = inner(vm, supplied_fn, next_item);
-    if (res.completed)
+    if (res.completed) {
+      vm.pop(); // iter
       return res;
+    }
 
     call_method(vm, iter, {"increment"});
   }
@@ -85,7 +92,8 @@ call_result transformed_range(vm::machine& vm, const F& inner)
 
 value::base* fn_print(vm::machine& vm)
 {
-  auto arg = get_arg(vm, 0);
+  vm.arg(0);
+  auto arg = vm.retval;
 
   if (arg->type == &type::string)
     std::cout << static_cast<value::string*>(arg)->val;
@@ -171,12 +179,14 @@ value::base* fn_any(vm::machine& vm)
 value::base* fn_reduce(vm::machine& vm)
 {
   // Get iterator from range
-  auto range = get_arg(vm, 0);
+  vm.arg(0);
+  auto range = vm.retval;
   auto iter = call_method(vm, range, {"start"}).value;
 
   vm.arg(1);
   vm.push(); // store total locally
-  auto supplied_fn = get_arg(vm, 2);
+  vm.arg(2);
+  auto supplied_fn = vm.retval;
 
   for (;;) {
     auto at_end = call_method(vm, iter, {"at_end"}).value;

@@ -13,20 +13,25 @@ namespace {
 
 value::base* fn_range_init(vm::machine& vm)
 {
-  auto& rng = static_cast<value::range&>(*get_self(vm));
-  rng.end = get_arg(vm, 1);
-  rng.start = get_arg(vm, 0);
+  vm.self();
+  auto& rng = static_cast<value::range&>(*vm.retval);
+  vm.arg(1);
+  rng.end = vm.retval;
+  vm.arg(0);
+  rng.start = vm.retval;
   return &rng;
 }
 
 value::base* fn_range_start(vm::machine& vm)
 {
-  return get_self(vm);
+  vm.self();
+  return vm.retval;
 }
 
 value::base* fn_range_size(vm::machine& vm)
 {
-  auto& rng = static_cast<value::range&>(*get_self(vm));
+  vm.self();
+  auto& rng = static_cast<value::range&>(*vm.retval);
   vm.retval = rng.start;
   vm.push_arg();
   vm.retval = rng.end;
@@ -38,7 +43,8 @@ value::base* fn_range_size(vm::machine& vm)
 
 value::base* fn_range_at_end(vm::machine& vm)
 {
-  auto& rng = static_cast<value::range&>(*get_self(vm));
+  vm.self();
+  auto& rng = static_cast<value::range&>(*vm.retval);
   vm.retval = rng.start;
   vm.push_arg();
   vm.retval = rng.end;
@@ -53,12 +59,14 @@ value::base* fn_range_at_end(vm::machine& vm)
 
 value::base* fn_range_get(vm::machine& vm)
 {
-  return static_cast<value::range&>(*get_self(vm)).start;
+  vm.self();
+  return static_cast<value::range&>(*vm.retval).start;
 }
 
 value::base* fn_range_increment(vm::machine& vm)
 {
-  auto& rng = static_cast<value::range&>(*get_self(vm));
+  vm.self();
+  auto& rng = static_cast<value::range&>(*vm.retval);
   vm.push_int(1);
   vm.push_arg();
   vm.retval = rng.start;
@@ -71,7 +79,8 @@ value::base* fn_range_increment(vm::machine& vm)
 
 value::base* fn_range_to_arr(vm::machine& vm)
 {
-  auto& rng = static_cast<value::range&>(*get_self(vm));
+  vm.self();
+  auto& rng = static_cast<value::range&>(*vm.retval);
   std::vector<value::base*> vals;
   auto iter = vm.retval = rng.start;
   for (;;) {

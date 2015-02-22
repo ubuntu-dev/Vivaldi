@@ -97,7 +97,10 @@ int main(int argc, char** argv)
       return 64; // bad usage
     }
 
+    auto excepted = false;
+
     auto base_frame = std::make_shared<vv::vm::call_frame>( tok_res.result() );
+    vv::vm::machine vm{base_frame, [&](auto&){ excepted = true; }};
 
     vv::builtin::make_base_env(*base_frame);
     auto arg_array = vv::gc::alloc<vv::value::array>( );
@@ -106,9 +109,6 @@ int main(int argc, char** argv)
     auto cast_argv = static_cast<vv::value::array*>( arg_array );
     transform(argv + 2, argv + argc, back_inserter(cast_argv->val),
               vv::gc::alloc<vv::value::string, std::string>);
-
-    auto excepted = false;
-    vv::vm::machine vm{base_frame, [&](auto&){ excepted = true; }};
 
     vm.run();
 

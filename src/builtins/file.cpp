@@ -16,10 +16,12 @@ namespace {
 
 value::base* fn_file_init(vm::machine& vm)
 {
-  auto arg = get_arg(vm, 0);
+  vm.arg(0);
+  auto arg = vm.retval;
   if (arg->type != &type::string)
     return throw_exception("Files can only be constructed from Strings");
-  auto& self = static_cast<value::file&>(*get_self(vm));
+  vm.self();
+  auto& self = static_cast<value::file&>(*vm.retval);
   const auto& filename = static_cast<value::string*>(arg)->val;
   self.val = std::fstream{filename};
   self.name = filename;
@@ -29,7 +31,8 @@ value::base* fn_file_init(vm::machine& vm)
 
 value::base* fn_file_contents(vm::machine& vm)
 {
-  auto& self = static_cast<value::file&>(*get_self(vm));
+  vm.self();
+  auto& self = static_cast<value::file&>(*vm.retval);
   std::ostringstream str_stream;
   str_stream << self.cur_line;
   str_stream << self.val.rdbuf();
@@ -39,18 +42,21 @@ value::base* fn_file_contents(vm::machine& vm)
 
 value::base* fn_file_start(vm::machine& vm)
 {
-  return get_self(vm);
+  vm.self();
+  return vm.retval;
 }
 
 value::base* fn_file_get(vm::machine& vm)
 {
-  const auto& self = static_cast<value::file&>(*get_self(vm));
+  vm.self();
+  const auto& self = static_cast<value::file&>(*vm.retval);
   return gc::alloc<value::string>( self.cur_line );
 }
 
 value::base* fn_file_increment(vm::machine& vm)
 {
-  auto& self = static_cast<value::file&>(*get_self(vm));
+  vm.self();
+  auto& self = static_cast<value::file&>(*vm.retval);
   if (self.val.peek() == EOF)
     return throw_exception("Cannot read past end of File");
   std::getline(self.val, self.cur_line);
@@ -59,7 +65,8 @@ value::base* fn_file_increment(vm::machine& vm)
 
 value::base* fn_file_at_end(vm::machine& vm)
 {
-  auto& self = static_cast<value::file&>(*get_self(vm));
+  vm.self();
+  auto& self = static_cast<value::file&>(*vm.retval);
   return gc::alloc<value::boolean>(self.val.peek() == EOF && !self.cur_line.size());
 }
 

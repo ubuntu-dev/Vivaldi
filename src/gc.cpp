@@ -12,15 +12,13 @@ std::array<value::integer, 1024> gc::internal::g_ints;
 
 namespace {
 
-std::shared_ptr<vm::call_frame> g_frame{nullptr};
 std::vector<value::base*> g_vals;
-value::base* g_retval;
+vm::machine* g_vm;
 
 void mark()
 {
-  mark(*g_frame);
-  if (g_retval && !g_retval->marked())
-    g_retval->mark();
+  if (g_vm)
+    g_vm->mark();
 }
 
 void sweep()
@@ -53,14 +51,9 @@ value::base* gc::internal::emplace(value::base* val)
   return val;
 }
 
-void gc::set_current_frame(std::shared_ptr<vm::call_frame> frame)
+void gc::set_running_vm(vm::machine& vm)
 {
-  g_frame = frame;
-}
-
-void gc::set_current_retval(value::base* retval)
-{
-  g_retval = retval;
+  g_vm = &vm;
 }
 
 void gc::init()

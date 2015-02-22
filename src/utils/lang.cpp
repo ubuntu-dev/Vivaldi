@@ -27,16 +27,6 @@ vv::value::base* vv::throw_exception(value::base* value)
   throw vm_error{value};
 }
 
-vv::value::base* vv::get_arg(vm::machine& vm, size_t idx)
-{
-  return *(end(vm.frame->parent->pushed) - vm.frame->args + idx);
-}
-
-vv::value::base* vv::get_self(vm::machine& vm)
-{
-  return vm.frame->self.get();
-}
-
 vv::value::base* vv::find_method(value::type* type, symbol name)
 {
   while (&type->parent != type && !type->methods.count(name))

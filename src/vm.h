@@ -15,6 +15,8 @@ public:
   void run();
   void run_cur_scope();
 
+  void mark();
+
   void push_bool(bool val);
   void push_flt(double val);
   void push_fn(const function_t& val);
@@ -58,7 +60,6 @@ public:
 
   void chdir(const std::string& new_dir);
 
-  std::shared_ptr<call_frame> frame;
   value::base* retval;
 
 private:
@@ -66,7 +67,11 @@ private:
 
   void except_until(call_frame* frame);
 
-  std::shared_ptr<call_frame> m_base;
+  call_frame* frame();
+  call_frame* parent();
+
+  //std::shared_ptr<call_frame> m_base;
+  std::vector<std::shared_ptr<call_frame>> m_call_stack;
   std::function<void(machine&)> m_exception_handler;
 
   value::base* m_pushed_self;

@@ -15,6 +15,7 @@ struct function : public base {
            std::shared_ptr<vm::call_frame> enclosure);
 
   std::string value() const override;
+  void mark() override;
 
   int argc;
   std::vector<vm::command> body;

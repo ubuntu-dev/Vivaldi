@@ -25,37 +25,35 @@ using namespace vv;
 
 vm::machine::machine(std::shared_ptr<call_frame> frame,
                      const std::function<void(vm::machine&)>& exception_handler)
-  : frame               {frame},
-    retval              {nullptr},
-    m_base              {frame},
+  : retval              {nullptr},
+    m_call_stack        {frame},
     m_exception_handler {exception_handler}
 {
-  gc::set_current_frame(frame);
-  gc::set_current_retval(retval);
+  gc::set_running_vm(*this);
 }
 
 void vm::machine::run()
 {
-  while (frame->instr_ptr.size()) {
+  while (frame()->instr_ptr.size()) {
     // Get next instruction (and argument, if it exists), and increment the
     // instruction pointer
-    auto command = frame->instr_ptr.front();
-    frame->instr_ptr = frame->instr_ptr.subvec(1);
+    auto command = frame()->instr_ptr.front();
+    frame()->instr_ptr = frame()->instr_ptr.subvec(1);
     run_single_command(command);
   }
 }
 
 void vm::machine::run_cur_scope()
 {
-  auto* exit_scope = frame.get();
+  auto* exit_scope = frame();
 
-  while (frame->instr_ptr.size()) {
+  while (frame()->instr_ptr.size()) {
     // Get next instruction (and argument, if it exists), and increment the
     // instruction pointer
-    auto command = frame->instr_ptr.front();
-    frame->instr_ptr = frame->instr_ptr.subvec(1);
+    auto command = frame()->instr_ptr.front();
+    frame()->instr_ptr = frame()->instr_ptr.subvec(1);
 
-    if (command.instr == vm::instruction::ret && frame.get() == exit_scope) {
+    if (command.instr == vm::instruction::ret && frame() == exit_scope) {
       ret(boost::get<bool>(command.arg));
       return;
     } else if (command.instr == vm::instruction::except) {
@@ -64,6 +62,16 @@ void vm::machine::run_cur_scope()
       run_single_command(command);
     }
   }
+}
+
+void vm::machine::mark()
+{
+  for (auto& i : m_call_stack)
+    vm::mark(*i);
+  if (retval && !retval->marked())
+    retval->mark();
+  if (m_pushed_self && !m_pushed_self->marked())
+    m_pushed_self->mark();
 }
 
 // Instruction implementations {{{
@@ -80,7 +88,7 @@ void vm::machine::push_flt(double val)
 
 void vm::machine::push_fn(const function_t& val)
 {
-  retval = gc::alloc<value::function>( val.argc, val.body, frame );
+  retval = gc::alloc<value::function>( val.argc, val.body, m_call_stack.back() );
 }
 
 void vm::machine::push_int(int val)
@@ -118,31 +126,31 @@ void vm::machine::push_type(const type_t& type)
   retval = gc::alloc<value::type>( nullptr, methods, *parent, type.name );
 
   // Clear pushed arguments without touching retval
-  frame->pushed.erase(end(frame->pushed) - methods.size() - 1,
-                      end(frame->pushed));
+  frame()->pushed.erase(end(frame()->pushed) - methods.size() - 1,
+                        end(frame()->pushed));
   let(type.name);
 }
 
 void vm::machine::make_arr(int size)
 {
-  std::vector<value::base*> args{end(frame->pushed) - size, end(frame->pushed)};
+  std::vector<value::base*> args{end(frame()->pushed) - size, end(frame()->pushed)};
   retval = gc::alloc<value::array>( args );
-  frame->pushed.erase(end(frame->pushed) - size, end(frame->pushed));
+  frame()->pushed.erase(end(frame()->pushed) - size, end(frame()->pushed));
 }
 
 void vm::machine::make_dict(int size)
 {
   std::unordered_map<value::base*, value::base*> dict;
-  for (auto i = end(frame->pushed) - size; i != end(frame->pushed); i += 2) {
+  for (auto i = end(frame()->pushed) - size; i != end(frame()->pushed); i += 2) {
     dict[i[0]] = i[1];
   }
   retval = gc::alloc<value::dictionary>( dict );
-  frame->pushed.erase(end(frame->pushed) - size, end(frame->pushed));
+  frame()->pushed.erase(end(frame()->pushed) - size, end(frame()->pushed));
 }
 
 void vm::machine::read(symbol sym)
 {
-  auto cur_frame = frame;
+  auto cur_frame = frame();
   while (cur_frame) {
     auto holder = find_if(rbegin(cur_frame->local), rend(cur_frame->local),
                           [&](const auto& vars) { return vars.count(sym); });
@@ -150,7 +158,7 @@ void vm::machine::read(symbol sym)
       retval = holder->at(sym);
       return;
     }
-    cur_frame = cur_frame->enclosing;
+    cur_frame = cur_frame->enclosing.get();
   }
   push_str("no such variable: " + to_string(sym));
   except();
@@ -158,7 +166,7 @@ void vm::machine::read(symbol sym)
 
 void vm::machine::write(symbol sym)
 {
-  auto cur_frame = frame;
+  auto cur_frame = frame();
   while (cur_frame) {
     auto holder = find_if(rbegin(cur_frame->local), rend(cur_frame->local),
                           [&](const auto& vars) { return vars.count(sym); });
@@ -166,7 +174,7 @@ void vm::machine::write(symbol sym)
       holder->at(sym) = retval;
       return;
     }
-    cur_frame = cur_frame->enclosing;
+    cur_frame = cur_frame->enclosing.get();
   }
   push_str("no such variable: " + to_string(sym));
   except();
@@ -174,30 +182,35 @@ void vm::machine::write(symbol sym)
 
 void vm::machine::let(symbol sym)
 {
-  frame->local.back()[sym] = retval;
+  frame()->local.back()[sym] = retval;
 }
 
 void vm::machine::self()
 {
-  auto cur_frame = frame;
+  auto cur_frame = frame();
   while (cur_frame && !cur_frame->self)
-    cur_frame = cur_frame->enclosing;
+    cur_frame = cur_frame->enclosing.get();
   if (cur_frame) {
     retval = cur_frame->self.get();
   } else {
     push_str("self does not exist outside of objects");
     except();
   }
+  assert(retval != nullptr);
+  //if (retval->type != &builtin::type::range) assert(retval->value().size() > 0);
 }
 
 void vm::machine::push_arg()
 {
-  frame->pushed.push_back(retval);
+  frame()->pushed.push_back(retval);
 }
 
 void vm::machine::arg(int idx)
 {
-  retval = get_arg(*this, idx);
+  const auto parent = end(m_call_stack)[-2].get();
+  const auto argc = m_call_stack.back()->args;
+  retval = *(end(parent->pushed) - argc + idx);
+  assert(retval != nullptr);
 }
 
 void vm::machine::readm(symbol sym)
@@ -219,8 +232,8 @@ void vm::machine::readm(symbol sym)
 
 void vm::machine::writem(symbol sym)
 {
-  auto value = frame->pushed.back();
-  frame->pushed.pop_back();
+  auto value = frame()->pushed.back();
+  frame()->pushed.pop_back();
 
   retval->members[sym] = value;
   retval = value;
@@ -239,11 +252,9 @@ void vm::machine::call(int argc)
       return;
     };
 
-    frame = std::make_shared<call_frame>(fn->body, frame, fn->enclosure, argc);
-    frame->self = m_pushed_self;
-    frame->caller = fn;
-
-    gc::set_current_frame(frame);
+    m_call_stack.push_back(std::make_shared<call_frame>(fn->body, fn->enclosure, argc));
+    frame()->self = m_pushed_self;
+    frame()->caller = fn;
 
   } else if (auto fn = dynamic_cast<value::builtin_function*>(retval)) {
     if (argc != fn->argc) {
@@ -254,14 +265,12 @@ void vm::machine::call(int argc)
       return;
     };
 
-    frame = std::make_shared<call_frame>(frame->instr_ptr, frame, m_base, argc);
-    frame->self = m_pushed_self;
-    frame->caller = fn;
+    m_call_stack.push_back(std::make_shared<call_frame>( com, nullptr, argc ));
+    frame()->self = m_pushed_self;
+    frame()->caller = fn;
 
     try {
-      gc::set_current_frame(frame);
       retval = fn->body(*this);
-      frame->instr_ptr = com;
     } catch (const vm_error& err) {
       retval = err.error();
       except();
@@ -307,26 +316,25 @@ void vm::machine::new_obj(int argc)
 
 void vm::machine::eblk()
 {
-  frame->local.emplace_back();
+  frame()->local.emplace_back();
 }
 
 void vm::machine::lblk()
 {
-  frame->local.pop_back();
+  frame()->local.pop_back();
 }
 
 void vm::machine::ret(bool copy)
 {
-  if (frame->parent) {
-    frame->parent->pushed.erase(end(frame->parent->pushed) - frame->args,
-                                end(frame->parent->pushed));
+  if (m_call_stack.size() > 1) {
+    auto parent = end(m_call_stack)[-2].get();
+    parent->pushed.erase(end(parent->pushed) - frame()->args, end(parent->pushed));
     if (copy) {
-      for (const auto& i : frame->local)
+      for (const auto& i : frame()->local)
         for (const auto& var : i)
-          frame->parent->local.back()[var.first] = var.second;
+          parent->local.back()[var.first] = var.second;
     }
-    frame = frame->parent;
-    gc::set_current_frame(frame);
+    m_call_stack.pop_back();
   } else {
     push_str("The top-level environment can't be returned from");
     except();
@@ -335,13 +343,13 @@ void vm::machine::ret(bool copy)
 
 void vm::machine::push()
 {
-  frame->pushed.push_back(retval);
+  frame()->pushed.push_back(retval);
 }
 
 void vm::machine::pop()
 {
-  retval = frame->pushed.back();
-  frame->pushed.pop_back();
+  retval = frame()->pushed.back();
+  frame()->pushed.pop_back();
 }
 
 void vm::machine::req(const std::string& filename)
@@ -361,7 +369,7 @@ void vm::machine::req(const std::string& filename)
 
 void vm::machine::jmp(int offset)
 {
-  frame->instr_ptr = frame->instr_ptr.shifted_by(offset - 1);
+  frame()->instr_ptr = frame()->instr_ptr.shifted_by(offset - 1);
 }
 
 void vm::machine::jmp_false(int offset)
@@ -378,27 +386,27 @@ void vm::machine::jmp_true(int offset)
 
 void vm::machine::push_catch()
 {
-  frame->catcher = retval;
+  frame()->catcher = retval;
 }
 
 void vm::machine::pop_catch()
 {
-  frame->catcher = {};
+  frame()->catcher = {};
 }
 
 void vm::machine::except()
 {
-  while (frame->parent && !frame->catcher)
-    frame = frame->parent;
+  while (m_call_stack.size() > 1 &&  !frame()->catcher)
+    m_call_stack.pop_back();
 
-  if (!frame->catcher) {
+  if (!frame()->catcher) {
     m_exception_handler(*this);
     // If we're still here, stop executing code since obviously some invariant's
     // broken
-    frame->instr_ptr = frame->instr_ptr.subvec(frame->instr_ptr.size());
+    frame()->instr_ptr = frame()->instr_ptr.subvec(frame()->instr_ptr.size());
   } else {
     push_arg();
-    retval = frame->catcher.get();
+    retval = frame()->catcher.get();
     pop_catch();
     call(1);
   }
@@ -409,15 +417,7 @@ void vm::machine::chdir(const std::string& dir)
   boost::filesystem::current_path(dir);
 }
 
-size_t depth(vm::call_frame* frame)
-{
-  size_t depth{0};
-  while (frame->parent) {
-    ++depth;
-    frame = frame->parent.get();
-  }
-  return depth;
-}
+// }}}
 
 void vm::machine::run_single_command(const vm::command& command)
 {
@@ -483,18 +483,21 @@ void vm::machine::run_single_command(const vm::command& command)
 
 void vm::machine::except_until(vm::call_frame* until)
 {
-  while (frame.get() != until && !frame->catcher)
-    frame = frame->parent;
+  while (frame() != until && !frame()->catcher)
+    m_call_stack.pop_back();
 
-  if (!frame->catcher) {
+  if (!frame()->catcher) {
     throw vm_error{retval};
 
   } else {
     push_arg();
-    retval = frame->catcher.get();
+    retval = frame()->catcher.get();
     pop_catch();
     call(1);
   }
 }
 
-// }}}
+vm::call_frame* vm::machine::frame()
+{
+  return m_call_stack.back().get();
+}

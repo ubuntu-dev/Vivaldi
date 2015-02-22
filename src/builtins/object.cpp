@@ -11,22 +11,32 @@ namespace {
 
 value::base* fn_object_equals(vm::machine& vm)
 {
-  return gc::alloc<value::boolean>( get_self(vm)->equals(*get_arg(vm, 0)) );
+  vm.self();
+  auto self = vm.retval;
+  vm.arg(0);
+  auto other = vm.retval;
+  return gc::alloc<value::boolean>( self->equals(*other) );
 }
 
 value::base* fn_object_unequal(vm::machine& vm)
 {
-  return gc::alloc<value::boolean>( !get_self(vm)->equals(*get_arg(vm, 0)) );
+  vm.self();
+  auto self = vm.retval;
+  vm.arg(0);
+  auto other = vm.retval;
+  return gc::alloc<value::boolean>( !self->equals(*other) );
 }
 
 value::base* fn_object_not(vm::machine& vm)
 {
-  return gc::alloc<value::boolean>( !truthy(get_self(vm)) );
+  vm.self();
+  return gc::alloc<value::boolean>( !truthy(vm.retval) );
 }
 
 value::base* fn_object_type(vm::machine& vm)
 {
-  return get_self(vm)->type;
+  vm.self();
+  return vm.retval->type;
 }
 
 value::builtin_function obj_equals  {fn_object_equals,  1};
