@@ -58,7 +58,7 @@ extern value::type range;
 
 }
 
-void make_base_env(vm::call_frame& base);
+void make_base_env(vm::environment& base);
 
 }
 

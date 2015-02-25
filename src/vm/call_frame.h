@@ -14,42 +14,36 @@ namespace vv {
 
 namespace vm {
 
-/*
 class environment {
 public:
-  environment(std::shared_ptr<environment> enclosing = nullptr);
+  environment(const std::shared_ptr<environment>& enclosing = nullptr,
+              value::base* self                             = nullptr);
 
   // Frame in which current function (ie closure) was defined
   const std::shared_ptr<environment> enclosing;
   // Local variables
+  std::unordered_map<symbol, value::base*> local;
   // self, if this is a method call
+  dumb_ptr<value::base> self;
 };
-*/
 
-//void mark(environment& env);
+void mark(environment& env);
 
-struct call_frame : public value::base {
-  const static size_t npos{std::numeric_limits<size_t>::max()};
-
-  call_frame(vector_ref<vm::command> instr_ptr = {},
-             call_frame* enclosing             = nullptr,
-             size_t argc                       = 0,
-             size_t frame_ptr                  = npos);
-
-  call_frame* enclosing;
+struct call_frame {
+  call_frame(vector_ref<vm::command> instr_ptr       = {},
+             const std::shared_ptr<environment>& env = nullptr,
+             size_t argc                             = 0,
+             size_t frame_ptr                        = 0);
 
   size_t argc;
-  size_t parent_frame_ptr;
+  size_t frame_ptr;
 
-  std::vector<std::unordered_map<symbol, value::base*>> local;
+  std::shared_ptr<environment> env;
 
   dumb_ptr<value::base> caller;
   dumb_ptr<value::base> catcher;
-  dumb_ptr<value::base> self;
 
   vector_ref<vm::command> instr_ptr;
-
-  void mark() override;
 };
 
 }

@@ -248,9 +248,9 @@ value::type type::function {[]{ return nullptr; }, {
 
 // }}}
 
-void builtin::make_base_env(vm::call_frame& base)
+void builtin::make_base_env(vm::environment& base)
 {
-  base.local.back() = {
+  base.local = {
     { {"print"},          &builtin::function::print },
     { {"puts"},           &builtin::function::puts },
     { {"gets"},           &builtin::function::gets },

@@ -66,14 +66,14 @@ void run_repl()
 {
   vv::gc::init();
 
-  auto frame = static_cast<vv::vm::call_frame*>(vv::gc::alloc<vv::vm::call_frame>( ));
-  vv::builtin::make_base_env(*frame);
+  auto env = std::make_shared<vv::vm::environment>( );
+  vv::builtin::make_base_env(*env);
 
   while (!std::cin.eof()) {
-    vv::vm::machine machine{frame, repl_catcher};
     for (const auto& expr : get_valid_line()) {
       auto body = expr->generate();
-      frame->instr_ptr = vv::vector_ref<vv::vm::command>{body};
+      vv::vm::call_frame frame{body, env};
+      vv::vm::machine machine{std::move(frame), repl_catcher};
       machine.run();
       std::cout << "=> " << machine.retval->value() << '\n';
     }
@@ -99,13 +99,17 @@ int main(int argc, char** argv)
 
     auto excepted = false;
 
-    auto base_frame = vv::gc::alloc<vv::vm::call_frame>( tok_res.result() );
-    auto frame = static_cast<vv::vm::call_frame*>(base_frame);
-    vv::vm::machine vm{frame, [&](auto&){ excepted = true; }};
+    //auto base_frame = vv::gc::alloc<vv::vm::call_frame>( tok_res.result() );
+    //auto frame = static_cast<vv::vm::call_frame*>(base_frame);
+    auto env = std::make_shared<vv::vm::environment>( );
+    vv::builtin::make_base_env(*env);
+    vv::vm::call_frame frame{tok_res.result(), env};
 
-    vv::builtin::make_base_env(*frame);
+    vv::vm::machine vm{std::move(frame), [&](auto&){ excepted = true; }};
+
+    vv::builtin::make_base_env(*env);
     auto arg_array = vv::gc::alloc<vv::value::array>( );
-    frame->local.back()[{"argv"}] = arg_array;
+    env->local[{"argv"}] = arg_array;
 
     auto cast_argv = static_cast<vv::value::array*>( arg_array );
     transform(argv + 2, argv + argc, back_inserter(cast_argv->val),

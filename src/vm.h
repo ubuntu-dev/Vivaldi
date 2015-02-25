@@ -9,7 +9,7 @@ namespace vm {
 
 class machine {
 public:
-  machine(call_frame* frame,
+  machine(call_frame&& frame,
           const std::function<void(vm::machine&)>& exception_handler);
 
   void run();
@@ -65,14 +65,14 @@ public:
 private:
   void run_single_command(const vm::command& command);
 
-  void except_until(call_frame* frame);
+  void except_until(size_t stack_pos);
 
-  call_frame* frame();
+  call_frame& frame();
 
+  std::vector<call_frame> m_call_stack;
   std::vector<value::base*> m_stack;
   std::function<void(machine&)> m_exception_handler;
 
-  size_t m_cur_frame_ptr;
   value::base* m_pushed_self;
 };
 

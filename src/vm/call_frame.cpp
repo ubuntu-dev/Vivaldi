@@ -2,10 +2,10 @@
 
 using namespace vv;
 
-/*
-vm::environment::environment(std::shared_ptr<environment> new_enclosing)
+vm::environment::environment(const std::shared_ptr<environment>& new_enclosing,
+                             value::base* new_self)
   : enclosing {new_enclosing},
-    local     {{}}
+    self      {new_self}
 { }
 
 void vm::mark(environment& frame)
@@ -17,45 +17,21 @@ void vm::mark(environment& frame)
     mark(*frame.enclosing);
 
   for (auto& i : frame.local)
-    for (auto& val : i)
-      if (!val.second->marked())
-        val.second->mark();
+    if (!i.second->marked())
+      i.second->mark();
 
   if (frame.self && !frame.self->marked())
     frame.self->mark();
 }
-*/
 
 vm::call_frame::call_frame(vector_ref<vm::command> instr_ptr,
-                           call_frame* enclosing,
+                           const std::shared_ptr<environment>& env,
                            size_t argc,
                            size_t frame_ptr)
-  : enclosing        {enclosing},
-    argc             {argc},
-    parent_frame_ptr {frame_ptr},
-    local            {{}},
-    caller           {nullptr},
-    catcher          {nullptr},
-    self             {nullptr},
-    instr_ptr        {instr_ptr}
+  : argc       {argc},
+    frame_ptr  {frame_ptr},
+    env        {env},
+    caller     {nullptr},
+    catcher    {nullptr},
+    instr_ptr  {instr_ptr}
 { }
-
-void vm::call_frame::mark()
-{
-  base::mark();
-
-  if (enclosing && !enclosing->marked())
-    enclosing->mark();
-
-  for (auto& i : local)
-    for (auto& val : i)
-      if (!val.second->marked())
-        val.second->mark();
-
-  if (caller && !caller->marked())
-    caller->mark();
-  if (catcher && !catcher->marked())
-    catcher->mark();
-  if (self && !self->marked())
-    self->mark();
-}
