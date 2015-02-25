@@ -34,16 +34,13 @@ public:
   // self, if this is a method call
   dumb_ptr<value::base> self;
 
-  // Arguments to be passed in eventual function call, as well as temporaries
-  std::vector<value::base*> pushed;
   // Number of function arguments --- stored in parent's pushed
   size_t args;
+  // Position pointing to top of frame in VM stack
+  size_t frame_ptr;
 
   // Catch expression provided by try...catch blocks
   dumb_ptr<value::base> catcher;
-  // Function from whom the current instruction pointer originates (stored here
-  // solely to avoid GC'ing it)
-  dumb_ptr<value::base> caller;
 
   // Current instruction pointer
   vector_ref<command> instr_ptr;

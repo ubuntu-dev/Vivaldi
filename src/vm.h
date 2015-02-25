@@ -70,7 +70,7 @@ private:
   call_frame* frame();
   call_frame* parent();
 
-  //std::shared_ptr<call_frame> m_base;
+  std::vector<value::base*> m_stack;
   std::vector<std::shared_ptr<call_frame>> m_call_stack;
   std::function<void(machine&)> m_exception_handler;
 

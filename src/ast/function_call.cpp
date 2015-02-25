@@ -15,11 +15,13 @@ std::vector<vm::command> ast::function_call::generate() const
 {
   std::vector<vm::command> vec;
 
-  for (const auto& i : m_args) {
+  //for (const auto& i : m_args) {
+  for_each(rbegin(m_args), rend(m_args), [&](auto& i)
+  {
     auto arg = i->generate();
     copy(begin(arg), end(arg), back_inserter(vec));
     vec.emplace_back(vm::instruction::push_arg);
-  }
+  });
 
   auto fn = m_function->generate();
   copy(begin(fn), end(fn), back_inserter(vec));

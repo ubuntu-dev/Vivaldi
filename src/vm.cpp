@@ -66,6 +66,8 @@ void vm::machine::run_cur_scope()
 
 void vm::machine::mark()
 {
+  for (auto* i : m_stack)
+    i->mark();
   for (auto& i : m_call_stack)
     vm::mark(*i);
   if (retval && !retval->marked())
@@ -126,26 +128,25 @@ void vm::machine::push_type(const type_t& type)
   retval = gc::alloc<value::type>( nullptr, methods, *parent, type.name );
 
   // Clear pushed arguments without touching retval
-  frame()->pushed.erase(end(frame()->pushed) - methods.size() - 1,
-                        end(frame()->pushed));
+  m_stack.erase(end(m_stack) - methods.size() - 1, end(m_stack));
   let(type.name);
 }
 
 void vm::machine::make_arr(int size)
 {
-  std::vector<value::base*> args{end(frame()->pushed) - size, end(frame()->pushed)};
+  std::vector<value::base*> args{end(m_stack) - size, end(m_stack)};
   retval = gc::alloc<value::array>( args );
-  frame()->pushed.erase(end(frame()->pushed) - size, end(frame()->pushed));
+  m_stack.erase(end(m_stack) - size, end(m_stack));
 }
 
 void vm::machine::make_dict(int size)
 {
   std::unordered_map<value::base*, value::base*> dict;
-  for (auto i = end(frame()->pushed) - size; i != end(frame()->pushed); i += 2) {
+  for (auto i = end(m_stack) - size; i != end(m_stack); i += 2) {
     dict[i[0]] = i[1];
   }
   retval = gc::alloc<value::dictionary>( dict );
-  frame()->pushed.erase(end(frame()->pushed) - size, end(frame()->pushed));
+  m_stack.erase(end(m_stack) - size, end(m_stack));
 }
 
 void vm::machine::read(symbol sym)
@@ -202,14 +203,13 @@ void vm::machine::self()
 
 void vm::machine::push_arg()
 {
-  frame()->pushed.push_back(retval);
+  m_stack.push_back(retval);
 }
 
 void vm::machine::arg(int idx)
 {
-  const auto parent = end(m_call_stack)[-2].get();
-  const auto argc = m_call_stack.back()->args;
-  retval = *(end(parent->pushed) - argc + idx);
+  assert(static_cast<size_t>(idx) <= frame()->frame_ptr && "whoops");
+  retval = m_stack[frame()->frame_ptr - static_cast<size_t>(idx)];
   assert(retval != nullptr);
 }
 
@@ -232,8 +232,8 @@ void vm::machine::readm(symbol sym)
 
 void vm::machine::writem(symbol sym)
 {
-  auto value = frame()->pushed.back();
-  frame()->pushed.pop_back();
+  auto value = m_stack.back();
+  m_stack.pop_back();
 
   retval->members[sym] = value;
   retval = value;
@@ -253,8 +253,9 @@ void vm::machine::call(int argc)
     };
 
     m_call_stack.push_back(std::make_shared<call_frame>(fn->body, fn->enclosure, argc));
+    m_call_stack.back()->frame_ptr = m_stack.size() - 1;
+    m_stack.push_back(fn);
     frame()->self = m_pushed_self;
-    frame()->caller = fn;
 
   } else if (auto fn = dynamic_cast<value::builtin_function*>(retval)) {
     if (argc != fn->argc) {
@@ -266,8 +267,9 @@ void vm::machine::call(int argc)
     };
 
     m_call_stack.push_back(std::make_shared<call_frame>( com, nullptr, argc ));
+    m_call_stack.back()->frame_ptr = m_stack.size() - 1;
+    m_stack.push_back(fn);
     frame()->self = m_pushed_self;
-    frame()->caller = fn;
 
     try {
       retval = fn->body(*this);
@@ -324,17 +326,26 @@ void vm::machine::lblk()
   frame()->local.pop_back();
 }
 
+namespace {
+
+template <typename T>
+void temp(T& t) { t.pop_back(); }
+
+}
+
 void vm::machine::ret(bool copy)
 {
   if (m_call_stack.size() > 1) {
-    auto parent = end(m_call_stack)[-2].get();
-    parent->pushed.erase(end(parent->pushed) - frame()->args, end(parent->pushed));
+    m_stack.erase(begin(m_stack) + frame()->frame_ptr + 1 - frame()->args,
+                  end(m_stack));
     if (copy) {
+      auto parent = end(m_call_stack)[-2].get();
       for (const auto& i : frame()->local)
         for (const auto& var : i)
           parent->local.back()[var.first] = var.second;
     }
-    m_call_stack.pop_back();
+    //m_call_stack.pop_back();
+    temp(m_call_stack);
   } else {
     push_str("The top-level environment can't be returned from");
     except();
@@ -343,13 +354,13 @@ void vm::machine::ret(bool copy)
 
 void vm::machine::push()
 {
-  frame()->pushed.push_back(retval);
+  m_stack.push_back(retval);
 }
 
 void vm::machine::pop()
 {
-  retval = frame()->pushed.back();
-  frame()->pushed.pop_back();
+  retval = m_stack.back();
+  m_stack.pop_back();
 }
 
 void vm::machine::req(const std::string& filename)

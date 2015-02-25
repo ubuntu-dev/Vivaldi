@@ -27,12 +27,6 @@ void vm::mark(call_frame& frame)
   if (frame.self && !frame.self->marked())
     frame.self->mark();
 
-  for (auto* i : frame.pushed)
-    if (!i->marked())
-      i->mark();
-
   if (frame.catcher && !frame.catcher->marked())
     frame.catcher->mark();
-  if (frame.caller && !frame.caller->marked())
-    frame.caller->mark();
 }
