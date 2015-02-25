@@ -400,16 +400,16 @@ void vm::machine::pop_catch()
 
 void vm::machine::except()
 {
-  while (m_call_stack.size() > 1 && !frame().catcher) {
-    m_stack.erase(begin(m_stack) + frame().frame_ptr - frame().argc, end(m_stack));
-    m_call_stack.pop_back();
-  }
+  auto new_frame = find_if(rbegin(m_call_stack), rend(m_call_stack) - 1,
+                      [](const auto& i) { return i.catcher; });
+  m_call_stack.erase(new_frame.base(), end(m_call_stack));
+  m_stack.erase(begin(m_stack) + frame().frame_ptr - frame().argc, end(m_stack));
 
   if (!frame().catcher) {
     m_exception_handler(*this);
     // If we're still here, stop executing code since obviously some invariant's
     // broken
-    frame().instr_ptr = frame().instr_ptr.subvec(frame().instr_ptr.size());
+    frame().instr_ptr = {};//frame().instr_ptr.subvec(frame().instr_ptr.size());
   } else {
     push_arg();
     retval = frame().catcher.get();
@@ -489,10 +489,11 @@ void vm::machine::run_single_command(const vm::command& command)
 
 void vm::machine::except_until(size_t stack_pos)
 {
-  while (m_call_stack.size() != stack_pos && !frame().catcher) {
-    m_stack.erase(begin(m_stack) + frame().frame_ptr - frame().argc, end(m_stack));
-    m_call_stack.pop_back();
-  }
+  auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - stack_pos,
+                      [](const auto& i) { return i.catcher; });
+  auto new_frame = std::max(last.base(), begin(m_call_stack) + stack_pos);
+  m_call_stack.erase(new_frame, end(m_call_stack));
+  m_stack.erase(begin(m_stack) + frame().frame_ptr - frame().argc, end(m_stack));
 
   if (!frame().catcher) {
     throw vm_error{retval};
