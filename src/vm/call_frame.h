@@ -14,40 +14,43 @@ namespace vv {
 
 namespace vm {
 
-// Vivaldi's call 'stack' is very loosely based on Python's; it consists of a
-// vector of shared_ptr<call_frame>'s (as defined below). Obviously this is
-// pretty much worse in every respect than just a vector<call_frame>, but
-// closures mess this up by possibly requiring access to frames no longer on the
-// call stack. This approach is pretty slow, but unless a better means of
-// managing closures presents iteslf we're stuck with it.
-
-class call_frame {
+/*
+class environment {
 public:
-  call_frame(vector_ref<command>         instr_ptr = {},
-             std::shared_ptr<call_frame> enclosing = nullptr,
-             size_t                      args      = 0);
+  environment(std::shared_ptr<environment> enclosing = nullptr);
 
   // Frame in which current function (ie closure) was defined
-  const std::shared_ptr<call_frame> enclosing;
+  const std::shared_ptr<environment> enclosing;
   // Local variables
-  std::vector<std::unordered_map<symbol, value::base*>> local;
   // self, if this is a method call
+};
+*/
+
+//void mark(environment& env);
+
+struct call_frame : public value::base {
+  const static size_t npos{std::numeric_limits<size_t>::max()};
+
+  call_frame(vector_ref<vm::command> instr_ptr = {},
+             call_frame* enclosing             = nullptr,
+             size_t argc                       = 0,
+             size_t frame_ptr                  = npos);
+
+  call_frame* enclosing;
+
+  size_t argc;
+  size_t parent_frame_ptr;
+
+  std::vector<std::unordered_map<symbol, value::base*>> local;
+
+  dumb_ptr<value::base> caller;
+  dumb_ptr<value::base> catcher;
   dumb_ptr<value::base> self;
 
-  // Number of function arguments --- stored in parent's pushed
-  size_t args;
-  // Position pointing to top of frame in VM stack
-  size_t frame_ptr;
+  vector_ref<vm::command> instr_ptr;
 
-  // Catch expression provided by try...catch blocks
-  dumb_ptr<value::base> catcher;
-
-  // Current instruction pointer
-  vector_ref<command> instr_ptr;
-
+  void mark() override;
 };
-
-void mark(call_frame& frame);
 
 }
 

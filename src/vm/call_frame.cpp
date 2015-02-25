@@ -2,16 +2,13 @@
 
 using namespace vv;
 
-vm::call_frame::call_frame(vector_ref<command>         new_instr_ptr,
-                           std::shared_ptr<call_frame> new_enclosing,
-                           size_t                      new_args)
+/*
+vm::environment::environment(std::shared_ptr<environment> new_enclosing)
   : enclosing {new_enclosing},
-    local     {{}},
-    args      {new_args},
-    instr_ptr {new_instr_ptr}
+    local     {{}}
 { }
 
-void vm::mark(call_frame& frame)
+void vm::mark(environment& frame)
 {
   // Tedious; just call mark on every extant member (unless it's already marked,
   // in which case don't--- both because it's redundant and because of circular
@@ -26,7 +23,39 @@ void vm::mark(call_frame& frame)
 
   if (frame.self && !frame.self->marked())
     frame.self->mark();
+}
+*/
 
-  if (frame.catcher && !frame.catcher->marked())
-    frame.catcher->mark();
+vm::call_frame::call_frame(vector_ref<vm::command> instr_ptr,
+                           call_frame* enclosing,
+                           size_t argc,
+                           size_t frame_ptr)
+  : enclosing        {enclosing},
+    argc             {argc},
+    parent_frame_ptr {frame_ptr},
+    local            {{}},
+    caller           {nullptr},
+    catcher          {nullptr},
+    self             {nullptr},
+    instr_ptr        {instr_ptr}
+{ }
+
+void vm::call_frame::mark()
+{
+  base::mark();
+
+  if (enclosing && !enclosing->marked())
+    enclosing->mark();
+
+  for (auto& i : local)
+    for (auto& val : i)
+      if (!val.second->marked())
+        val.second->mark();
+
+  if (caller && !caller->marked())
+    caller->mark();
+  if (catcher && !catcher->marked())
+    catcher->mark();
+  if (self && !self->marked())
+    self->mark();
 }

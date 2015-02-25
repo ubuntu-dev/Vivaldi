@@ -7,7 +7,7 @@ using namespace vv;
 
 value::function::function(int new_argc,
                           const std::vector<vm::command>& new_body,
-                          std::shared_ptr<vm::call_frame> new_enclosure)
+                          vm::call_frame* new_enclosure)
   : base      {&builtin::type::function},
     argc      {new_argc},
     body      {new_body},
@@ -19,6 +19,6 @@ std::string value::function::value() const { return "<function>"; }
 void value::function::mark()
 {
   base::mark();
-  if (enclosure)
-    vm::mark(*enclosure);
+  if (enclosure && !enclosure->marked())
+    enclosure->mark();
 }
