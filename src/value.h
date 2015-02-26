@@ -29,7 +29,6 @@ struct file;
 struct floating_point;
 struct function;
 struct integer;
-struct iterator;
 struct nil;
 struct range;
 struct string;
