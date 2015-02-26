@@ -23,9 +23,10 @@ value::base* fn_file_init(vm::machine& vm)
   vm.self();
   auto& self = static_cast<value::file&>(*vm.retval);
   const auto& filename = static_cast<value::string*>(arg)->val;
-  self.val = std::fstream{filename};
+  delete self.val;
+  self.val = new std::fstream{filename};
   self.name = filename;
-  std::getline(self.val, self.cur_line);
+  std::getline(*self.val, self.cur_line);
   return &self;
 }
 
@@ -35,7 +36,7 @@ value::base* fn_file_contents(vm::machine& vm)
   auto& self = static_cast<value::file&>(*vm.retval);
   std::ostringstream str_stream;
   str_stream << self.cur_line;
-  str_stream << self.val.rdbuf();
+  str_stream << self.val->rdbuf();
   self.cur_line.clear();
   return gc::alloc<value::string>( str_stream.str() );
 }
@@ -57,9 +58,9 @@ value::base* fn_file_increment(vm::machine& vm)
 {
   vm.self();
   auto& self = static_cast<value::file&>(*vm.retval);
-  if (self.val.peek() == EOF)
+  if (self.val->peek() == EOF)
     return throw_exception("Cannot read past end of File");
-  std::getline(self.val, self.cur_line);
+  std::getline(*self.val, self.cur_line);
   return &self;
 }
 
@@ -67,7 +68,7 @@ value::base* fn_file_at_end(vm::machine& vm)
 {
   vm.self();
   auto& self = static_cast<value::file&>(*vm.retval);
-  return gc::alloc<value::boolean>(self.val.peek() == EOF && !self.cur_line.size());
+  return gc::alloc<value::boolean>(self.val->peek() == EOF && !self.cur_line.size());
 }
 
 value::builtin_function file_init      {fn_file_init,      1};

@@ -13,12 +13,15 @@ struct file : public base {
 public:
   file(const std::string& filename);
   file();
+  file(file&& other);
 
   std::string value() const override;
 
   std::string name;
   std::string cur_line;
-  std::fstream val;
+  std::fstream* val;
+
+  ~file();
 };
 
 }
