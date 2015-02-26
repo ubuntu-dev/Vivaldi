@@ -7,22 +7,6 @@
 #include "value/nil.h"
 #include "vm.h"
 
-#include "builtins.h"
-#include "value/array.h"
-#include "value/array_iterator.h"
-#include "value/builtin_function.h"
-#include "value/boolean.h"
-#include "value/dictionary.h"
-#include "value/integer.h"
-#include "value/file.h"
-#include "value/floating_point.h"
-#include "value/function.h"
-#include "value/nil.h"
-#include "value/range.h"
-#include "value/string.h"
-#include "value/string_iterator.h"
-#include "value/symbol.h"
-
 #include <array>
 #include <list>
 
@@ -32,54 +16,25 @@ namespace gc {
 
 namespace internal {
 
-union value_type {
-  value::array            array;
-  value::array_iterator   array_iterator;
-  value::base             base;
-  value::boolean          boolean;
-  value::builtin_function builtin_function;
-  value::dictionary       dictionary;
-  value::file             file;
-  value::floating_point   floating_point;
-  value::function         function;
-  value::integer          integer;
-  value::nil              nil;
-  value::range            range;
-  value::string           string;
-  value::string_iterator  string_iterator;
-  value::symbol           symbol;
-  value::type             type;
+union value_type;
 
-  value_type& operator=(value::array&& array);
-  value_type& operator=(value::array_iterator&& array_iterator);
-  value_type& operator=(value::base&& base);
-  value_type& operator=(value::boolean&& boolean);
-  value_type& operator=(value::builtin_function&& builtin_function);
-  value_type& operator=(value::dictionary&& dictionary);
-  value_type& operator=(value::file&& file);
-  value_type& operator=(value::floating_point&& floating_point);
-  value_type& operator=(value::function&& function);
-  value_type& operator=(value::integer&& integer);
-  value_type& operator=(value::nil&& nil);
-  value_type& operator=(value::range&& range);
-  value_type& operator=(value::string&& string);
-  value_type& operator=(value::string_iterator&&  string_iterator);
-  value_type& operator=(value::symbol&& symbol);
-  value_type& operator=(value::type&& type);
-  value_type& operator=(vm::environment&& environment);
-
-  value_type() : nil{} { }
-
-  bool marked() const { return base.marked(); }
-  void unmark() { base.unmark(); }
-  void mark() { (&base)->mark(); }
-
-  bool empty() const { return base.type == &builtin::type::nil; }
-
-  operator value::base& () { return base; }
-
-  ~value_type() { (&base)->~base(); }
-};
+void set_value_type(value_type* val, value::array&& array);
+void set_value_type(value_type* val, value::array_iterator&& array_iterator);
+void set_value_type(value_type* val, value::base&& base);
+void set_value_type(value_type* val, value::boolean&& boolean);
+void set_value_type(value_type* val, value::builtin_function&& builtin_function);
+void set_value_type(value_type* val, value::dictionary&& dictionary);
+void set_value_type(value_type* val, value::file&& file);
+void set_value_type(value_type* val, value::floating_point&& floating_point);
+void set_value_type(value_type* val, value::function&& function);
+void set_value_type(value_type* val, value::integer&& integer);
+void set_value_type(value_type* val, value::nil&& nil);
+void set_value_type(value_type* val, value::range&& range);
+void set_value_type(value_type* val, value::string&& string);
+void set_value_type(value_type* val, value::string_iterator&&  string_iterator);
+void set_value_type(value_type* val, value::symbol&& symbol);
+void set_value_type(value_type* val, value::type&& type);
+void set_value_type(value_type* val, vm::environment&& environment);
 
 // Optimize common values
 extern value::nil g_nil;
@@ -95,10 +50,9 @@ value_type* get_next_empty();
 template <typename T>
 inline value::base* emplace(T&& val)
 {
-  //auto first = try_emplace(val);
   auto empty = get_next_empty();
-  *empty = std::move(val);
-  return &empty->base;
+  set_value_type(empty, std::move(val));
+  return reinterpret_cast<value::base*>(empty);
 }
 
 }

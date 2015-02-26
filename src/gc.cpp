@@ -1,5 +1,21 @@
 #include "gc.h"
 
+#include "builtins.h"
+#include "value/array.h"
+#include "value/array_iterator.h"
+#include "value/builtin_function.h"
+#include "value/boolean.h"
+#include "value/dictionary.h"
+#include "value/integer.h"
+#include "value/file.h"
+#include "value/floating_point.h"
+#include "value/function.h"
+#include "value/nil.h"
+#include "value/range.h"
+#include "value/string.h"
+#include "value/string_iterator.h"
+#include "value/symbol.h"
+
 using namespace vv;
 using namespace gc;
 using namespace internal;
@@ -16,117 +32,129 @@ std::list<gc_chunk> g_vals( 4 );
 
 }
 
+union gc::internal::value_type {
+  value::array            array;
+  value::array_iterator   array_iterator;
+  value::base             base;
+  value::boolean          boolean;
+  value::builtin_function builtin_function;
+  value::dictionary       dictionary;
+  value::file             file;
+  value::floating_point   floating_point;
+  value::function         function;
+  value::integer          integer;
+  value::nil              nil;
+  value::range            range;
+  value::string           string;
+  value::string_iterator  string_iterator;
+  value::symbol           symbol;
+  value::type             type;
+
+  value_type() : nil{} { }
+
+  bool marked() const { return base.marked(); }
+  void unmark() { base.unmark(); }
+  void mark() { (&base)->mark(); }
+
+  bool empty() const { return base.type == &builtin::type::nil; }
+
+  operator value::base& () { return base; }
+
+  ~value_type() { (&base)->~base(); }
+};
+
 vm::machine* g_vm;
 
-value_type& value_type::operator=(value::array&& other)
+void gc::internal::set_value_type(value_type* val, value::array&& other)
 {
-  (&base)->~base();
-  new (this) value::array{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::array{std::move(other)};
 }
-value_type& value_type::operator=(value::array_iterator&& other)
+void gc::internal::set_value_type(value_type* val, value::array_iterator&& other)
 {
-  (&base)->~base();
-  new (this) value::array_iterator{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::array_iterator{std::move(other)};
 }
-value_type& value_type::operator=(value::base&& other)
+void gc::internal::set_value_type(value_type* val, value::base&& other)
 {
-  (&base)->~base();
-  new (this) value::base{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::base{std::move(other)};
 }
-value_type& value_type::operator=(value::boolean&& other)
+void gc::internal::set_value_type(value_type* val, value::boolean&& other)
 {
-  (&base)->~base();
-  new (this) value::boolean{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::boolean{std::move(other)};
 }
-value_type& value_type::operator=(value::builtin_function&& other)
+void gc::internal::set_value_type(value_type* val, value::builtin_function&& other)
 {
-  (&base)->~base();
-  new (this) value::builtin_function{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::builtin_function{std::move(other)};
 }
-value_type& value_type::operator=(value::dictionary&& other)
+void gc::internal::set_value_type(value_type* val, value::dictionary&& other)
 {
-  (&base)->~base();
-  new (this) value::dictionary{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::dictionary{std::move(other)};
 }
-value_type& value_type::operator=(value::file&& other)
+void gc::internal::set_value_type(value_type* val, value::file&& other)
 {
-  (&base)->~base();
-  new (this) value::file{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::file{std::move(other)};
 }
-value_type& value_type::operator=(value::floating_point&& other)
+void gc::internal::set_value_type(value_type* val, value::floating_point&& other)
 {
-  (&base)->~base();
-  new (this) value::floating_point{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::floating_point{std::move(other)};
 }
-value_type& value_type::operator=(value::function&& other)
+void gc::internal::set_value_type(value_type* val, value::function&& other)
 {
-  (&base)->~base();
-  new (this) value::function{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::function{std::move(other)};
 }
-value_type& value_type::operator=(value::integer&& other)
+void gc::internal::set_value_type(value_type* val, value::integer&& other)
 {
-  (&base)->~base();
-  new (this) value::integer{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::integer{std::move(other)};
 }
-value_type& value_type::operator=(value::nil&& other)
+void gc::internal::set_value_type(value_type* val, value::nil&& other)
 {
-  (&base)->~base();
-  new (this) value::nil{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::nil{std::move(other)};
 }
-value_type& value_type::operator=(value::range&& other)
+void gc::internal::set_value_type(value_type* val, value::range&& other)
 {
-  (&base)->~base();
-  new (this) value::range{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::range{std::move(other)};
 }
-value_type& value_type::operator=(value::string&& other)
+void gc::internal::set_value_type(value_type* val, value::string&& other)
 {
-  (&base)->~base();
-  new (this) value::string{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::string{std::move(other)};
 }
-value_type& value_type::operator=(value::string_iterator&& other)
+void gc::internal::set_value_type(value_type* val, value::string_iterator&& other)
 {
-  (&base)->~base();
-  new (this) value::string_iterator{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::string_iterator{std::move(other)};
 }
-value_type& value_type::operator=(value::symbol&& other)
+void gc::internal::set_value_type(value_type* val, value::symbol&& other)
 {
-  (&base)->~base();
-  new (this) value::symbol{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::symbol{std::move(other)};
 }
-value_type& value_type::operator=(value::type&& other)
+void gc::internal::set_value_type(value_type* val, value::type&& other)
 {
-  (&base)->~base();
-  new (this) value::type{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) value::type{std::move(other)};
 }
-value_type& value_type::operator=(vm::environment&& other)
+void gc::internal::set_value_type(value_type* val, vm::environment&& other)
 {
-  (&base)->~base();
-  new (this) vm::environment{std::move(other)};
-  return *this;
+  (&val->base)->~base();
+  new (val) vm::environment{std::move(other)};
 }
 
 void get_next(std::list<gc_chunk>::iterator& major, value_type*& minor)
 {
   while (major != end(g_vals)) {
-    minor = std::find_if(minor, end(*major),
-                         [](const auto& i)
-                           { return i.base.type == &builtin::type::nil; });
+    minor = std::find_if(minor, end(*major), [](const auto& i) { return i.empty(); });
     if (minor != end(*major))
       break;
     ++major;
@@ -175,11 +203,10 @@ void gc::internal::sweep()
 {
   for (auto& i : g_vals) {
     for (auto& j : i) {
-      if (j.marked()) {
+      if (j.marked())
         j.unmark();
-      } else {
-        j = value::nil{};
-      }
+      else
+        set_value_type(&j, value::nil{});
     }
   }
 }
