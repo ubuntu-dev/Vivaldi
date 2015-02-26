@@ -25,8 +25,6 @@ struct type_t {
   std::unordered_map<symbol, function_t> methods;
 };
 
-struct nil_t { };
-
 enum class instruction {
   /// pushes the provided Bool literal into retval
   push_bool,
@@ -117,14 +115,14 @@ public:
   command(instruction instr);
 
   instruction instr;
-  boost::variant<int,
-                symbol,
-                bool,
-                std::string,
-                double,
-                function_t,
-                type_t,
-                nil_t>
+  boost::variant<boost::blank,
+                 int,
+                 symbol,
+                 bool,
+                 std::string,
+                 double,
+                 function_t,
+                 type_t>
     arg;
 };
 
