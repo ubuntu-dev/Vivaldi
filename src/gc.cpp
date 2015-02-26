@@ -27,127 +27,138 @@ std::array<value::integer, 1024> gc::internal::g_ints;
 
 namespace {
 
+// Using list, instead of vector, for two reasons:
+// - copying value_type's is both infeasible and expensive
+// - pointers to value_type's (i.e. iterators in g_vals) can never be
+//   invalidated, lest everything blow up
 using gc_chunk = std::array<value_type, 512>;
 std::list<gc_chunk> g_vals( 4 );
 
+// Stored here for GC marking
+vm::machine* g_vm;
+
 }
 
+// Think of this as just a chunk of memory with ~256 bytes; it's done as a union
+// to ensure that we get the proper maximum size and don't inadvertently slice
+// anything.  Every builtin type (except nil and builtin, since they're handled
+// separately) should be included.
 union gc::internal::value_type {
   value::array            array;
   value::array_iterator   array_iterator;
   value::base             base;
-  value::boolean          boolean;
   value::builtin_function builtin_function;
   value::dictionary       dictionary;
   value::file             file;
   value::floating_point   floating_point;
   value::function         function;
   value::integer          integer;
-  value::nil              nil;
   value::range            range;
   value::string           string;
   value::string_iterator  string_iterator;
   value::symbol           symbol;
   value::type             type;
+  vm::environment         environment;
+  // Used by default ctor, and for empty slots. We know that value::base and its
+  // derived classes can never be all zeroes, since it includes several
+  // nonnullable pointers/references, so testing for zero works as a means of
+  // testing emptiness.
+  size_t blank;
 
-  value_type() : nil{} { }
+  value_type() : blank{} { }
 
   bool marked() const { return base.marked(); }
   void unmark() { base.unmark(); }
   void mark() { (&base)->mark(); }
 
-  bool empty() const { return base.type == &builtin::type::nil; }
+  bool empty() const { return blank == 0; }
+  void clear()
+  {
+    if (!empty()) {
+      (&base)->~base();
+      blank = 0;
+    }
+  }
 
-  operator value::base& () { return base; }
-
-  ~value_type() { (&base)->~base(); }
+  // In a sense this union is tagged, by virtue of vtables
+  ~value_type() { if (!empty()) (&base)->~base(); }
 };
 
-vm::machine* g_vm;
-
+// done like this, instead of as template, so that value_type doesn't have to be
+// defined in gc.h and mess up build times
 void gc::internal::set_value_type(value_type* val, value::array&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::array{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::array_iterator&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::array_iterator{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::base&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::base{std::move(other)};
-}
-void gc::internal::set_value_type(value_type* val, value::boolean&& other)
-{
-  (&val->base)->~base();
-  new (val) value::boolean{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::builtin_function&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::builtin_function{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::dictionary&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::dictionary{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::file&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::file{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::floating_point&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::floating_point{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::function&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::function{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::integer&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::integer{std::move(other)};
-}
-void gc::internal::set_value_type(value_type* val, value::nil&& other)
-{
-  (&val->base)->~base();
-  new (val) value::nil{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::range&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::range{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::string&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::string{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::string_iterator&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::string_iterator{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::symbol&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::symbol{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::type&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) value::type{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, vm::environment&& other)
 {
-  (&val->base)->~base();
+  val->~value_type();
   new (val) vm::environment{std::move(other)};
 }
 
@@ -183,13 +194,9 @@ value_type* gc::internal::get_next_empty()
   }
 
   auto ret = minor;
-
   // since minor is by definition empty at this point, *don't* include it in the
   // next-empty search
-  ++minor;
-  get_next(major, minor);
-
-  assert(ret->base.type == &builtin::type::nil && "search failed\n");
+  get_next(major, ++minor);
   return ret;
 }
 
@@ -206,7 +213,8 @@ void gc::internal::sweep()
       if (j.marked())
         j.unmark();
       else
-        set_value_type(&j, value::nil{});
+        j.clear();
+        //set_value_type(&j, value::nil{});
     }
   }
 }
