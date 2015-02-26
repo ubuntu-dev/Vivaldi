@@ -12,14 +12,14 @@ namespace value {
 struct function : public base {
   function(int argc,
            const std::vector<vm::command>& body,
-           const std::shared_ptr<vm::environment>& enclosure);
+           vm::environment* enclosure);
 
   std::string value() const override;
   void mark() override;
 
   int argc;
   std::vector<vm::command> body;
-  const std::shared_ptr<vm::environment> enclosure;
+  vm::environment* enclosure;
 };
 
 }

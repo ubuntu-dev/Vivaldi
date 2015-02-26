@@ -66,7 +66,7 @@ void run_repl()
 {
   vv::gc::init();
 
-  auto env = std::make_shared<vv::vm::environment>( );
+  auto env = vv::gc::alloc<vv::vm::environment>( );
   vv::builtin::make_base_env(*env);
 
   while (!std::cin.eof()) {
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
     //auto base_frame = vv::gc::alloc<vv::vm::call_frame>( tok_res.result() );
     //auto frame = static_cast<vv::vm::call_frame*>(base_frame);
-    auto env = std::make_shared<vv::vm::environment>( );
+    auto env = vv::gc::alloc<vv::vm::environment>( );
     vv::builtin::make_base_env(*env);
     vv::vm::call_frame frame{tok_res.result(), env};
 

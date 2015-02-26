@@ -75,7 +75,8 @@ void vm::machine::mark()
       i.caller->mark();
     if (i.catcher && !i.catcher->marked())
       i.catcher->mark();
-    vm::mark(*i.env);
+    if (!i.env->marked())
+      i.env->mark();
   }
   if (retval && !retval->marked())
     retval->mark();
@@ -97,7 +98,7 @@ void vm::machine::push_flt(double val)
 
 void vm::machine::push_fn(const function_t& val)
 {
-  retval = gc::alloc<value::function>(val.argc, val.body, frame().env);
+  retval = gc::alloc<value::function>(val.argc, val.body, frame().env.get());
 }
 
 void vm::machine::push_int(int val)
@@ -247,11 +248,8 @@ void vm::machine::call(int argc)
       return;
     };
 
-    auto new_env = std::make_shared<environment>( fn->enclosure, m_pushed_self );
-    m_call_stack.emplace_back( fn->body,
-                               new_env,
-                               static_cast<size_t>(argc),
-                               m_stack.size() );
+    auto new_env = gc::alloc<environment>( fn->enclosure, m_pushed_self );
+    m_call_stack.emplace_back(fn->body, new_env, static_cast<size_t>(argc), m_stack.size());
     frame().caller = fn;
 
   } else if (auto fn = dynamic_cast<value::builtin_function*>(retval)) {
@@ -263,11 +261,8 @@ void vm::machine::call(int argc)
       return;
     };
 
-    auto new_env = std::make_shared<environment>( nullptr, m_pushed_self );
-    m_call_stack.emplace_back( com,
-                               new_env,
-                               static_cast<size_t>(argc),
-                               m_stack.size() );
+    auto new_env = gc::alloc<environment>( nullptr, m_pushed_self );
+    m_call_stack.emplace_back(com, new_env, static_cast<size_t>(argc), m_stack.size());
     frame().caller = fn;
 
     try {
@@ -317,12 +312,11 @@ void vm::machine::new_obj(int argc)
 
 void vm::machine::eblk()
 {
-  frame().env.reset(new environment{frame().env});
+  frame().env = gc::alloc<environment>(frame().env.get());
 }
 
 void vm::machine::lblk()
 {
-  //frame().env.reset(frame().env->enclosing.get());
   frame().env = frame().env->enclosing;
 }
 

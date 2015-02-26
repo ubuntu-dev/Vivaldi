@@ -35,7 +35,8 @@ auto fn_floating_point_op(const F& op)
     auto other = vm.retval;
     if (!is_float(other))
       return throw_exception("Right-hand argument is not a Float");
-    return gc::alloc<value::floating_point>(op(to_float(self), to_float(other)));
+    auto res = gc::alloc<value::floating_point>(op(to_float(self), to_float(other)));
+    return static_cast<value::base*>(res);
   };
 }
 
@@ -50,7 +51,8 @@ auto fn_float_bool_op(const F& op)
     auto other = vm.retval;
     if (!is_float(other))
       return throw_exception("Right-hand argument is not a Float");
-    return gc::alloc<value::boolean>( op(to_float(self), to_float(other)) );
+    auto res = gc::alloc<value::boolean>( op(to_float(self), to_float(other)) );
+    return static_cast<value::base*>(res);
   };
 }
 

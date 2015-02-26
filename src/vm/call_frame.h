@@ -14,31 +14,31 @@ namespace vv {
 
 namespace vm {
 
-class environment {
+class environment : public value::base {
 public:
-  environment(const std::shared_ptr<environment>& enclosing = nullptr,
-              value::base* self                             = nullptr);
+  environment(environment* enclosing = nullptr,
+              value::base* self      = nullptr);
 
   // Frame in which current function (ie closure) was defined
-  const std::shared_ptr<environment> enclosing;
+  dumb_ptr<environment> enclosing;
   // Local variables
   std::unordered_map<symbol, value::base*> local;
   // self, if this is a method call
   dumb_ptr<value::base> self;
+
+  void mark() override;
 };
 
-void mark(environment& env);
-
 struct call_frame {
-  call_frame(vector_ref<vm::command> instr_ptr       = {},
-             const std::shared_ptr<environment>& env = nullptr,
-             size_t argc                             = 0,
-             size_t frame_ptr                        = 0);
+  call_frame(vector_ref<vm::command> instr_ptr = {},
+             environment* env                  = nullptr,
+             size_t argc                       = 0,
+             size_t frame_ptr                  = 0);
 
   size_t argc;
   size_t frame_ptr;
 
-  std::shared_ptr<environment> env;
+  dumb_ptr<environment> env;
 
   dumb_ptr<value::base> caller;
   dumb_ptr<value::base> catcher;

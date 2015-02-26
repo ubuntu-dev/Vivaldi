@@ -26,26 +26,26 @@ extern std::array<value::integer, 1024> g_ints;
 }
 
 template <typename T, typename... Args>
-inline value::base* alloc(Args&&... args)
+inline T* alloc(Args&&... args)
 {
-  return internal::emplace(new T{args...});
+  return static_cast<T*>(internal::emplace(new T{args...}));
 }
 
 // Optimized template overrides for alloc:
 template <>
-inline value::base* alloc<value::boolean>(bool&& val)
+inline value::boolean* alloc<value::boolean>(bool&& val)
 {
   return &(val ? internal::g_true : internal::g_false);
 }
 
 template <>
-inline value::base* alloc<value::nil>()
+inline value::nil* alloc<value::nil>()
 {
   return &internal::g_nil;
 }
 
 template <>
-inline value::base* alloc<value::integer>(int&& val)
+inline value::integer* alloc<value::integer>(int&& val)
 {
   if (val >= 0 && val < 1024)
     return &internal::g_ints[static_cast<unsigned>(val)];

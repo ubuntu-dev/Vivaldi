@@ -28,7 +28,7 @@ double to_float(dumb_ptr<value::base> boxed)
 template <typename F>
 auto fn_int_or_flt_op(const F& op)
 {
-  return [=](vm::machine& vm)
+  return [=](vm::machine& vm) -> value::base*
   {
     vm.self();
     auto left = to_int(vm.retval);
@@ -48,7 +48,7 @@ auto fn_int_or_flt_op(const F& op)
 template <typename F>
 auto fn_integer_op(const F& op)
 {
-  return [=](vm::machine& vm)
+  return [=](vm::machine& vm) -> value::base*
   {
     vm.self();
     auto left = to_int(vm.retval);
@@ -85,7 +85,7 @@ auto fn_int_to_flt_monop(const F& op)
 template <typename F>
 auto fn_int_bool_op(const F& op)
 {
-  return [=](vm::machine& vm)
+  return [=](vm::machine& vm) -> value::base*
   {
     vm.self();
     auto self = vm.retval;

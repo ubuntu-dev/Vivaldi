@@ -2,30 +2,29 @@
 
 using namespace vv;
 
-vm::environment::environment(const std::shared_ptr<environment>& new_enclosing,
+vm::environment::environment(environment* new_enclosing,
                              value::base* new_self)
   : enclosing {new_enclosing},
     self      {new_self || !enclosing ? new_self : enclosing->self}
 { }
 
-void vm::mark(environment& frame)
+void vm::environment::mark()
 {
-  // Tedious; just call mark on every extant member (unless it's already marked,
-  // in which case don't--- both because it's redundant and because of circular
-  // references)
-  if (frame.enclosing)
-    mark(*frame.enclosing);
+  base::mark();
 
-  for (auto& i : frame.local)
+  if (enclosing && !enclosing->marked())
+    enclosing->mark();
+
+  for (auto& i : local)
     if (!i.second->marked())
       i.second->mark();
 
-  if (frame.self && !frame.self->marked())
-    frame.self->mark();
+  if (self && !self->marked())
+    self->mark();
 }
 
 vm::call_frame::call_frame(vector_ref<vm::command> instr_ptr,
-                           const std::shared_ptr<environment>& env,
+                           environment* env,
                            size_t argc,
                            size_t frame_ptr)
   : argc       {argc},
