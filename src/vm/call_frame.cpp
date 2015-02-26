@@ -5,7 +5,7 @@ using namespace vv;
 vm::environment::environment(const std::shared_ptr<environment>& new_enclosing,
                              value::base* new_self)
   : enclosing {new_enclosing},
-    self      {new_self}
+    self      {new_self || !enclosing ? new_self : enclosing->self}
 { }
 
 void vm::mark(environment& frame)

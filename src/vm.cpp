@@ -187,11 +187,8 @@ void vm::machine::let(symbol sym)
 
 void vm::machine::self()
 {
-  auto env = frame().env;
-  while (env && !env->self)
-    env = env->enclosing;
-  if (env) {
-    retval = env->self.get();
+  if (frame().env->self) {
+    retval = frame().env->self.get();
   } else {
     push_str("self does not exist outside of objects");
     except();
