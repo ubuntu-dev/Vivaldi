@@ -25,8 +25,22 @@ fn arr_addition(): do
   assert(combined[6] == 7, "combined[6] == 7")
 end
 
+fn arr_iter(): do
+  let arr = [1, 2, 4, 8, 16]
+  assert(arr.start().get() == 1, "reading from iterator")
+  assert(arr.start() == arr.start(), "arr.start() == arr.start()")
+  assert(arr.stop() != arr.start(), "arr.stop() != arr.start()")
+  assert(arr.start() < arr.stop(), "arr.start() < arr.stop()")
+  let other = []
+  for i in arr.start() to arr.stop(): other.append(i)
+  for i in 0 to 5: do
+    assert(arr[i] == other[i].get(), "member of range of iterators")
+  end
+end
+
 section("Arrays")
 test(arr_size, "size")
 test(arr_order, "order")
 test(arr_indexing, "indexing")
 test(arr_addition, "addition")
+test(arr_iter, "iterators")
