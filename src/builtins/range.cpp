@@ -33,7 +33,7 @@ value::base* fn_range_size(vm::machine& vm)
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.retval);
   vm.retval = rng.start;
-  vm.push_arg();
+  vm.push();
   vm.retval = rng.end;
   vm.readm({"subtract"});
   vm.call(1);
@@ -46,7 +46,7 @@ value::base* fn_range_at_end(vm::machine& vm)
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.retval);
   vm.retval = rng.start;
-  vm.push_arg();
+  vm.push();
   vm.retval = rng.end;
   vm.readm({"greater"});
   vm.call(1);
@@ -68,7 +68,7 @@ value::base* fn_range_increment(vm::machine& vm)
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.retval);
   vm.push_int(1);
-  vm.push_arg();
+  vm.push();
   vm.retval = rng.start;
   vm.readm({"add"});
   vm.call(1);
@@ -84,7 +84,7 @@ value::base* fn_range_to_arr(vm::machine& vm)
   std::vector<value::base*> vals;
   auto iter = vm.retval = rng.start;
   for (;;) {
-    vm.push_arg();
+    vm.push();
     vm.retval = rng.end;
     vm.readm({"greater"});
     vm.call(1);
@@ -95,7 +95,7 @@ value::base* fn_range_to_arr(vm::machine& vm)
     vm.retval = iter;
     vm.push();
     vm.push_int(1);
-    vm.push_arg();
+    vm.push();
     vm.retval = iter;
     vm.readm({"add"});
     vm.call(1);

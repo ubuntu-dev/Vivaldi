@@ -34,7 +34,6 @@ public:
   void let(symbol sym);
 
   void self();
-  void push_arg();
   void arg(int idx);
   void readm(symbol sym);
   void writem(symbol sym);

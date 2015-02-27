@@ -16,6 +16,8 @@
 #include "value/string_iterator.h"
 #include "value/symbol.h"
 
+#include <list>
+
 using namespace vv;
 using namespace gc;
 using namespace internal;

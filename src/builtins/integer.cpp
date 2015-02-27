@@ -39,9 +39,7 @@ auto fn_int_or_flt_op(const F& op)
 
     if (arg->type != &type::integer)
       return throw_exception("Right-hand argument is not an Integer");
-    // Apparently moving from integers is a bad idea; without the explicit int&&
-    // template parameter, 0 is always passed to value::integer::integer
-    return gc::alloc<value::integer, int&&>( op(left, to_int(arg)) );
+    return gc::alloc<value::integer, int>( op(left, to_int(arg)) );
   };
 }
 
@@ -58,7 +56,7 @@ auto fn_integer_op(const F& op)
       return throw_exception("Right-hand argument is not an Integer");
     auto right = to_int(arg);
 
-    return gc::alloc<value::integer, int&&>( op(left, right) );
+    return gc::alloc<value::integer, int>( op(left, right) );
   };
 }
 
@@ -68,7 +66,7 @@ auto fn_integer_monop(const F& op)
   return [=](vm::machine& vm)
   {
     vm.self();
-    return gc::alloc<value::integer, int&&>( op(to_int(vm.retval)) );
+    return gc::alloc<value::integer, int>( op(to_int(vm.retval)) );
   };
 }
 

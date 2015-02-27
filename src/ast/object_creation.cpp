@@ -18,7 +18,7 @@ std::vector<vm::command> ast::object_creation::generate() const
   for (const auto& i : m_args) {
     auto arg = i->generate();
     copy(begin(arg), end(arg), back_inserter(vec));
-    vec.emplace_back(vm::instruction::push_arg);
+    vec.emplace_back(vm::instruction::push);
   }
 
   auto type = m_type->generate();

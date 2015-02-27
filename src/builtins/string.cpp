@@ -176,7 +176,7 @@ value::base* fn_string_ord(vm::machine& vm)
   auto str = static_cast<value::string&>(*vm.retval).val;
   if (!str.size())
     return throw_exception("Cannot call ord on an empty string");
-  return gc::alloc<value::integer>( str[0] );
+  return gc::alloc<value::integer, int>( str[0] );
 }
 
 // }}}

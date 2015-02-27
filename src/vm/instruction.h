@@ -57,8 +57,6 @@ enum class instruction {
 
   /// reads self into retval
   self,
-  /// pushes retval onto arg stack
-  push_arg,
   /// retrieves the nth passed argument, where n is the provided integer
   arg,
   /// reads a member into retval

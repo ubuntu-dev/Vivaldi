@@ -129,7 +129,7 @@ value::base* fn_filter(vm::machine& vm)
   fake_for_loop(vm, [array](auto& vm, auto* pred_fn, auto* item)
   {
     vm.retval = item;
-    vm.push_arg();
+    vm.push();
     vm.retval = pred_fn;
     vm.call(1);
     vm.run_cur_scope();
@@ -201,9 +201,9 @@ value::base* fn_reduce(vm::machine& vm)
 
     auto next_item = call_method(vm, iter, {"get"}).value;
     vm.pop(); // get total
-    vm.push_arg();
+    vm.push();
     vm.retval = next_item;
-    vm.push_arg();
+    vm.push();
     vm.retval = supplied_fn;
     vm.call(2);
     vm.run_cur_scope();

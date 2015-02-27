@@ -198,11 +198,6 @@ void vm::machine::self()
   //if (retval->type != &builtin::type::range) assert(retval->value().size() > 0);
 }
 
-void vm::machine::push_arg()
-{
-  m_stack.push_back(retval);
-}
-
 void vm::machine::arg(int idx)
 {
   retval = m_stack[frame().frame_ptr - static_cast<size_t>(idx) - 1];
@@ -402,7 +397,7 @@ void vm::machine::except()
     // broken
     frame().instr_ptr = {};//frame().instr_ptr.subvec(frame().instr_ptr.size());
   } else {
-    push_arg();
+    push();
     retval = frame().catcher.get();
     pop_catch();
     call(1);
@@ -450,7 +445,6 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::let:   let(get<symbol>(arg));   break;
 
   case instruction::self:     self();                   break;
-  case instruction::push_arg: push_arg();               break;
   case instruction::arg:      this->arg(get<int>(arg)); break;
   case instruction::readm:    readm(get<symbol>(arg));  break;
   case instruction::writem:   writem(get<symbol>(arg)); break;
@@ -490,7 +484,7 @@ void vm::machine::except_until(size_t stack_pos)
     throw vm_error{retval};
 
   } else {
-    push_arg();
+    push();
     retval = frame().catcher.get();
     pop_catch();
     call(1);

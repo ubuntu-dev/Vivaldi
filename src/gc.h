@@ -8,7 +8,6 @@
 #include "vm.h"
 
 #include <array>
-#include <list>
 
 namespace vv {
 
@@ -21,14 +20,12 @@ union value_type;
 void set_value_type(value_type* val, value::array&& array);
 void set_value_type(value_type* val, value::array_iterator&& array_iterator);
 void set_value_type(value_type* val, value::base&& base);
-void set_value_type(value_type* val, value::boolean&& boolean);
 void set_value_type(value_type* val, value::builtin_function&& builtin_function);
 void set_value_type(value_type* val, value::dictionary&& dictionary);
 void set_value_type(value_type* val, value::file&& file);
 void set_value_type(value_type* val, value::floating_point&& floating_point);
 void set_value_type(value_type* val, value::function&& function);
 void set_value_type(value_type* val, value::integer&& integer);
-void set_value_type(value_type* val, value::nil&& nil);
 void set_value_type(value_type* val, value::range&& range);
 void set_value_type(value_type* val, value::string&& string);
 void set_value_type(value_type* val, value::string_iterator&&  string_iterator);
@@ -60,15 +57,27 @@ inline value::base* emplace(T&& val)
 template <typename T, typename... Args>
 inline T* alloc(Args&&... args)
 {
-  //return static_cast<T*>(internal::emplace(new T{args...}));
+  static_assert(!std::is_same<T, value::boolean>::value, "unspecialized for bool");
+  static_assert(!std::is_same<T, value::nil>::value, "unspecialized for nil");
+  static_assert(!std::is_same<T, value::integer>::value, "unspecialized for integer");
   return static_cast<T*>(internal::emplace(T{args...}));
 }
 
 // Optimized template overrides for alloc:
 template <>
-inline value::boolean* alloc<value::boolean>(bool&& val)
+inline value::boolean* alloc<value::boolean, bool>(bool&& val)
 {
   return &(val ? internal::g_true : internal::g_false);
+}
+template <>
+inline value::boolean* alloc<value::boolean, bool&>(bool& val)
+{
+  return alloc<value::boolean, bool>(bool{val});
+}
+template <>
+inline value::boolean* alloc<value::boolean>()
+{
+  return &internal::g_true;
 }
 
 template <>
@@ -78,11 +87,21 @@ inline value::nil* alloc<value::nil>()
 }
 
 template <>
-inline value::integer* alloc<value::integer>(int&& val)
+inline value::integer* alloc<value::integer, int>(int&& val)
 {
   if (val >= 0 && val < 1024)
     return &internal::g_ints[static_cast<unsigned>(val)];
-  return gc::alloc<value::integer>( val );
+  return static_cast<value::integer*>(internal::emplace(value::integer{val}));
+}
+template <>
+inline value::integer* alloc<value::integer, int&>(int& val)
+{
+  return alloc<value::integer, int>(int{val});
+}
+template <>
+inline value::integer* alloc<value::integer>()
+{
+  return alloc<value::integer, int>(0);
 }
 
 void set_running_vm(vm::machine& vm);
