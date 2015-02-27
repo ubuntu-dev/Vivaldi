@@ -219,6 +219,28 @@ value::base* fn_array_iterator_unequal(vm::machine& vm)
                                   || iter->idx != other->idx );
 }
 
+value::base* fn_array_iterator_greater(vm::machine& vm)
+{
+  vm.self();
+  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  vm.arg(0);
+  auto other = static_cast<value::array_iterator*>(vm.retval);
+  if (&iter->arr != &other->arr)
+    return throw_exception("Only ArrayIterators from the same Array can be compared");
+  return gc::alloc<value::boolean>(iter->idx > other->idx );
+}
+
+value::base* fn_array_iterator_less(vm::machine& vm)
+{
+  vm.self();
+  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  vm.arg(0);
+  auto other = static_cast<value::array_iterator*>(vm.retval);
+  if (&iter->arr != &other->arr)
+    return throw_exception("Only ArrayIterators from the same Array can be compared");
+  return gc::alloc<value::boolean>(iter->idx < other->idx );
+}
+
 // }}}
 
 value::builtin_function array_init   {fn_array_init,   1};
@@ -235,6 +257,8 @@ value::builtin_function array_iterator_at_end    {fn_array_iterator_at_end,    0
 value::builtin_function array_iterator_get       {fn_array_iterator_get,       0};
 value::builtin_function array_iterator_equals    {fn_array_iterator_equals,    1};
 value::builtin_function array_iterator_unequal   {fn_array_iterator_unequal,   1};
+value::builtin_function array_iterator_greater   {fn_array_iterator_greater,   1};
+value::builtin_function array_iterator_less      {fn_array_iterator_less,      1};
 value::builtin_function array_iterator_increment {fn_array_iterator_increment, 0};
 value::builtin_function array_iterator_decrement {fn_array_iterator_decrement, 0};
 value::builtin_function array_iterator_add       {fn_array_iterator_add,       1};
@@ -258,6 +282,8 @@ value::type type::array_iterator {[]{ return nullptr; }, {
   { {"get"},       &array_iterator_get },
   { {"equals"},    &array_iterator_equals },
   { {"unequal"},   &array_iterator_unequal },
+  { {"greater"},   &array_iterator_greater },
+  { {"less"},      &array_iterator_less },
   { {"increment"}, &array_iterator_increment },
   { {"decrement"}, &array_iterator_decrement },
   { {"add"},       &array_iterator_add },
