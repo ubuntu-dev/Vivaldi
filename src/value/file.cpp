@@ -21,14 +21,9 @@ value::file::file()
 value::file::file(file&& other)
   : base {&builtin::type::file},
     name {move(other.name)},
-    val  {other.val}
+    val  {std::move(other.val)}
 {
   other.val = nullptr;
 }
 
 std::string value::file::value() const { return "File: " + name; }
-
-value::file::~file()
-{
-  delete val;
-}

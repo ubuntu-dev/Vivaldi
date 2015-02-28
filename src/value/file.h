@@ -19,9 +19,7 @@ public:
 
   std::string name;
   std::string cur_line;
-  std::fstream* val;
-
-  ~file();
+  std::unique_ptr<std::fstream> val;
 };
 
 }

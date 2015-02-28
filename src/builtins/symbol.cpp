@@ -24,9 +24,9 @@ vv::symbol to_symbol(dumb_ptr<value::base> boxed)
 value::base* fn_symbol_init(vm::machine& vm)
 {
   vm.self();
-  auto& sym = static_cast<value::symbol&>(*vm.retval);
+  auto& sym = static_cast<value::symbol&>(*vm.top());
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type == &type::symbol)
     sym.val = to_symbol(arg);
   if (arg->type == &type::string)
@@ -39,23 +39,23 @@ value::base* fn_symbol_init(vm::machine& vm)
 value::base* fn_symbol_equals(vm::machine& vm)
 {
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
 
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( false );
   vm.self();
-  return gc::alloc<value::boolean>(to_symbol(vm.retval) == to_symbol(arg));
+  return gc::alloc<value::boolean>(to_symbol(vm.top()) == to_symbol(arg));
 }
 
 value::base* fn_symbol_unequal(vm::machine& vm)
 {
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
 
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( true );
   vm.self();
-  return gc::alloc<value::boolean>(to_symbol(vm.retval) != to_symbol(arg));
+  return gc::alloc<value::boolean>(to_symbol(vm.top()) != to_symbol(arg));
 }
 
 value::builtin_function symbol_init    {fn_symbol_init,    1};

@@ -11,6 +11,6 @@ ast::except::except(std::unique_ptr<expression>&& value)
 std::vector<vm::command> ast::except::generate() const
 {
   auto vec = m_value->generate();
-  vec.emplace_back(vm::instruction::except);
+  vec.emplace_back(vm::instruction::exc);
   return vec;
 }

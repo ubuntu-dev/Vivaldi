@@ -16,9 +16,9 @@ namespace {
 value::base* fn_array_init(vm::machine& vm)
 {
   vm.self();
-  auto arr = static_cast<value::array*>(vm.retval);
+  auto arr = static_cast<value::array*>(vm.top());
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type != &type::array)
     return throw_exception("Arrays can only be constructed from other Arrays");
   arr->val = static_cast<value::array*>( arg )->val;
@@ -28,36 +28,36 @@ value::base* fn_array_init(vm::machine& vm)
 value::base* fn_array_size(vm::machine& vm)
 {
   vm.self();
-  auto sz = static_cast<value::array&>(*vm.retval).val.size();
+  auto sz = static_cast<value::array&>(*vm.top()).val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
 value::base* fn_array_append(vm::machine& vm)
 {
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type == &type::array) {
     vm.self();
-    auto& arr = static_cast<value::array&>(*vm.retval).val;
+    auto& arr = static_cast<value::array&>(*vm.top()).val;
     const auto& new_val = static_cast<value::array*>(arg)->val;
     copy(begin(new_val), end(new_val), back_inserter(arr));
   } else {
     vm.self();
-    static_cast<value::array&>(*vm.retval).val.push_back(arg);
+    static_cast<value::array&>(*vm.top()).val.push_back(arg);
   }
   vm.self();
-  return vm.retval;
+  return vm.top();
 }
 
 value::base* fn_array_at(vm::machine& vm)
 {
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type != &type::integer)
     return throw_exception("Index must be an Integer");
   auto val = static_cast<value::integer*>(arg)->val;
   vm.self();
-  const auto& arr = static_cast<value::array&>(*vm.retval).val;
+  const auto& arr = static_cast<value::array&>(*vm.top()).val;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
     return throw_exception("Out of range (expected 0-"
                            + std::to_string(arr.size()) + ", got "
@@ -68,31 +68,31 @@ value::base* fn_array_at(vm::machine& vm)
 value::base* fn_array_set_at(vm::machine& vm)
 {
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type != &type::integer)
     return throw_exception("Index must be an Integer");
   auto val = static_cast<value::integer*>(arg)->val;
   vm.self();
-  auto& arr = static_cast<value::array&>(*vm.retval).val;
+  auto& arr = static_cast<value::array&>(*vm.top()).val;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
     return throw_exception("Out of range (expected 0-"
                            + std::to_string(arr.size()) + ", got "
                            + std::to_string(val) + ")");
   vm.arg(1);
-  return arr[static_cast<unsigned>(val)] = vm.retval;
+  return arr[static_cast<unsigned>(val)] = vm.top();
 }
 
 value::base* fn_array_start(vm::machine& vm)
 {
   vm.self();
-  auto& self = static_cast<value::array&>(*vm.retval);
+  auto& self = static_cast<value::array&>(*vm.top());
   return gc::alloc<value::array_iterator>( self );
 }
 
 value::base* fn_array_stop(vm::machine& vm)
 {
   vm.self();
-  auto& self = static_cast<value::array&>(*vm.retval);
+  auto& self = static_cast<value::array&>(*vm.top());
   auto iter = gc::alloc<value::array_iterator>( self );
   static_cast<value::array_iterator*>(iter)->idx = self.val.size();
   return iter;
@@ -101,9 +101,9 @@ value::base* fn_array_stop(vm::machine& vm)
 value::base* fn_array_add(vm::machine& vm)
 {
   vm.self();
-  auto arr = static_cast<value::array*>(vm.retval);
+  auto arr = static_cast<value::array*>(vm.top());
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type != &type::array)
     return throw_exception("Only Arrays can be added to other Arrays");
   auto other = static_cast<value::array*>(arg);
@@ -117,21 +117,21 @@ value::base* fn_array_add(vm::machine& vm)
 value::base* fn_array_iterator_at_start(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   return gc::alloc<value::boolean>( iter->idx == 0 );
 }
 
 value::base* fn_array_iterator_at_end(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   return gc::alloc<value::boolean>( iter->idx == iter->arr.val.size() );
 }
 
 value::base* fn_array_iterator_get(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   if (iter->idx == iter->arr.val.size())
     return throw_exception("ArrayIterator is at end of array");
   return iter->arr.val[iter->idx];
@@ -140,7 +140,7 @@ value::base* fn_array_iterator_get(vm::machine& vm)
 value::base* fn_array_iterator_increment(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   if (iter->idx == iter->arr.val.size())
     return throw_exception("ArrayIterators cannot be incremented past end");
   iter->idx += 1;
@@ -150,7 +150,7 @@ value::base* fn_array_iterator_increment(vm::machine& vm)
 value::base* fn_array_iterator_decrement(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   if (iter->idx == 0)
     return throw_exception("ArrayIterators cannot be decremented past start");
   iter->idx -= 1;
@@ -160,9 +160,9 @@ value::base* fn_array_iterator_decrement(vm::machine& vm)
 value::base* fn_array_iterator_add(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type != &builtin::type::integer)
     return throw_exception("Only Integers can be added to ArrayIterators");
   auto offset = static_cast<value::integer*>(arg)->val;
@@ -180,9 +180,9 @@ value::base* fn_array_iterator_add(vm::machine& vm)
 value::base* fn_array_iterator_subtract(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type != &builtin::type::integer)
     return throw_exception("Only Integers can be added to ArrayIterators");
   auto offset = static_cast<value::integer*>(arg)->val;
@@ -202,9 +202,9 @@ value::base* fn_array_iterator_subtract(vm::machine& vm)
 value::base* fn_array_iterator_equals(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   vm.arg(0);
-  auto other = static_cast<value::array_iterator*>(vm.retval);
+  auto other = static_cast<value::array_iterator*>(vm.top());
   return gc::alloc<value::boolean>( &iter->arr == &other->arr
                                   && iter->idx == other->idx );
 }
@@ -212,9 +212,9 @@ value::base* fn_array_iterator_equals(vm::machine& vm)
 value::base* fn_array_iterator_unequal(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   vm.arg(0);
-  auto other = static_cast<value::array_iterator*>(vm.retval);
+  auto other = static_cast<value::array_iterator*>(vm.top());
   return gc::alloc<value::boolean>( &iter->arr != &other->arr
                                   || iter->idx != other->idx );
 }
@@ -222,9 +222,9 @@ value::base* fn_array_iterator_unequal(vm::machine& vm)
 value::base* fn_array_iterator_greater(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   vm.arg(0);
-  auto other = static_cast<value::array_iterator*>(vm.retval);
+  auto other = static_cast<value::array_iterator*>(vm.top());
   if (&iter->arr != &other->arr)
     return throw_exception("Only ArrayIterators from the same Array can be compared");
   return gc::alloc<value::boolean>(iter->idx > other->idx );
@@ -233,9 +233,9 @@ value::base* fn_array_iterator_greater(vm::machine& vm)
 value::base* fn_array_iterator_less(vm::machine& vm)
 {
   vm.self();
-  auto iter = static_cast<value::array_iterator*>(vm.retval);
+  auto iter = static_cast<value::array_iterator*>(vm.top());
   vm.arg(0);
-  auto other = static_cast<value::array_iterator*>(vm.retval);
+  auto other = static_cast<value::array_iterator*>(vm.top());
   if (&iter->arr != &other->arr)
     return throw_exception("Only ArrayIterators from the same Array can be compared");
   return gc::alloc<value::boolean>(iter->idx < other->idx );

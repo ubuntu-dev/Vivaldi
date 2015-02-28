@@ -20,7 +20,6 @@ std::vector<vm::command> ast::function_call::generate() const
   {
     auto arg = i->generate();
     copy(begin(arg), end(arg), back_inserter(vec));
-    vec.emplace_back(vm::instruction::push);
   });
 
   auto fn = m_function->generate();

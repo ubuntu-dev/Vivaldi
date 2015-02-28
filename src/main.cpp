@@ -18,10 +18,9 @@ void write_error(const std::string& error)
 
 void repl_catcher(vv::vm::machine& vm)
 {
-  write_error("caught exception: " + vm.retval->value());
-
-  // Clear out remaining instructions once the current line's borked
-  vm.retval = vv::gc::alloc<vv::value::nil>( );
+  write_error("caught exception: " + vm.top()->value());
+  vm.pop(1);
+  vm.pnil();
 }
 
 std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
@@ -75,7 +74,7 @@ void run_repl()
       vv::vm::call_frame frame{body, env};
       vv::vm::machine machine{std::move(frame), repl_catcher};
       machine.run();
-      std::cout << "=> " << machine.retval->value() << '\n';
+      std::cout << "=> " << machine.top()->value() << '\n';
     }
   }
   std::cout << '\n'; // stick prompt on newline on ^D
@@ -118,7 +117,7 @@ int main(int argc, char** argv)
     vm.run();
 
     if (excepted)
-      std::cerr << "Caught exception: " << vm.retval->value() << '\n';
+      std::cerr << "Caught exception: " << vm.top()->value() << '\n';
 
     vv::gc::empty();
     return excepted ? 65 : 0; // data err

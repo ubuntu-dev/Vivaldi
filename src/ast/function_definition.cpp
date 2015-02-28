@@ -27,7 +27,7 @@ std::vector<vm::command> ast::function_definition::generate() const
   definition.emplace_back(vm::instruction::ret, false);
 
   std::vector<vm::command> vec;
-  vec.emplace_back( vm::instruction::push_fn,
+  vec.emplace_back( vm::instruction::pfn,
                     vm::function_t{argc, move(definition)} );
 
   if (m_name != symbol{})

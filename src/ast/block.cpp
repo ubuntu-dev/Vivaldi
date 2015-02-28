@@ -22,7 +22,7 @@ std::vector<vm::command> ast::block::generate() const
   // expressions, and since in that case the e/lblk don't change any semantics,
   // there's no reason not to special-case it
   if (!m_subexpressions.size())
-    return { {vm::instruction::push_nil} };
+    return { {vm::instruction::pnil} };
 
   std::vector<vm::command> vec{ {vm::instruction::eblk} };
 

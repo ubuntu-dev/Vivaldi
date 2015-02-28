@@ -11,7 +11,7 @@ namespace {
 value::base* fn_custom_type_parent(vm::machine& vm)
 {
   vm.self();
-  return &static_cast<value::type&>(*vm.retval).parent;
+  return &static_cast<value::type&>(*vm.top()).parent;
 }
 
 value::builtin_function custom_type_parent {fn_custom_type_parent, 0};

@@ -14,98 +14,93 @@ namespace {
 value::base* fn_range_init(vm::machine& vm)
 {
   vm.self();
-  auto& rng = static_cast<value::range&>(*vm.retval);
+  auto& rng = static_cast<value::range&>(*vm.top());
   vm.arg(1);
-  rng.end = vm.retval;
+  rng.end = vm.top();
   vm.arg(0);
-  rng.start = vm.retval;
+  rng.start = vm.top();
   return &rng;
 }
 
 value::base* fn_range_start(vm::machine& vm)
 {
   vm.self();
-  return vm.retval;
+  return vm.top();
 }
 
 value::base* fn_range_size(vm::machine& vm)
 {
   vm.self();
-  auto& rng = static_cast<value::range&>(*vm.retval);
-  vm.retval = rng.start;
-  vm.push();
-  vm.retval = rng.end;
+  auto& rng = static_cast<value::range&>(*vm.top());
+  vm.push(rng.start);
+  vm.push(rng.end);
   vm.readm({"subtract"});
   vm.call(1);
   vm.run_cur_scope();
-  return vm.retval;
+  return vm.top();
 }
 
 value::base* fn_range_at_end(vm::machine& vm)
 {
   vm.self();
-  auto& rng = static_cast<value::range&>(*vm.retval);
-  vm.retval = rng.start;
-  vm.push();
-  vm.retval = rng.end;
+  auto& rng = static_cast<value::range&>(*vm.top());
+  vm.push(rng.start);
+  vm.push(rng.end);
   vm.readm({"greater"});
   vm.call(1);
   vm.run_cur_scope();
   vm.readm({"not"});
   vm.call(0);
   vm.run_cur_scope();
-  return vm.retval;
+  return vm.top();
 }
 
 value::base* fn_range_get(vm::machine& vm)
 {
   vm.self();
-  return static_cast<value::range&>(*vm.retval).start;
+  return static_cast<value::range&>(*vm.top()).start;
 }
 
 value::base* fn_range_increment(vm::machine& vm)
 {
   vm.self();
-  auto& rng = static_cast<value::range&>(*vm.retval);
-  vm.push_int(1);
-  vm.push();
-  vm.retval = rng.start;
+  auto& rng = static_cast<value::range&>(*vm.top());
+  vm.pint(1);
+  vm.push(rng.start);
   vm.readm({"add"});
   vm.call(1);
   vm.run_cur_scope();
-  rng.start = vm.retval;
+  rng.start = vm.top();
   return &rng;
 }
 
 value::base* fn_range_to_arr(vm::machine& vm)
 {
   vm.self();
-  auto& rng = static_cast<value::range&>(*vm.retval);
+  auto& rng = static_cast<value::range&>(*vm.top());
   std::vector<value::base*> vals;
-  auto iter = vm.retval = rng.start;
+  vm.push(rng.start);
+  auto iter = vm.top();
   for (;;) {
-    vm.push();
-    vm.retval = rng.end;
+    vm.push(rng.end);
     vm.readm({"greater"});
     vm.call(1);
     vm.run_cur_scope();
-    if (!truthy(vm.retval))
+    if (!truthy(vm.top()))
       break;
     vals.push_back(iter);
-    vm.retval = iter;
-    vm.push();
-    vm.push_int(1);
-    vm.push();
-    vm.retval = iter;
+    vm.push(iter);
+    vm.pint(1);
+    vm.push(iter);
     vm.readm({"add"});
     vm.call(1);
     vm.run_cur_scope();
-    iter = vm.retval;
+    iter = vm.top();
   }
 
   auto ret = gc::alloc<value::array>( vals );
   for (auto i = vals.size(); i--;)
-    vm.pop();
+    vm.pop(1);
   return ret;
 }
 

@@ -15,19 +15,22 @@ public:
   void run();
   void run_cur_scope();
 
+  value::base* top();
+  void push(value::base* newtop);
+
   void mark();
 
-  void push_bool(bool val);
-  void push_flt(double val);
-  void push_fn(const function_t& val);
-  void push_int(int val);
-  void push_nil();
-  void push_str(const std::string& val);
-  void push_sym(symbol val);
-  void push_type(const type_t& type);
+  void pbool(bool val);
+  void pflt(double val);
+  void pfn(const function_t& val);
+  void pint(int val);
+  void pnil();
+  void pstr(const std::string& val);
+  void psym(symbol val);
+  void ptype(const type_t& type);
 
-  void make_arr(int size);
-  void make_dict(int size);
+  void parr(int size);
+  void pdict(int size);
 
   void read(symbol sym);
   void write(symbol sym);
@@ -38,28 +41,25 @@ public:
   void readm(symbol sym);
   void writem(symbol sym);
   void call(int args);
-  void new_obj(int args);
+  void pobj(int args);
+
+  void pop(int num);
 
   void eblk();
   void lblk();
   void ret(bool copy);
 
-  void push();
-  void pop();
-
   void req(const std::string& file);
 
   void jmp(int offset);
-  void jmp_false(int offset);
-  void jmp_true(int offset);
+  void jf(int offset);
+  void jt(int offset);
 
-  void push_catch();
-  void pop_catch();
-  void except();
+  void pushc();
+  void popc();
+  void exc();
 
   void chdir(const std::string& new_dir);
-
-  value::base* retval;
 
 private:
   void run_single_command(const vm::command& command);
@@ -70,9 +70,10 @@ private:
 
   std::vector<call_frame> m_call_stack;
   std::vector<value::base*> m_stack;
-  std::function<void(machine&)> m_exception_handler;
 
-  value::base* m_pushed_self;
+  value::base* m_transient_self;
+
+  std::function<void(machine&)> m_exception_handler;
 };
 
 }

@@ -30,9 +30,9 @@ auto fn_floating_point_op(const F& op)
   return [=](vm::machine& vm)
   {
     vm.self();
-    auto self = vm.retval;
+    auto self = vm.top();
     vm.arg(0);
-    auto other = vm.retval;
+    auto other = vm.top();
     if (!is_float(other))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::floating_point>(op(to_float(self), to_float(other)));
@@ -46,9 +46,9 @@ auto fn_float_bool_op(const F& op)
   return [=](vm::machine& vm)
   {
     vm.self();
-    auto self = vm.retval;
+    auto self = vm.top();
     vm.arg(0);
-    auto other = vm.retval;
+    auto other = vm.top();
     if (!is_float(other))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::boolean>( op(to_float(self), to_float(other)) );
@@ -62,16 +62,16 @@ auto fn_floating_point_monop(const F& op)
   return [=](vm::machine& vm)
   {
     vm.self();
-    return gc::alloc<value::floating_point>( op(to_float(vm.retval)) );
+    return gc::alloc<value::floating_point>( op(to_float(vm.top())) );
   };
 }
 
 value::base* fn_floating_point_divides(vm::machine& vm)
 {
   vm.self();
-  auto self = vm.retval;
+  auto self = vm.top();
   vm.arg(0);
-  auto other = vm.retval;
+  auto other = vm.top();
   if (!is_float(other))
     return throw_exception("Right-hand argument is not a Float");
   if (to_float(other) == 0)

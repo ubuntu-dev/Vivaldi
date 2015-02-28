@@ -14,14 +14,14 @@ ast::while_loop::while_loop(std::unique_ptr<expression>&& test,
 std::vector<vm::command> ast::while_loop::generate() const
 {
   auto vec = m_test->generate();
-  vec.emplace_back(vm::instruction::jmp_false);
+  vec.emplace_back(vm::instruction::jf);
   auto test_jump_idx = vec.size() - 1;
 
   auto body = m_body->generate();
   copy(begin(body), end(body), back_inserter(vec));
 
   vec.emplace_back(vm::instruction::jmp, -static_cast<int>(vec.size()));
-  vec.emplace_back(vm::instruction::push_nil);
+  vec.emplace_back(vm::instruction::pnil);
   vec[test_jump_idx].arg = static_cast<int>(vec.size() - 1 - test_jump_idx);
 
   return vec;

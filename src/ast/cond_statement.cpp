@@ -19,9 +19,10 @@ std::vector<vm::command> ast::cond_statement::generate() const
   for (const auto& i : m_body) {
     auto test = i.first->generate();
     copy(begin(test), end(test), back_inserter(vec));
-    vec.emplace_back(vm::instruction::jmp_false);
+    vec.emplace_back(vm::instruction::jf);
     auto jump_to_next_test_idx = vec.size() - 1;
 
+    vec.emplace_back(vm::instruction::pop, 1); // pop test result
     auto body = i.second->generate();
     copy(begin(body), end(body), back_inserter(vec));
     vec.emplace_back(vm::instruction::jmp);
@@ -31,7 +32,7 @@ std::vector<vm::command> ast::cond_statement::generate() const
     vec[jump_to_next_test_idx].arg = jump_sz;
   }
 
-  vec.emplace_back(vm::instruction::push_nil);
+  vec.emplace_back(vm::instruction::pnil);
   for (auto i : jump_to_end_idxs) {
     auto jump_sz = static_cast<int>(vec.size() - i);
     vec[i].arg = jump_sz;

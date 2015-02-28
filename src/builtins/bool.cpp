@@ -13,9 +13,9 @@ namespace {
 value::base* fn_bool_init(vm::machine& vm)
 {
   vm.arg(0);
-  if (vm.retval->type == &type::boolean)
-    return vm.retval;
-  return gc::alloc<value::boolean>( truthy(vm.retval) );
+  if (vm.top()->type == &type::boolean)
+    return vm.top();
+  return gc::alloc<value::boolean>( truthy(vm.top()) );
 }
 
 value::builtin_function bool_init {fn_bool_init, 1};

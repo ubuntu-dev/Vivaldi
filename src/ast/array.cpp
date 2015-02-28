@@ -15,9 +15,8 @@ std::vector<vm::command> ast::array::generate() const
   for (const auto& i : m_members) {
     auto arg = i->generate();
     copy(begin(arg), end(arg), back_inserter(vec));
-    vec.emplace_back(vm::instruction::push);
   }
 
-  vec.emplace_back(vm::instruction::make_arr, static_cast<int>(m_members.size()));
+  vec.emplace_back(vm::instruction::parr, static_cast<int>(m_members.size()));
   return vec;
 }

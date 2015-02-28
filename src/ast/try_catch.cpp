@@ -22,14 +22,14 @@ std::vector<vm::command> ast::try_catch::generate() const
   catcher.emplace_back(vm::instruction::ret, false);
 
   std::vector<vm::command> vec;
-  vec.emplace_back(vm::instruction::push_fn, vm::function_t{1, move(catcher)});
-  vec.emplace_back(vm::instruction::push_catch);
+  vec.emplace_back(vm::instruction::pfn, vm::function_t{1, move(catcher)});
+  vec.emplace_back(vm::instruction::pushc);
 
   auto body = m_body->generate();
   body.emplace_back(vm::instruction::ret, false);
-  vec.emplace_back(vm::instruction::push_fn, vm::function_t{0, move(body)});
+  vec.emplace_back(vm::instruction::pfn, vm::function_t{0, move(body)});
   vec.emplace_back(vm::instruction::call, 0);
 
-  vec.emplace_back(vm::instruction::pop_catch);
+  vec.emplace_back(vm::instruction::popc);
   return vec;
 }

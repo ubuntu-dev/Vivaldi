@@ -32,11 +32,11 @@ struct call_result {
 
 call_result call_method(vm::machine& vm, value::base* self, symbol method)
 {
-  vm.retval = self;
+  vm.push(self);
   vm.readm(method);
   vm.call(0);
   vm.run_cur_scope();
-  return { true, vm.retval };
+  return { true, vm.top() };
 }
 
 template <typename F>
@@ -44,17 +44,16 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
 {
   // Get iterator from range
   vm.arg(0);
-  auto range = vm.retval;
+  auto range = vm.top();
   auto iter = call_method(vm, range, {"start"}).value;
-  vm.push();
 
   vm.arg(1);
-  auto supplied_fn = vm.retval;
+  auto supplied_fn = vm.top();
 
   for (;;) {
     auto at_end = call_method(vm, iter, {"at_end"}).value;
     if (truthy(at_end)) {
-      vm.pop(); // iter
+      vm.pop(1); // iter
       return { true, at_end };
     }
 
@@ -62,7 +61,7 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
 
     auto res = inner(vm, supplied_fn, next_item);
     if (res.completed) {
-      vm.pop(); // iter
+      vm.pop(1); // iter
       return res;
     }
 
@@ -75,15 +74,14 @@ call_result transformed_range(vm::machine& vm, const F& inner)
 {
   return fake_for_loop(vm, [&](auto vm, auto* transform, auto* orig)
   {
-    vm.retval = orig;
-    vm.push();
+    vm.push(orig);
 
-    vm.retval = transform;
+    vm.push(transform);
     vm.call(1);
     vm.run_cur_scope();
 
-    auto completed = inner(orig, vm.retval);
-    return call_result{ completed, vm.retval };
+    auto completed = inner(orig, vm.top());
+    return call_result{ completed, vm.top() };
   });
 }
 
@@ -93,7 +91,7 @@ call_result transformed_range(vm::machine& vm, const F& inner)
 value::base* fn_print(vm::machine& vm)
 {
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
 
   if (arg->type == &type::string)
     std::cout << static_cast<value::string*>(arg)->val;
@@ -122,37 +120,34 @@ value::base* fn_gets(vm::machine&)
 
 value::base* fn_filter(vm::machine& vm)
 {
-  vm.make_arr(0);
-  auto array = static_cast<value::array*>(vm.retval);
-  vm.push(); // store array locally
+  vm.parr(0);
+  auto array = static_cast<value::array*>(vm.top());
 
   fake_for_loop(vm, [array](auto& vm, auto* pred_fn, auto* item)
   {
-    vm.retval = item;
-    vm.push();
-    vm.retval = pred_fn;
+    vm.push(item);
+    vm.push(pred_fn);
     vm.call(1);
     vm.run_cur_scope();
-    if (truthy(vm.retval))
+    if (truthy(vm.top()))
       array->val.push_back(item);
     return call_result{ false, nullptr };
   });
 
-  vm.pop(); // array
-  return vm.retval;
+  vm.pop(1); // array
+  return vm.top();
 }
 
 value::base* fn_map(vm::machine& vm)
 {
   // Get pointer to empty Array
-  vm.make_arr(0);
-  vm.push(); // Avoid GC'ing retval of inactive VM
-  auto mapped = static_cast<value::array*>(vm.retval);
+  vm.parr(0);
+  auto mapped = static_cast<value::array*>(vm.top());
 
   transformed_range(vm, [&](auto*, auto* val)
                            { mapped->val.push_back(val); return false; });
 
-  vm.pop(); // filtered
+  vm.pop(1); // filtered
   return mapped;
 }
 
@@ -184,30 +179,25 @@ value::base* fn_reduce(vm::machine& vm)
 {
   // Get iterator from range
   vm.arg(0);
-  auto range = vm.retval;
+  auto range = vm.top();
   auto iter = call_method(vm, range, {"start"}).value;
 
   vm.arg(1);
-  vm.push(); // store total locally
   vm.arg(2);
-  auto supplied_fn = vm.retval;
+  auto supplied_fn = vm.top();
 
   for (;;) {
     auto at_end = call_method(vm, iter, {"at_end"}).value;
     if (truthy(at_end)) {
-      vm.pop(); // get total
-      return vm.retval;
+      vm.pop(1); // get total
+      return vm.top();
     }
 
     auto next_item = call_method(vm, iter, {"get"}).value;
-    vm.pop(); // get total
-    vm.push();
-    vm.retval = next_item;
-    vm.push();
-    vm.retval = supplied_fn;
+    vm.push(next_item);
+    vm.push(supplied_fn);
     vm.call(2);
     vm.run_cur_scope();
-    vm.push(); // push total
 
     call_method(vm, iter, {"increment"});
   }

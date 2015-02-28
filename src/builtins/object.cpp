@@ -12,31 +12,31 @@ namespace {
 value::base* fn_object_equals(vm::machine& vm)
 {
   vm.self();
-  auto self = vm.retval;
+  auto self = vm.top();
   vm.arg(0);
-  auto other = vm.retval;
+  auto other = vm.top();
   return gc::alloc<value::boolean>( self->equals(*other) );
 }
 
 value::base* fn_object_unequal(vm::machine& vm)
 {
   vm.self();
-  auto self = vm.retval;
+  auto self = vm.top();
   vm.arg(0);
-  auto other = vm.retval;
+  auto other = vm.top();
   return gc::alloc<value::boolean>( !self->equals(*other) );
 }
 
 value::base* fn_object_not(vm::machine& vm)
 {
   vm.self();
-  return gc::alloc<value::boolean>( !truthy(vm.retval) );
+  return gc::alloc<value::boolean>( !truthy(vm.top()) );
 }
 
 value::base* fn_object_type(vm::machine& vm)
 {
   vm.self();
-  return vm.retval->type;
+  return vm.top()->type;
 }
 
 value::builtin_function obj_equals  {fn_object_equals,  1};

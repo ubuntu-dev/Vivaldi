@@ -31,9 +31,9 @@ auto fn_int_or_flt_op(const F& op)
   return [=](vm::machine& vm) -> value::base*
   {
     vm.self();
-    auto left = to_int(vm.retval);
+    auto left = to_int(vm.top());
     vm.arg(0);
-    auto arg = vm.retval;
+    auto arg = vm.top();
     if (arg->type == &type::floating_point)
       return gc::alloc<value::floating_point>( op(left, to_float(arg)) );
 
@@ -49,9 +49,9 @@ auto fn_integer_op(const F& op)
   return [=](vm::machine& vm) -> value::base*
   {
     vm.self();
-    auto left = to_int(vm.retval);
+    auto left = to_int(vm.top());
     vm.arg(0);
-    auto arg = vm.retval;
+    auto arg = vm.top();
     if (arg->type != &type::integer)
       return throw_exception("Right-hand argument is not an Integer");
     auto right = to_int(arg);
@@ -66,7 +66,7 @@ auto fn_integer_monop(const F& op)
   return [=](vm::machine& vm)
   {
     vm.self();
-    return gc::alloc<value::integer, int>( op(to_int(vm.retval)) );
+    return gc::alloc<value::integer, int>( op(to_int(vm.top())) );
   };
 }
 
@@ -76,7 +76,7 @@ auto fn_int_to_flt_monop(const F& op)
   return [=](vm::machine& vm)
   {
     vm.self();
-    return gc::alloc<value::floating_point>( op(to_int(vm.retval)) );
+    return gc::alloc<value::floating_point>( op(to_int(vm.top())) );
   };
 }
 
@@ -86,9 +86,9 @@ auto fn_int_bool_op(const F& op)
   return [=](vm::machine& vm) -> value::base*
   {
     vm.self();
-    auto self = vm.retval;
+    auto self = vm.top();
     vm.arg(0);
-    auto arg = vm.retval;
+    auto arg = vm.top();
     if (arg->type == &type::floating_point) {
       auto left = to_int(self);
       auto right = to_float(arg);
@@ -106,9 +106,9 @@ auto fn_int_bool_op(const F& op)
 value::base* fn_integer_divides(vm::machine& vm)
 {
   vm.self();
-  auto left = to_int(vm.retval);
+  auto left = to_int(vm.top());
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type == &type::floating_point) {
     if (to_float(arg) == 0.0)
       return throw_exception("cannot divide by zero");
@@ -125,9 +125,9 @@ value::base* fn_integer_divides(vm::machine& vm)
 bool boxed_integer_equal(vm::machine& vm)
 {
   vm.self();
-  auto self = vm.retval;
+  auto self = vm.top();
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type == &type::floating_point) {
     auto left = to_int(self);
     auto right = to_float(arg);
@@ -154,9 +154,9 @@ value::base* fn_integer_unequal(vm::machine& vm)
 value::base* fn_integer_pow(vm::machine& vm)
 {
   vm.self();
-  auto self = vm.retval;
+  auto self = vm.top();
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type == &type::floating_point) {
     auto left = to_int(self);
     auto right = to_float(arg);
@@ -176,7 +176,7 @@ value::base* fn_integer_pow(vm::machine& vm)
 value::base* fn_integer_chr(vm::machine& vm)
 {
   vm.self();
-  auto self = to_int(vm.retval);
+  auto self = to_int(vm.top());
   if (self < 0 || self > 255)
     return throw_exception("chr can only be called on integers between 0 to 256");
   return gc::alloc<value::string>( std::string{static_cast<char>(self)} );

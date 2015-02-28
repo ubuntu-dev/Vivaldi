@@ -63,7 +63,6 @@ value::type::type(
 
     for (auto i = 0; i != init_shim.argc; ++i) {
       init_shim.body.emplace_back(vm::instruction::arg, i);
-      init_shim.body.emplace_back(vm::instruction::push);
     }
 
     init_shim.body.emplace_back( vm::instruction::self );

@@ -21,15 +21,15 @@ std::vector<vm::command> ast::logical_and::generate() const
   //   jmp 2
   //   push_bool false
   auto vec = m_left->generate();
-  vec.emplace_back(vm::instruction::jmp_false);
+  vec.emplace_back(vm::instruction::jf);
   auto jmp_to_false_idx = vec.size() - 1;
 
   auto right = m_right->generate();
   copy(begin(right), end(right), back_inserter(vec));
-  vec.emplace_back(vm::instruction::jmp_false, 3);
-  vec.emplace_back(vm::instruction::push_bool, true);
+  vec.emplace_back(vm::instruction::jf, 3);
+  vec.emplace_back(vm::instruction::pbool, true);
   vec.emplace_back(vm::instruction::jmp, 2);
-  vec.emplace_back(vm::instruction::push_bool, false);
+  vec.emplace_back(vm::instruction::pbool, false);
 
   auto false_idx = vec.size() - 1;
   vec[jmp_to_false_idx].arg = static_cast<int>(false_idx - jmp_to_false_idx);

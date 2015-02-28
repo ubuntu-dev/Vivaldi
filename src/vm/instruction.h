@@ -27,26 +27,26 @@ struct type_t {
 
 enum class instruction {
   /// pushes the provided Bool literal into retval
-  push_bool,
+  pbool,
   /// pushes the provided Float literal into retval
-  push_flt,
+  pflt,
   /// pushes the provided Function literal into retval
-  push_fn,
+  pfn,
   /// pushes the provided Integer literal into retval
-  push_int,
+  pint,
   /// pushes a Nil literal into retval
-  push_nil,
+  pnil,
   /// pushes the provided String literal into retval
-  push_str,
+  pstr,
   /// pushes the provided Symbol literal into retval
-  push_sym,
+  psym,
   /// Pushes the provided Type literal into retval
-  push_type,
+  ptype,
 
   /// sets retval to an Array made out of the provided number of pushed args
-  make_arr,
+  parr,
   /// sets retval to a Dictionary made out of the provided number of pushed args
-  make_dict,
+  pdict,
 
   /// reads a variable into retval
   read,
@@ -66,7 +66,10 @@ enum class instruction {
   /// calls retval, using the provided number of pushed arguments
   call,
   /// creates new object of the type in retval
-  new_obj,
+  pobj,
+
+  /// removes the provided number of objects from the top of the stack
+  pop,
 
   /// enters a new block
   eblk,
@@ -76,26 +79,21 @@ enum class instruction {
   /// local frame to parent
   ret,
 
-  /// pushes retval onto the arg/temporary stack
-  push,
-  /// pops a temporary off the stack into retval
-  pop,
-
   /// loads and run a file with the provided name
   req,
 
   /// unconditionally jumps the provided number of commands
   jmp,
   /// jump the provided number of commands if retval is falsy
-  jmp_false,
+  jf,
   /// jump the provided number of commands if retval is trutyh
-  jmp_true,
+  jt,
   /// pushes retval as a new function for catching exceptions
-  push_catch,
+  pushc,
   /// pops an exception catcher and discards it, leaving retval unchanged
-  pop_catch,
+  popc,
   /// throws retval as an exception
-  except,
+  exc,
 
   /// Changes current directory to that passed as a string literal
   chdir

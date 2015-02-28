@@ -26,7 +26,7 @@ std::vector<vm::command> ast::type_definition::generate() const
   }
 
   std::vector<vm::command> vec;
-  vec.emplace_back(vm::instruction::push_type,
+  vec.emplace_back(vm::instruction::ptype,
                    vm::type_t{m_name, m_parent, methods});
   return vec;
 }

@@ -17,14 +17,13 @@ namespace {
 value::base* fn_file_init(vm::machine& vm)
 {
   vm.arg(0);
-  auto arg = vm.retval;
+  auto arg = vm.top();
   if (arg->type != &type::string)
     return throw_exception("Files can only be constructed from Strings");
   vm.self();
-  auto& self = static_cast<value::file&>(*vm.retval);
+  auto& self = static_cast<value::file&>(*vm.top());
   const auto& filename = static_cast<value::string*>(arg)->val;
-  delete self.val;
-  self.val = new std::fstream{filename};
+  self.val = std::make_unique<std::fstream>(filename);
   self.name = filename;
   std::getline(*self.val, self.cur_line);
   return &self;
@@ -33,7 +32,7 @@ value::base* fn_file_init(vm::machine& vm)
 value::base* fn_file_contents(vm::machine& vm)
 {
   vm.self();
-  auto& self = static_cast<value::file&>(*vm.retval);
+  auto& self = static_cast<value::file&>(*vm.top());
   std::ostringstream str_stream;
   str_stream << self.cur_line;
   str_stream << self.val->rdbuf();
@@ -44,20 +43,20 @@ value::base* fn_file_contents(vm::machine& vm)
 value::base* fn_file_start(vm::machine& vm)
 {
   vm.self();
-  return vm.retval;
+  return vm.top();
 }
 
 value::base* fn_file_get(vm::machine& vm)
 {
   vm.self();
-  const auto& self = static_cast<value::file&>(*vm.retval);
+  const auto& self = static_cast<value::file&>(*vm.top());
   return gc::alloc<value::string>( self.cur_line );
 }
 
 value::base* fn_file_increment(vm::machine& vm)
 {
   vm.self();
-  auto& self = static_cast<value::file&>(*vm.retval);
+  auto& self = static_cast<value::file&>(*vm.top());
   if (self.val->peek() == EOF)
     return throw_exception("Cannot read past end of File");
   std::getline(*self.val, self.cur_line);
@@ -67,7 +66,7 @@ value::base* fn_file_increment(vm::machine& vm)
 value::base* fn_file_at_end(vm::machine& vm)
 {
   vm.self();
-  auto& self = static_cast<value::file&>(*vm.retval);
+  auto& self = static_cast<value::file&>(*vm.top());
   return gc::alloc<value::boolean>(self.val->peek() == EOF && !self.cur_line.size());
 }
 
