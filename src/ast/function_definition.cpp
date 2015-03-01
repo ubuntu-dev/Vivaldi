@@ -20,6 +20,7 @@ std::vector<vm::command> ast::function_definition::generate() const
   for (auto i = argc; i--;) {
     definition.emplace_back(vm::instruction::arg, i);
     definition.emplace_back(vm::instruction::let, m_args[i]);
+    definition.emplace_back(vm::instruction::pop, 1);
   }
 
   auto body = m_body->generate();
