@@ -256,11 +256,7 @@ void vm::machine::call(int argc)
     { instruction::ret, false }
   }};
   auto func = top();
-  m_stack.pop_back();
-
-  auto new_env = gc::alloc<environment>( frame().env.get(), m_transient_self );
-  m_call_stack.emplace_back(builtin_shim, new_env, argc, m_stack.size() - 1);
-  frame().caller = func;
+  pop(1);
 
   if (auto builtin = dynamic_cast<value::builtin_function*>(func)) {
     if (builtin->argc != argc) {
@@ -268,6 +264,9 @@ void vm::machine::call(int argc)
       return;
     }
 
+    auto new_env = gc::alloc<environment>( nullptr, m_transient_self );
+    m_call_stack.emplace_back(builtin_shim, new_env, argc, m_stack.size() - 1);
+    frame().caller = func;
     try {
       push(builtin->body(*this));
     } catch (const vm_error& h) {
@@ -281,7 +280,9 @@ void vm::machine::call(int argc)
       exc_wrong_argc(*this, builtin->argc, argc);
       return;
     }
-    frame().instr_ptr = vvfunc->body;
+    auto new_env = gc::alloc<environment>(vvfunc->enclosure, m_transient_self);
+    m_call_stack.emplace_back(vvfunc->body, new_env, argc, m_stack.size() - 1);
+    frame().caller = func;
 
   } else {
     m_call_stack.pop_back();
@@ -494,7 +495,7 @@ void vm::machine::except_until(size_t stack_pos)
   auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - stack_pos,
                       [](const auto& i) { return i.catcher; });
 
-  auto last_erased = 1 + last.base();
+  auto last_erased = last.base();
   m_stack.erase(begin(m_stack) + last_erased->frame_ptr - last_erased->argc,
                 end(m_stack));
   m_call_stack.erase(last.base(), end(m_call_stack));
