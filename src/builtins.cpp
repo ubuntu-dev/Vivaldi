@@ -131,11 +131,12 @@ value::base* fn_filter(vm::machine& vm)
     vm.run_cur_scope();
     if (truthy(vm.top()))
       array->val.push_back(item);
+    vm.pop(1);
     return call_result{ false, nullptr };
   });
 
   vm.pop(1); // array
-  return vm.top();
+  return array;
 }
 
 value::base* fn_map(vm::machine& vm)
