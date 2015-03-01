@@ -395,11 +395,13 @@ void vm::machine::exc()
   auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - 1,
                       [](const auto& i) { return i.catcher; });
 
-  auto last_erased = 1 + last.base();
-  pop(last_erased->frame_ptr + last_erased->argc);
+  if (last != rbegin(m_call_stack)) {
+    auto last_erased = last.base();
+    m_stack.erase(begin(m_stack) + last_erased->frame_ptr - last_erased->argc + 1,
+                  end(m_stack));
+  }
   m_call_stack.erase(last.base(), end(m_call_stack));
   push(except_val);
-
 
   if (frame().catcher) {
     call(frame().catcher);
@@ -485,7 +487,8 @@ void vm::machine::except_until(size_t stack_pos)
                       [](const auto& i) { return i.catcher; });
 
   auto last_erased = 1 + last.base();
-  pop(last_erased->frame_ptr + last_erased->argc);
+  m_stack.erase(begin(m_stack) + last_erased->frame_ptr - last_erased->argc,
+                end(m_stack));
   m_call_stack.erase(last.base(), end(m_call_stack));
   push(except_val);
 
