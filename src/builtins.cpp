@@ -36,7 +36,9 @@ call_result call_method(vm::machine& vm, value::base* self, symbol method)
   vm.readm(method);
   vm.call(0);
   vm.run_cur_scope();
-  return { true, vm.top() };
+  auto val = vm.top();
+  vm.pop(1);
+  return { true, val };
 }
 
 template <typename F>
@@ -181,22 +183,22 @@ value::base* fn_reduce(vm::machine& vm)
   // Get iterator from range
   vm.arg(0);
   auto range = vm.top();
+  vm.pop(1);
   auto iter = call_method(vm, range, {"start"}).value;
+  vm.push(iter);
 
-  vm.arg(1);
-  vm.arg(2);
-  auto supplied_fn = vm.top();
+  vm.arg(1); // put total on stack
+
 
   for (;;) {
     auto at_end = call_method(vm, iter, {"at_end"}).value;
     if (truthy(at_end)) {
-      vm.pop(1); // get total
       return vm.top();
     }
 
     auto next_item = call_method(vm, iter, {"get"}).value;
     vm.push(next_item);
-    vm.push(supplied_fn);
+    vm.arg(2); // supplied function
     vm.call(2);
     vm.run_cur_scope();
 
