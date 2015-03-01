@@ -28,13 +28,13 @@ std::vector<vm::command> ast::cond_statement::generate() const
     vec.emplace_back(vm::instruction::jmp);
     jump_to_end_idxs.push_back(vec.size() - 1);
 
-    auto jump_sz = static_cast<int>(vec.size() - jump_to_next_test_idx);
+    auto jump_sz = static_cast<int>(vec.size() - jump_to_next_test_idx - 1);
     vec[jump_to_next_test_idx].arg = jump_sz;
   }
 
   vec.emplace_back(vm::instruction::pnil);
   for (auto i : jump_to_end_idxs) {
-    auto jump_sz = static_cast<int>(vec.size() - i);
+    auto jump_sz = static_cast<int>(vec.size() - i - 1);
     vec[i].arg = jump_sz;
   }
 
