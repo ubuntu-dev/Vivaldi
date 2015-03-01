@@ -12,6 +12,7 @@ ast::for_loop::for_loop(symbol iterator,
     m_body     {move(body)}
 { }
 
+// TODO: clean up substantially
 std::vector<vm::command> ast::for_loop::generate() const
 {
   auto vec = m_range->generate();
@@ -19,15 +20,22 @@ std::vector<vm::command> ast::for_loop::generate() const
   vec.emplace_back(vm::instruction::call, 0);
 
   vec.emplace_back(vm::instruction::eblk);
+  vec.emplace_back(vm::instruction::pnil);
+  vec.emplace_back(vm::instruction::let, m_iterator);
+  vec.emplace_back(vm::instruction::pop, 1);
 
-  auto test_idx = vec.size();
+  auto test_idx = vec.size() - 1;
+  vec.emplace_back(vm::instruction::dup);
   vec.emplace_back(vm::instruction::readm, symbol{"at_end"});
   vec.emplace_back(vm::instruction::call, 0);
   vec.emplace_back(vm::instruction::jt);
   auto jmp_to_end_idx = vec.size() - 1;
+  vec.emplace_back(vm::instruction::pop, 1);
+  vec.emplace_back(vm::instruction::dup);
   vec.emplace_back(vm::instruction::readm, symbol{"get"});
   vec.emplace_back(vm::instruction::call, 0);
-  vec.emplace_back(vm::instruction::let, m_iterator);
+  vec.emplace_back(vm::instruction::write, m_iterator);
+  vec.emplace_back(vm::instruction::pop, 1);
 
   auto body = m_body->generate();
   copy(begin(body), end(body), back_inserter(vec));

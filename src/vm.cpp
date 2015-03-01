@@ -314,6 +314,11 @@ void vm::machine::pobj(int argc)
   call(argc);
 }
 
+void vm::machine::dup()
+{
+  push(top());
+}
+
 void vm::machine::pop(int quant)
 {
   m_stack.erase(end(m_stack) - quant, end(m_stack));
@@ -455,6 +460,7 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::lblk: lblk();              break;
   case instruction::ret:  ret(get<bool>(arg)); break;
 
+  case instruction::dup: dup();              break;
   case instruction::pop: pop(get<int>(arg)); break;
 
   case instruction::req: req(get<std::string>(arg)); break;

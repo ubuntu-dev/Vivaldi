@@ -68,6 +68,8 @@ enum class instruction {
   /// creates new object of the type in retval
   pobj,
 
+  /// pushes a (shallow) copy of the top of the stack onto the stack
+  dup,
   /// removes the provided number of objects from the top of the stack
   pop,
 

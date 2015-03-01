@@ -43,6 +43,7 @@ public:
   void call(int args);
   void pobj(int args);
 
+  void dup();
   void pop(int num);
 
   void eblk();
