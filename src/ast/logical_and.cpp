@@ -23,12 +23,15 @@ std::vector<vm::command> ast::logical_and::generate() const
   auto vec = m_left->generate();
   vec.emplace_back(vm::instruction::jf);
   auto jmp_to_false_idx = vec.size() - 1;
+  vec.emplace_back(vm::instruction::pop, 1);
 
   auto right = m_right->generate();
   copy(begin(right), end(right), back_inserter(vec));
   vec.emplace_back(vm::instruction::jf, 3);
+  vec.emplace_back(vm::instruction::pop, 1);
   vec.emplace_back(vm::instruction::pbool, true);
   vec.emplace_back(vm::instruction::jmp, 2);
+  vec.emplace_back(vm::instruction::pop, 1);
   vec.emplace_back(vm::instruction::pbool, false);
 
   auto false_idx = vec.size() - 1;
