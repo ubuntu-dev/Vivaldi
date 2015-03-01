@@ -424,6 +424,73 @@ void vm::machine::chdir(const std::string& dir)
 }
 
 // }}}
+// Optimizations {{{
+
+namespace {
+
+template <typename F>
+void int_optimization(vm::machine& vm, const F& fn, vv::symbol sym)
+{
+  auto first = vm.top();
+  vm.pop(1);
+  auto second = vm.top();
+
+  if (first->type == &builtin::type::integer && !first->members.count(sym)) {
+    if (second->type == &builtin::type::integer) {
+      vm.pop(1);
+      auto left = static_cast<value::integer*>(first)->val;
+      auto right = static_cast<value::integer*>(second)->val;
+      vm.pint(fn(left, right));
+      return;
+    }
+  }
+  vm.push(first);
+  vm.readm(sym);
+  vm.call(1);
+  vm.run_cur_scope();
+}
+
+}
+
+void vm::machine::opt_add()
+{
+  int_optimization(*this, std::plus<int>{}, {"add"});
+}
+
+void vm::machine::opt_sub()
+{
+  int_optimization(*this, std::minus<int>{}, {"subtract"});
+}
+
+void vm::machine::opt_mul()
+{
+  int_optimization(*this, std::multiplies<int>{}, {"times"});
+}
+
+void vm::machine::opt_div()
+{
+  int_optimization(*this, std::divides<int>{}, {"divides"});
+}
+
+void vm::machine::opt_not()
+{
+  const static symbol sym{"not"};
+
+  auto val = top();
+  if (!val->members.count(sym)) {
+    if (find_method(val->type, sym) == builtin::type::object.methods.at(sym)) {
+      auto res = !truthy(val);
+      pop(1);
+      pbool(res);
+      return;
+    }
+  }
+  readm(sym);
+  call(0);
+  run_cur_scope();
+}
+
+// }}}
 
 void vm::machine::run_single_command(const vm::command& command)
 {
@@ -483,6 +550,13 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::exc:   exc();   break;
 
   case instruction::chdir:      chdir(get<std::string>(arg)); break;
+
+  case instruction::opt_add: opt_add(); break;
+  case instruction::opt_sub: opt_sub(); break;
+  case instruction::opt_mul: opt_mul(); break;
+  case instruction::opt_div: opt_div(); break;
+
+  case instruction::opt_not: opt_not(); break;
   }
 }
 

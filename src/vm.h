@@ -62,6 +62,13 @@ public:
 
   void chdir(const std::string& new_dir);
 
+  void opt_add();
+  void opt_sub();
+  void opt_mul();
+  void opt_div();
+
+  void opt_not();
+
 private:
   void run_single_command(const vm::command& command);
 

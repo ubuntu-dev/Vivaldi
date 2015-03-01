@@ -34,9 +34,7 @@ value::base* fn_range_size(vm::machine& vm)
   auto& rng = static_cast<value::range&>(*vm.top());
   vm.push(rng.start);
   vm.push(rng.end);
-  vm.readm({"subtract"});
-  vm.call(1);
-  vm.run_cur_scope();
+  vm.opt_sub();
   return vm.top();
 }
 
@@ -49,9 +47,7 @@ value::base* fn_range_at_end(vm::machine& vm)
   vm.readm({"greater"});
   vm.call(1);
   vm.run_cur_scope();
-  vm.readm({"not"});
-  vm.call(0);
-  vm.run_cur_scope();
+  vm.opt_not();
   return vm.top();
 }
 
@@ -67,9 +63,7 @@ value::base* fn_range_increment(vm::machine& vm)
   auto& rng = static_cast<value::range&>(*vm.top());
   vm.pint(1);
   vm.push(rng.start);
-  vm.readm({"add"});
-  vm.call(1);
-  vm.run_cur_scope();
+  vm.opt_add();
   rng.start = vm.top();
   return &rng;
 }
@@ -78,30 +72,28 @@ value::base* fn_range_to_arr(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
-  std::vector<value::base*> vals;
   vm.push(rng.start);
   auto iter = vm.top();
+  int count{};
   for (;;) {
+    vm.dup();
     vm.push(rng.end);
     vm.readm({"greater"});
     vm.call(1);
     vm.run_cur_scope();
     if (!truthy(vm.top()))
       break;
-    vals.push_back(iter);
-    vm.push(iter);
+    vm.pop(1);
     vm.pint(1);
     vm.push(iter);
-    vm.readm({"add"});
-    vm.call(1);
-    vm.run_cur_scope();
+    vm.opt_add();
     iter = vm.top();
+    ++count;
   }
 
-  auto ret = gc::alloc<value::array>( vals );
-  for (auto i = vals.size(); i--;)
-    vm.pop(1);
-  return ret;
+  vm.pop(2);
+  vm.parr(static_cast<int>(count));
+  return vm.top();
 }
 
 value::builtin_function range_init      {fn_range_init,      2};

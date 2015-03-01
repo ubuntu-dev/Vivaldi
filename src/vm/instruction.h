@@ -98,7 +98,14 @@ enum class instruction {
   exc,
 
   /// Changes current directory to that passed as a string literal
-  chdir
+  chdir,
+
+  opt_add,
+  opt_sub,
+  opt_mul,
+  opt_div,
+
+  opt_not,
 };
 
 struct command {
