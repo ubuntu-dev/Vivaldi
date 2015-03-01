@@ -381,6 +381,7 @@ void vm::machine::jt(int offset)
 void vm::machine::pushc()
 {
   frame().catcher = top();
+  pop(1);
 }
 
 void vm::machine::popc()
@@ -404,7 +405,9 @@ void vm::machine::exc()
   push(except_val);
 
   if (frame().catcher) {
-    call(frame().catcher);
+    push(frame().catcher.get());
+    popc();
+    call(1);
   } else {
     m_exception_handler(*this);
     frame().instr_ptr = {}; // bail out before anything blows up
@@ -494,7 +497,9 @@ void vm::machine::except_until(size_t stack_pos)
 
 
   if (frame().catcher) {
-    call(frame().catcher);
+    push(frame().catcher.get());
+    popc();
+    call(1);
   } else {
     throw vm_error{except_val};
   }
