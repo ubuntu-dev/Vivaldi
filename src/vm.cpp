@@ -78,7 +78,12 @@ void vm::machine::push(value::base* val)
 void vm::machine::mark()
 {
   for (auto* i : m_stack)
-    i->mark();
+    if (!i->marked())
+      i->mark();
+
+  if (m_transient_self && !m_transient_self->marked())
+    m_transient_self->mark();
+
   for (auto& i : m_call_stack) {
     if (i.caller && !i.caller->marked())
       i.caller->mark();
