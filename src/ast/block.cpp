@@ -21,13 +21,13 @@ std::vector<vm::command> ast::block::generate() const
   // But since the only time the push_nil is actually used is when there are no
   // expressions, and since in that case the e/lblk don't change any semantics,
   // there's no reason not to special-case it
-  if (!m_subexpressions.size())
-    return { {vm::instruction::pnil} };
 
   std::vector<vm::command> vec{ {vm::instruction::eblk} };
+  vec.emplace_back(vm::instruction::pnil);
 
   for (const auto& i : m_subexpressions) {
     auto subexpr = i->generate();
+    vec.emplace_back(vm::instruction::pop, 1);
     copy(begin(subexpr), end(subexpr), back_inserter(vec));
   }
 

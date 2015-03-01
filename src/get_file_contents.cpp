@@ -75,8 +75,10 @@ read_file_result vv::get_file_contents(const std::string& filename)
   std::vector<vm::command> body;
   // set working directory to path of file, so nested 'require's don't bork
   body.emplace_back(vm::instruction::chdir, path.native());
+  body.emplace_back(vm::instruction::pnil); // HACK--- for pops below
   for (const auto& i : exprs) {
     auto code = i->generate();
+    body.emplace_back(vm::instruction::pop, 1);
     copy(begin(code), end(code), back_inserter(body));
   }
   return { path.native(), move(body) };
