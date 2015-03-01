@@ -10,7 +10,7 @@ fn early_ret_test(): do
   let t = "foo"
   let post = early_return(t, false)
   assert(post == "!foo!", "unintended early return")
-  let post = early_return(t, true)
+  post = early_return(t, true)
   assert(post == "foo!", "unintended lack of early return")
 end
 
