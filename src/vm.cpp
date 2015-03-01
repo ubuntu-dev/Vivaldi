@@ -21,8 +21,6 @@
 #include <boost/variant/get.hpp>
 #include <boost/filesystem.hpp>
 
-#include <iostream>
-
 using namespace vv;
 
 vm::machine::machine(call_frame&& frame,
