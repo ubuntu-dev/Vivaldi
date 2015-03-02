@@ -75,6 +75,7 @@ add_executable(vivaldi
   src/value/function.cpp
   src/value/integer.cpp
   src/value/nil.cpp
+  src/value/opt_functions.cpp
   src/value/range.cpp
   src/value/string.cpp
   src/value/string_iterator.cpp
