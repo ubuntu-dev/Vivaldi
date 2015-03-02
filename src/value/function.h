@@ -9,7 +9,7 @@ namespace vv {
 
 namespace value {
 
-struct function : public base {
+struct function : public basic_function {
   function(int argc,
            const std::vector<vm::command>& body,
            vm::environment* enclosure);
@@ -17,9 +17,13 @@ struct function : public base {
   std::string value() const override;
   void mark() override;
 
+  virtual int get_argc() const override;
+  virtual vector_ref<vm::command> get_body() const override;
+  virtual vm::environment* get_enclosing() const override;
+
   int argc;
   std::vector<vm::command> body;
-  vm::environment* enclosure;
+  vm::environment* enclosing;
 };
 
 }

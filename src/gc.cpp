@@ -11,6 +11,7 @@
 #include "value/floating_point.h"
 #include "value/function.h"
 #include "value/nil.h"
+#include "value/opt_functions.h"
 #include "value/range.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
@@ -55,6 +56,8 @@ union gc::internal::value_type {
   value::floating_point   floating_point;
   value::function         function;
   value::integer          integer;
+  value::opt_monop        monop;
+  value::opt_binop        binop;
   value::range            range;
   value::string           string;
   value::string_iterator  string_iterator;
@@ -132,6 +135,16 @@ void gc::internal::set_value_type(value_type* val, value::integer&& other)
 {
   val->~value_type();
   new (val) value::integer{std::move(other)};
+}
+void gc::internal::set_value_type(value_type* val, value::opt_monop&& other)
+{
+  val->~value_type();
+  new (val) value::opt_monop{std::move(other)};
+}
+void gc::internal::set_value_type(value_type* val, value::opt_binop&& other)
+{
+  val->~value_type();
+  new (val) value::opt_binop{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::range&& other)
 {

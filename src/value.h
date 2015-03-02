@@ -2,6 +2,7 @@
 #define VV_VALUE_H
 
 #include "symbol.h"
+#include "utils/vector_ref.h"
 #include "vm/instruction.h"
 
 #include <unordered_map>
@@ -16,6 +17,7 @@ class function_definition;
 
 namespace vm {
 class machine;
+class environment;
 }
 
 namespace value {
@@ -30,6 +32,8 @@ struct floating_point;
 struct function;
 struct integer;
 struct nil;
+struct opt_monop;
+struct opt_binop;
 struct range;
 struct string;
 struct string_iterator;
@@ -66,6 +70,14 @@ struct base {
 
 private:
   bool m_marked;
+};
+
+struct basic_function : public base {
+  basic_function();
+
+  virtual int get_argc() const = 0;
+  virtual vm::environment* get_enclosing() const = 0;
+  virtual vector_ref<vm::command> get_body() const = 0;
 };
 
 struct type : public base {

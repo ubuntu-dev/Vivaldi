@@ -4,6 +4,7 @@
 #include "utils/lang.h"
 #include "value/array.h"
 #include "value/builtin_function.h"
+#include "value/opt_functions.h"
 #include "value/range.h"
 
 using namespace vv;
@@ -22,10 +23,9 @@ value::base* fn_range_init(vm::machine& vm)
   return &rng;
 }
 
-value::base* fn_range_start(vm::machine& vm)
+value::base* fn_range_start(value::base* self)
 {
-  vm.self();
-  return vm.top();
+  return self;
 }
 
 value::base* fn_range_size(vm::machine& vm)
@@ -51,10 +51,9 @@ value::base* fn_range_at_end(vm::machine& vm)
   return vm.top();
 }
 
-value::base* fn_range_get(vm::machine& vm)
+value::base* fn_range_get(value::base* self)
 {
-  vm.self();
-  return static_cast<value::range&>(*vm.top()).start;
+  return static_cast<value::range*>(self)->start;
 }
 
 value::base* fn_range_increment(vm::machine& vm)
@@ -97,10 +96,10 @@ value::base* fn_range_to_arr(vm::machine& vm)
 }
 
 value::builtin_function range_init      {fn_range_init,      2};
-value::builtin_function range_start     {fn_range_start,     0};
+value::opt_monop        range_start     {fn_range_start       };
 value::builtin_function range_size      {fn_range_size,      0};
 value::builtin_function range_at_end    {fn_range_at_end,    0};
-value::builtin_function range_get       {fn_range_get,       0};
+value::opt_monop        range_get       {fn_range_get         };
 value::builtin_function range_increment {fn_range_increment, 0};
 value::builtin_function range_to_arr    {fn_range_to_arr,    0};
 

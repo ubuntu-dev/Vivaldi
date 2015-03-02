@@ -42,6 +42,10 @@ void value::base::mark()
       i.second->mark();
 }
 
+value::basic_function::basic_function()
+  : base {&builtin::type::function}
+{ }
+
 value::type::type(
     const std::function<value::base*()>& new_constructor,
     const std::unordered_map<vv::symbol, value::base*>& new_methods,

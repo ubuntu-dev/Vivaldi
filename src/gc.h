@@ -26,6 +26,8 @@ void set_value_type(value_type* val, value::file&& file);
 void set_value_type(value_type* val, value::floating_point&& floating_point);
 void set_value_type(value_type* val, value::function&& function);
 void set_value_type(value_type* val, value::integer&& integer);
+void set_value_type(value_type* val, value::opt_monop&& monop);
+void set_value_type(value_type* val, value::opt_binop&& binop);
 void set_value_type(value_type* val, value::range&& range);
 void set_value_type(value_type* val, value::string&& string);
 void set_value_type(value_type* val, value::string_iterator&&  string_iterator);

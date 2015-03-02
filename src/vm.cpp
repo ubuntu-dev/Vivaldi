@@ -15,11 +15,13 @@
 #include "value/floating_point.h"
 #include "value/function.h"
 #include "value/nil.h"
+#include "value/opt_functions.h"
 #include "value/string.h"
 #include "value/symbol.h"
 
 #include <boost/variant/get.hpp>
 #include <boost/filesystem.hpp>
+#include <iostream>
 
 using namespace vv;
 
@@ -87,7 +89,7 @@ void vm::machine::mark()
       i.caller->mark();
     if (i.catcher && !i.catcher->marked())
       i.catcher->mark();
-    if (!i.env->marked())
+    if (i.env && !i.env->marked())
       i.env->mark();
   }
 }
@@ -236,55 +238,47 @@ void vm::machine::writem(symbol sym)
   obj->members[sym] = top();
 }
 
-// TODO: factor out argc, so I can just do this check once in machine::call
-namespace {
-
-void exc_wrong_argc(vm::machine& vm, int expected, int recieved)
-{
-  vm.pstr("wrong number of arguments--- expected " + std::to_string(expected)
-       += ", got " + std::to_string(recieved));
-  vm.exc();
-}
-
-};
-
 void vm::machine::call(int argc)
 {
-  const static std::array<command, 1> builtin_shim {{
-    { instruction::ret, false }
-  }};
-  auto func = top();
+  if (top()->type != &builtin::type::function) {
+    pstr("objects of type " + top()->type->value() += " cannot be called");
+    exc();
+    return;
+  }
+
+  auto func = static_cast<value::basic_function*>(top());
   pop(1);
+  if (func->get_argc() != argc) {
+    pstr("wrong number of arguments--- expected " + std::to_string(func->get_argc())
+      += ", got " + std::to_string(argc));
+    exc();
+    return;
+  }
+  m_call_stack.emplace_back(func->get_body(),
+                            nullptr,
+                            func->get_argc(),
+                            m_stack.size() - 1);
+  frame().caller = func;
 
-  if (auto builtin = dynamic_cast<value::builtin_function*>(func)) {
-    if (builtin->argc != argc) {
-      exc_wrong_argc(*this, builtin->argc, argc);
-      return;
-    }
+  try {
+    if (auto monop = dynamic_cast<value::opt_monop*>(func)) {
+      auto ret = monop->body(m_transient_self);
+      push(ret);
 
-    auto new_env = gc::alloc<environment>( nullptr, m_transient_self );
-    m_call_stack.emplace_back(builtin_shim, new_env, argc, m_stack.size() - 1);
-    frame().caller = func;
-    try {
+    } else if (auto binop = dynamic_cast<value::opt_binop*>(func)) {
+      auto ret = binop->body(m_transient_self, top());
+      //pop(1);
+      push(ret);
+
+    } else if (auto builtin = dynamic_cast<value::builtin_function*>(func)) {
+      frame().env = gc::alloc<environment>( nullptr, m_transient_self );
       push(builtin->body(*this));
-    } catch (const vm_error& h) {
-      push(h.error());
-      exc();
-      return;
-    };
 
-  } else if (auto vvfunc = dynamic_cast<value::function*>(func)) {
-    if (vvfunc->argc != argc) {
-      exc_wrong_argc(*this, builtin->argc, argc);
-      return;
+    } else {
+      frame().env = gc::alloc<environment>(func->get_enclosing(), m_transient_self);
     }
-    auto new_env = gc::alloc<environment>(vvfunc->enclosure, m_transient_self);
-    m_call_stack.emplace_back(vvfunc->body, new_env, argc, m_stack.size() - 1);
-    frame().caller = func;
-
-  } else {
-    m_call_stack.pop_back();
-    pstr("objects of type " + func->type->value() += " cannot be called");
+  } catch (const vm_error& err) {
+    push(err.error());
     exc();
   }
 }

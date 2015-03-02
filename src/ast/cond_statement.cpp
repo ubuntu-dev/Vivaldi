@@ -16,7 +16,10 @@ std::vector<vm::command> ast::cond_statement::generate() const
   std::vector<vm::command> vec;
   std::vector<size_t> jump_to_end_idxs;
 
+  vec.emplace_back(vm::instruction::pnil);
+
   for (const auto& i : m_body) {
+    vec.emplace_back(vm::instruction::pop, 1); // pop prev failed test result
     auto test = i.first->generate();
     copy(begin(test), end(test), back_inserter(vec));
     vec.emplace_back(vm::instruction::jf);
@@ -32,6 +35,7 @@ std::vector<vm::command> ast::cond_statement::generate() const
     vec[jump_to_next_test_idx].arg = jump_sz;
   }
 
+  vec.emplace_back(vm::instruction::pop, 1);
   vec.emplace_back(vm::instruction::pnil);
   for (auto i : jump_to_end_idxs) {
     auto jump_sz = static_cast<int>(vec.size() - i - 1);
