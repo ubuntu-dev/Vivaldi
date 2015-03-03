@@ -3,8 +3,6 @@
 #include "gc.h"
 #include "vm/instruction.h"
 
-#include <boost/variant/get.hpp>
-
 using namespace vv;
 
 ast::type_definition::type_definition(
@@ -22,7 +20,7 @@ std::vector<vm::command> ast::type_definition::generate() const
   std::unordered_map<symbol, vm::function_t> methods;
   for (const auto& i : m_methods) {
     auto arg = i.second.generate().front().arg;
-    methods[i.first] = boost::get<vm::function_t>(arg);
+    methods[i.first] = arg.as_fn();
   }
 
   std::vector<vm::command> vec;

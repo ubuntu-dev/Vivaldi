@@ -19,7 +19,6 @@
 #include "value/string.h"
 #include "value/symbol.h"
 
-#include <boost/variant/get.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
 
@@ -55,7 +54,7 @@ void vm::machine::run_cur_scope()
     frame().instr_ptr = frame().instr_ptr.subvec(1);
 
     if (command.instr == vm::instruction::ret && m_call_stack.size() == exit_sz) {
-      ret(boost::get<bool>(command.arg));
+      ret(command.arg.as_bool());
       return;
     } else if (command.instr == vm::instruction::exc) {
       except_until(exit_sz);
@@ -503,47 +502,47 @@ void vm::machine::run_single_command(const vm::command& command)
     m_transient_self = nullptr;
 
   switch (instr) {
-  case instruction::pbool: pbool(get<bool>(arg));       break;
-  case instruction::pflt:  pflt(get<double>(arg));      break;
-  case instruction::pfn:   pfn(get<function_t>(arg));   break;
-  case instruction::pint:  pint(get<int>(arg));         break;
+  case instruction::pbool: pbool(arg.as_bool());       break;
+  case instruction::pflt:  pflt(arg.as_double());      break;
+  case instruction::pfn:   pfn(arg.as_fn());   break;
+  case instruction::pint:  pint(arg.as_int());         break;
   case instruction::pnil:  pnil();                      break;
-  case instruction::pstr:  pstr(get<std::string>(arg)); break;
-  case instruction::psym:  psym(get<symbol>(arg));      break;
-  case instruction::ptype: ptype(get<type_t>(arg));     break;
+  case instruction::pstr:  pstr(arg.as_str()); break;
+  case instruction::psym:  psym(arg.as_sym());      break;
+  case instruction::ptype: ptype(arg.as_type());     break;
 
-  case instruction::parr:  parr(get<int>(arg));  break;
-  case instruction::pdict: pdict(get<int>(arg)); break;
+  case instruction::parr:  parr(arg.as_int());  break;
+  case instruction::pdict: pdict(arg.as_int()); break;
 
-  case instruction::read:  read(get<symbol>(arg));  break;
-  case instruction::write: write(get<symbol>(arg)); break;
-  case instruction::let:   let(get<symbol>(arg));   break;
+  case instruction::read:  read(arg.as_sym());  break;
+  case instruction::write: write(arg.as_sym()); break;
+  case instruction::let:   let(arg.as_sym());   break;
 
   case instruction::self:   self();                   break;
-  case instruction::arg:    this->arg(get<int>(arg)); break;
-  case instruction::readm:  readm(get<symbol>(arg));  break;
-  case instruction::writem: writem(get<symbol>(arg)); break;
-  case instruction::call:   call(get<int>(arg));      break;
-  case instruction::pobj:   pobj(get<int>(arg));      break;
+  case instruction::arg:    this->arg(arg.as_int()); break;
+  case instruction::readm:  readm(arg.as_sym());  break;
+  case instruction::writem: writem(arg.as_sym()); break;
+  case instruction::call:   call(arg.as_int());      break;
+  case instruction::pobj:   pobj(arg.as_int());      break;
 
   case instruction::eblk: eblk();              break;
   case instruction::lblk: lblk();              break;
-  case instruction::ret:  ret(get<bool>(arg)); break;
+  case instruction::ret:  ret(arg.as_bool()); break;
 
   case instruction::dup: dup();              break;
-  case instruction::pop: pop(get<int>(arg)); break;
+  case instruction::pop: pop(arg.as_int()); break;
 
-  case instruction::req: req(get<std::string>(arg)); break;
+  case instruction::req: req(arg.as_str()); break;
 
-  case instruction::jmp: jmp(get<int>(arg)); break;
-  case instruction::jf:  jf(get<int>(arg));  break;
-  case instruction::jt:  jt(get<int>(arg));  break;
+  case instruction::jmp: jmp(arg.as_int()); break;
+  case instruction::jf:  jf(arg.as_int());  break;
+  case instruction::jt:  jt(arg.as_int());  break;
 
   case instruction::pushc: pushc(); break;
   case instruction::popc:  popc();  break;
   case instruction::exc:   exc();   break;
 
-  case instruction::chdir:      chdir(get<std::string>(arg)); break;
+  case instruction::chdir:      chdir(arg.as_str()); break;
 
   case instruction::opt_add: opt_add(); break;
   case instruction::opt_sub: opt_sub(); break;

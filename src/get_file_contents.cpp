@@ -7,7 +7,6 @@
 #include "vm.h"
 
 #include <boost/filesystem.hpp>
-#include <boost/variant/get.hpp>
 
 #include <fstream>
 #include <sstream>

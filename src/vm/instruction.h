@@ -3,8 +3,6 @@
 
 #include "symbol.h"
 
-#include <boost/variant/variant.hpp>
-
 #include <unordered_map>
 #include <vector>
 
@@ -108,6 +106,75 @@ enum class instruction {
   opt_not,
 };
 
+// each type in this union is repeated in *quintuplicate*:
+// - ctor
+// - getter
+// - union member
+// - union ctor
+// - enum
+// Or *septuplicate* if you count the definitions in instruction.cpp.
+// This is somewhat displeasing, but boost::variant seems to be a slight
+// bottleneck, so here we are.
+class argument {
+public:
+  argument();
+  argument(int num);
+  argument(symbol sym);
+  argument(bool bol);
+  argument(const std::string& str);
+  argument(double flt);
+  argument(const function_t& fnc);
+  argument(const type_t& typ);
+
+  argument(const argument& other);
+  argument(argument&& other);
+
+  argument& operator=(const argument& other);
+  argument& operator=(argument&& other);
+
+  int as_int() const;
+  symbol as_sym() const;
+  bool as_bool() const;
+  const std::string& as_str() const;
+  double as_double() const;
+  const function_t& as_fn() const;
+  const type_t& as_type() const;
+
+  ~argument();
+
+private:
+  union arg_val {
+    int         num;
+    symbol      sym;
+    bool        bol;
+    std::string str;
+    double      flt;
+    function_t  fnc;
+    type_t      typ;
+
+    arg_val(int num)                : num{num} { }
+    arg_val(symbol sym)             : sym{sym} { }
+    arg_val(bool bol)               : bol{bol} { }
+    arg_val(const std::string& str) : str{str} { }
+    arg_val(double flt)             : flt{flt} { }
+    arg_val(const function_t& fnc)  : fnc(fnc) { }
+    arg_val(const type_t& typ)      : typ(typ) { }
+
+    ~arg_val() { }
+  } m_val;
+
+  enum class arg_type {
+    nil,
+    num,
+    sym,
+    bol,
+    str,
+    flt,
+    fnc,
+    typ
+  } m_which;
+};
+
 struct command {
 public:
   command(instruction instr, int arg);
@@ -120,15 +187,7 @@ public:
   command(instruction instr);
 
   instruction instr;
-  boost::variant<boost::blank,
-                 int,
-                 symbol,
-                 bool,
-                 std::string,
-                 double,
-                 function_t,
-                 type_t>
-    arg;
+  argument arg;
 };
 
 }
