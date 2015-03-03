@@ -1,20 +1,19 @@
 #include "builtins.h"
 
 #include "utils/lang.h"
-#include "value/builtin_function.h"
+#include "value/opt_functions.h"
 
 using namespace vv;
 using namespace builtin;
 
 namespace {
 
-value::base* fn_custom_type_parent(vm::machine& vm)
+value::base* fn_custom_type_parent(value::base* self)
 {
-  vm.self();
-  return &static_cast<value::type&>(*vm.top()).parent;
+  return &static_cast<value::type*>(self)->parent;
 }
 
-value::builtin_function custom_type_parent {fn_custom_type_parent, 0};
+value::opt_monop custom_type_parent {fn_custom_type_parent};
 
 }
 value::type type::custom_type {[]{ return nullptr; }, {

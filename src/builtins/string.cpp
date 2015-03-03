@@ -4,6 +4,7 @@
 #include "utils/lang.h"
 #include "utils/string_helpers.h"
 #include "value/builtin_function.h"
+#include "value/opt_functions.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
 #include "value/symbol.h"
@@ -45,76 +46,59 @@ value::base* fn_string_init(vm::machine& vm)
   return &str;
 }
 
-value::base* fn_string_size(vm::machine& vm)
+value::base* fn_string_size(value::base* self)
 {
-  vm.self();
-  auto sz = static_cast<value::string&>(*vm.top()).val.size();
+  auto sz = static_cast<value::string*>(self)->val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
-value::base* fn_string_equals(vm::machine& vm)
+value::base* fn_string_equals(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto arg = vm.top();
   if (arg->type != &type::string)
     return gc::alloc<value::boolean>( false );
-  vm.self();
-  return gc::alloc<value::boolean>( to_string(vm.top()) == to_string(arg) );
+  return gc::alloc<value::boolean>( to_string(self) == to_string(arg) );
 }
 
-value::base* fn_string_unequal(vm::machine& vm)
+value::base* fn_string_unequal(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto arg = vm.top();
   if (arg->type != &type::string)
     return gc::alloc<value::boolean>( false );
-  vm.self();
-  return gc::alloc<value::boolean>( to_string(vm.top()) != to_string(arg) );
+  return gc::alloc<value::boolean>( to_string(self) != to_string(arg) );
 }
 
-value::base* fn_string_add(vm::machine& vm)
+value::base* fn_string_add(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto other = vm.top();
-  if (other->type != &type::string)
+  if (arg->type != &type::string)
     return throw_exception("Only strings can be appended to other strings");
 
-  auto str = to_string(other);
-  vm.self();
-  auto new_str = static_cast<value::string&>(*vm.top()).val + str;
+  auto str = to_string(arg);
+  auto new_str = static_cast<value::string*>(self)->val + str;
   return gc::alloc<value::string>( new_str );
 }
 
-value::base* fn_string_times(vm::machine& vm)
+value::base* fn_string_times(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto other = vm.top();
-  if (other->type != &type::integer)
+  if (arg->type != &type::integer)
     return throw_exception("Strings can only be multiplied by Integers");
 
-  vm.self();
-  auto val = static_cast<value::string&>(*vm.top()).val;
+  auto val = static_cast<value::string*>(self)->val;
   std::string new_str{};
-  for (auto i = to_int(other); i--;)
+  for (auto i = to_int(self); i--;)
     new_str += val;
   return gc::alloc<value::string>( new_str );
 }
 
-value::base* fn_string_to_int(vm::machine& vm)
+value::base* fn_string_to_int(value::base* self)
 {
-  vm.self();
-  return gc::alloc<value::integer>(vv::to_int(to_string(vm.top())));
+  return gc::alloc<value::integer>(vv::to_int(to_string(self)));
 }
 
-value::base* fn_string_at(vm::machine& vm)
+value::base* fn_string_at(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto arg = vm.top();
   if (arg->type != &type::integer)
     return throw_exception("Index must be an Integer");
   auto val = static_cast<value::integer*>(arg)->val;
-  vm.self();
-  const auto& str = static_cast<value::string&>(*vm.top()).val;
+  const auto& str = static_cast<value::string*>(self)->val;
   if (str.size() <= static_cast<unsigned>(val) || val < 0)
     return throw_exception("Out of range (expected 0-"
                            + std::to_string(str.size()) + ", got "
@@ -122,47 +106,40 @@ value::base* fn_string_at(vm::machine& vm)
   return gc::alloc<value::string>( std::string{str[static_cast<unsigned>(val)]} );
 }
 
-value::base* fn_string_start(vm::machine& vm)
+value::base* fn_string_start(value::base* self)
 {
-  vm.self();
-  auto& self = static_cast<value::string&>(*vm.top());
-  return gc::alloc<value::string_iterator>(self);
+  auto* str = static_cast<value::string*>(self);
+  return gc::alloc<value::string_iterator>(*str);
 }
 
-value::base* fn_string_stop(vm::machine& vm)
+value::base* fn_string_stop(value::base* self)
 {
-  vm.self();
-  auto& self = static_cast<value::string&>(*vm.top());
-  auto end = gc::alloc<value::string_iterator>(self);
-  static_cast<value::string_iterator*>(end)->idx = self.val.size();
+  auto* str = static_cast<value::string*>(self);
+  auto end = gc::alloc<value::string_iterator>(*str);
+  static_cast<value::string_iterator*>(end)->idx = str->val.size();
   return end;
 }
 
-value::base* fn_string_to_upper(vm::machine& vm)
+value::base* fn_string_to_upper(value::base* self)
 {
-  vm.self();
-  auto str = static_cast<value::string&>(*vm.top()).val;
+  auto str = static_cast<value::string&>(*self).val;
   transform(begin(str), end(str), begin(str), toupper);
   return gc::alloc<value::string>( str );
 }
 
-value::base* fn_string_to_lower(vm::machine& vm)
+value::base* fn_string_to_lower(value::base* self)
 {
-  vm.self();
-  auto str = static_cast<value::string&>(*vm.top()).val;
+  auto str = static_cast<value::string&>(*self).val;
   transform(begin(str), end(str), begin(str), tolower);
   return gc::alloc<value::string>( str );
 }
 
-value::base* fn_string_starts_with(vm::machine& vm)
+value::base* fn_string_starts_with(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto arg = vm.top();
   if (arg->type != &type::string)
     return throw_exception("Strings can only start with other Strings");
 
-  vm.self();
-  const auto& str = static_cast<value::string&>(*vm.top()).val;
+  const auto& str = static_cast<value::string*>(self)->val;
   const auto& other = to_string(arg);
 
   if (other.size() > str.size() || !equal(begin(other), end(other), begin(str)))
@@ -170,10 +147,9 @@ value::base* fn_string_starts_with(vm::machine& vm)
   return gc::alloc<value::boolean>( true );
 }
 
-value::base* fn_string_ord(vm::machine& vm)
+value::base* fn_string_ord(value::base* self)
 {
-  vm.self();
-  auto str = static_cast<value::string&>(*vm.top()).val;
+  auto str = static_cast<value::string*>(self)->val;
   if (!str.size())
     return throw_exception("Cannot call ord on an empty string");
   return gc::alloc<value::integer, int>( str[0] );
@@ -182,55 +158,48 @@ value::base* fn_string_ord(vm::machine& vm)
 // }}}
 // string_iterator {{{
 
-value::base* fn_string_iterator_at_start(vm::machine& vm)
+value::base* fn_string_iterator_at_start(value::base* self)
 {
-  vm.self();
-  auto iter = static_cast<value::string_iterator*>(vm.top());
+  auto iter = static_cast<value::string_iterator*>(self);
   return gc::alloc<value::boolean>( iter->idx == 0 );
 }
 
-value::base* fn_string_iterator_at_end(vm::machine& vm)
+value::base* fn_string_iterator_at_end(value::base* self)
 {
-  vm.self();
-  auto iter = static_cast<value::string_iterator*>(vm.top());
+  auto iter = static_cast<value::string_iterator*>(self);
   return gc::alloc<value::boolean>( iter->idx == iter->str.val.size() );
 }
 
-value::base* fn_string_iterator_get(vm::machine& vm)
+value::base* fn_string_iterator_get(value::base* self)
 {
-  vm.self();
-  auto iter = static_cast<value::string_iterator*>(vm.top());
+  auto iter = static_cast<value::string_iterator*>(self);
   if (iter->idx == iter->str.val.size())
     return throw_exception("StringIterator is at end of string");
   return gc::alloc<value::string>( std::string{iter->str.val[iter->idx]} );
 }
 
-value::base* fn_string_iterator_increment(vm::machine& vm)
+value::base* fn_string_iterator_increment(value::base* self)
 {
-  vm.self();
-  auto iter = static_cast<value::string_iterator*>(vm.top());
+  auto iter = static_cast<value::string_iterator*>(self);
   if (iter->idx == iter->str.val.size())
     return throw_exception("StringIterators cannot be incremented past end");
   iter->idx += 1;
   return iter;
 }
 
-value::base* fn_string_iterator_decrement(vm::machine& vm)
+value::base* fn_string_iterator_decrement(value::base* self)
 {
-  vm.self();
-  auto iter = static_cast<value::string_iterator*>(vm.top());
+  auto iter = static_cast<value::string_iterator*>(self);
   if (iter->idx == 0)
     return throw_exception("StringIterators cannot be decremented past start");
   iter->idx -= 1;
   return iter;
 }
 
-value::base* fn_string_iterator_add(vm::machine& vm)
+value::base* fn_string_iterator_add(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto arg = vm.top();
-  vm.self();
-  auto iter = static_cast<value::string_iterator*>(vm.top());
+  auto iter = static_cast<value::string_iterator*>(self);
+
   if (arg->type != &type::integer)
     return throw_exception("Only numeric types can be added to StringIterators");
   auto offset = to_int(arg);
@@ -245,12 +214,10 @@ value::base* fn_string_iterator_add(vm::machine& vm)
   return other;
 }
 
-value::base* fn_string_iterator_subtract(vm::machine& vm)
+value::base* fn_string_iterator_subtract(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto arg = vm.top();
-  vm.self();
-  auto iter = static_cast<value::string_iterator*>(vm.top());
+  auto iter = static_cast<value::string_iterator*>(self);
+
   if (arg->type != &type::integer)
     return throw_exception("Only numeric types can be added to StringIterators");
   auto offset = to_int(arg);
@@ -265,52 +232,48 @@ value::base* fn_string_iterator_subtract(vm::machine& vm)
   return other;
 }
 
-value::base* fn_string_iterator_equals(vm::machine& vm)
+value::base* fn_string_iterator_equals(value::base* self, value::base* arg)
 {
-  vm.self();
-  auto iter = static_cast<value::string_iterator*>(vm.top());
-  vm.arg(0);
-  auto other = static_cast<value::string_iterator*>(vm.top());
+  auto iter = static_cast<value::string_iterator*>(self);
+  auto other = static_cast<value::string_iterator*>(arg);
   return gc::alloc<value::boolean>( &iter->str == &other->str
                                   && iter->idx == other->idx );
 }
 
-value::base* fn_string_iterator_unequal(vm::machine& vm)
+value::base* fn_string_iterator_unequal(value::base* self, value::base* arg)
 {
-  vm.self();
-  auto iter = static_cast<value::string_iterator*>(vm.top());
-  vm.arg(0);
-  auto other = static_cast<value::string_iterator*>(vm.top());
+  auto iter = static_cast<value::string_iterator*>(self);
+  auto other = static_cast<value::string_iterator*>(arg);
   return gc::alloc<value::boolean>( &iter->str != &other->str
                                   || iter->idx != other->idx );
 }
 
 // }}}
 
-value::builtin_function string_init        {fn_string_init,        1};
-value::builtin_function string_size        {fn_string_size,        0};
-value::builtin_function string_equals      {fn_string_equals,      1};
-value::builtin_function string_unequal     {fn_string_unequal,     1};
-value::builtin_function string_add         {fn_string_add,         1};
-value::builtin_function string_times       {fn_string_times,       1};
-value::builtin_function string_to_int      {fn_string_to_int,      0};
-value::builtin_function string_at          {fn_string_at,          1};
-value::builtin_function string_start       {fn_string_start,       0};
-value::builtin_function string_stop        {fn_string_stop,        0};
-value::builtin_function string_to_upper    {fn_string_to_upper,    0};
-value::builtin_function string_to_lower    {fn_string_to_lower,    0};
-value::builtin_function string_starts_with {fn_string_starts_with, 1};
-value::builtin_function string_ord         {fn_string_ord,         0};
+value::builtin_function string_init {fn_string_init, 1};
+value::opt_monop string_size        {fn_string_size       };
+value::opt_binop string_equals      {fn_string_equals     };
+value::opt_binop string_unequal     {fn_string_unequal    };
+value::opt_binop string_add         {fn_string_add        };
+value::opt_binop string_times       {fn_string_times      };
+value::opt_monop string_to_int      {fn_string_to_int     };
+value::opt_binop string_at          {fn_string_at         };
+value::opt_monop string_start       {fn_string_start      };
+value::opt_monop string_stop        {fn_string_stop       };
+value::opt_monop string_to_upper    {fn_string_to_upper   };
+value::opt_monop string_to_lower    {fn_string_to_lower   };
+value::opt_binop string_starts_with {fn_string_starts_with};
+value::opt_monop string_ord         {fn_string_ord        };
 
-value::builtin_function string_iterator_at_start  {fn_string_iterator_at_start,  0};
-value::builtin_function string_iterator_at_end    {fn_string_iterator_at_end,    0};
-value::builtin_function string_iterator_get       {fn_string_iterator_get,       0};
-value::builtin_function string_iterator_equals    {fn_string_iterator_equals,    1};
-value::builtin_function string_iterator_unequal   {fn_string_iterator_unequal,   1};
-value::builtin_function string_iterator_increment {fn_string_iterator_increment, 0};
-value::builtin_function string_iterator_decrement {fn_string_iterator_decrement, 0};
-value::builtin_function string_iterator_add       {fn_string_iterator_add,       1};
-value::builtin_function string_iterator_subtract  {fn_string_iterator_subtract,  1};
+value::opt_monop string_iterator_at_start  {fn_string_iterator_at_start };
+value::opt_monop string_iterator_at_end    {fn_string_iterator_at_end   };
+value::opt_monop string_iterator_get       {fn_string_iterator_get      };
+value::opt_binop string_iterator_equals    {fn_string_iterator_equals   };
+value::opt_binop string_iterator_unequal   {fn_string_iterator_unequal  };
+value::opt_monop string_iterator_increment {fn_string_iterator_increment};
+value::opt_monop string_iterator_decrement {fn_string_iterator_decrement};
+value::opt_binop string_iterator_add       {fn_string_iterator_add      };
+value::opt_binop string_iterator_subtract  {fn_string_iterator_subtract };
 
 }
 

@@ -2,47 +2,37 @@
 
 #include "gc.h"
 #include "utils/lang.h"
-#include "value/builtin_function.h"
+#include "value/opt_functions.h"
 
 using namespace vv;
 using namespace builtin;
 
 namespace {
 
-value::base* fn_object_equals(vm::machine& vm)
+value::base* fn_object_equals(value::base* self, value::base* arg)
 {
-  vm.self();
-  auto self = vm.top();
-  vm.arg(0);
-  auto other = vm.top();
-  return gc::alloc<value::boolean>( self->equals(*other) );
+  return gc::alloc<value::boolean>( self->equals(*arg) );
 }
 
-value::base* fn_object_unequal(vm::machine& vm)
+value::base* fn_object_unequal(value::base* self, value::base* arg)
 {
-  vm.self();
-  auto self = vm.top();
-  vm.arg(0);
-  auto other = vm.top();
-  return gc::alloc<value::boolean>( !self->equals(*other) );
+  return gc::alloc<value::boolean>( !self->equals(*arg) );
 }
 
-value::base* fn_object_not(vm::machine& vm)
+value::base* fn_object_not(value::base* self)
 {
-  vm.self();
-  return gc::alloc<value::boolean>( !truthy(vm.top()) );
+  return gc::alloc<value::boolean>( !truthy(self) );
 }
 
-value::base* fn_object_type(vm::machine& vm)
+value::base* fn_object_type(value::base* self)
 {
-  vm.self();
-  return vm.top()->type;
+  return self->type;
 }
 
-value::builtin_function obj_equals  {fn_object_equals,  1};
-value::builtin_function obj_unequal {fn_object_unequal, 1};
-value::builtin_function obj_not     {fn_object_not,     0};
-value::builtin_function obj_type    {fn_object_type,    0};
+value::opt_binop obj_equals  {fn_object_equals };
+value::opt_binop obj_unequal {fn_object_unequal};
+value::opt_monop obj_not     {fn_object_not    };
+value::opt_monop obj_type    {fn_object_type   };
 }
 value::type type::object {gc::alloc<value::base>, {
   { {"equals"},  &obj_equals },

@@ -2,13 +2,14 @@
 
 #include "utils/lang.h"
 #include "gc.h"
-#include "value/builtin_function.h"
+#include "value/opt_functions.h"
 #include "value/floating_point.h"
 #include "value/integer.h"
 
 using namespace vv;
 using namespace builtin;
-using value::builtin_function;
+using value::opt_monop;
+using value::opt_binop;
 
 namespace {
 
@@ -27,15 +28,11 @@ double to_float(dumb_ptr<value::base> boxed) noexcept
 template <typename F>
 auto fn_floating_point_op(const F& op)
 {
-  return [=](vm::machine& vm)
+  return [=](value::base* self, value::base* arg)
   {
-    vm.self();
-    auto self = vm.top();
-    vm.arg(0);
-    auto other = vm.top();
-    if (!is_float(other))
+    if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
-    auto res = gc::alloc<value::floating_point>(op(to_float(self), to_float(other)));
+    auto res = gc::alloc<value::floating_point>(op(to_float(self), to_float(arg)));
     return static_cast<value::base*>(res);
   };
 }
@@ -43,15 +40,11 @@ auto fn_floating_point_op(const F& op)
 template <typename F>
 auto fn_float_bool_op(const F& op)
 {
-  return [=](vm::machine& vm)
+  return [=](value::base* self, value::base* arg)
   {
-    vm.self();
-    auto self = vm.top();
-    vm.arg(0);
-    auto other = vm.top();
-    if (!is_float(other))
+    if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
-    auto res = gc::alloc<value::boolean>( op(to_float(self), to_float(other)) );
+    auto res = gc::alloc<value::boolean>( op(to_float(self), to_float(arg)) );
     return static_cast<value::base*>(res);
   };
 }
@@ -59,42 +52,37 @@ auto fn_float_bool_op(const F& op)
 template <typename F>
 auto fn_floating_point_monop(const F& op)
 {
-  return [=](vm::machine& vm)
+  return [=](value::base* self)
   {
-    vm.self();
-    return gc::alloc<value::floating_point>( op(to_float(vm.top())) );
+    return gc::alloc<value::floating_point>( op(to_float(self)) );
   };
 }
 
-value::base* fn_floating_point_divides(vm::machine& vm)
+value::base* fn_floating_point_divides(value::base* self, value::base* arg)
 {
-  vm.self();
-  auto self = vm.top();
-  vm.arg(0);
-  auto other = vm.top();
-  if (!is_float(other))
+  if (!is_float(arg))
     return throw_exception("Right-hand argument is not a Float");
-  if (to_float(other) == 0)
+  if (to_float(arg) == 0)
     return throw_exception("Cannot divide by zero");
-  return gc::alloc<value::floating_point>( to_float(self) / to_float(other) );
+  return gc::alloc<value::floating_point>( to_float(self) / to_float(arg) );
 }
 
-builtin_function flt_add      {fn_floating_point_op(std::plus<double>{}),       1};
-builtin_function flt_subtract {fn_floating_point_op(std::minus<double>{}),      1};
-builtin_function flt_times    {fn_floating_point_op(std::multiplies<double>{}), 1};
-builtin_function flt_divides  {fn_floating_point_divides,                       1};
-builtin_function flt_pow      {fn_floating_point_op(pow),                       1};
-builtin_function flt_eq       {fn_float_bool_op(std::equal_to<double>{}),       1};
-builtin_function flt_neq      {fn_float_bool_op(std::not_equal_to<double>{}),   1};
-builtin_function flt_lt       {fn_float_bool_op(std::less<double>{}),           1};
-builtin_function flt_gt       {fn_float_bool_op(std::greater<double>{}),        1};
-builtin_function flt_le       {fn_float_bool_op(std::less_equal<double>{}),     1};
-builtin_function flt_ge       {fn_float_bool_op(std::greater_equal<double>{}),  1};
-builtin_function flt_negative {fn_floating_point_monop(std::negate<double>{}),  0};
-builtin_function flt_sqrt     {fn_floating_point_monop(sqrt),                   0};
-builtin_function flt_sin      {fn_floating_point_monop(sin),                    0};
-builtin_function flt_cos      {fn_floating_point_monop(cos),                    0};
-builtin_function flt_tan      {fn_floating_point_monop(tan),                    0};
+opt_binop flt_add      {fn_floating_point_op(std::plus<double>{})      };
+opt_binop flt_subtract {fn_floating_point_op(std::minus<double>{})     };
+opt_binop flt_times    {fn_floating_point_op(std::multiplies<double>{})};
+opt_binop flt_divides  {fn_floating_point_divides                      };
+opt_binop flt_pow      {fn_floating_point_op(pow)                      };
+opt_binop flt_eq       {fn_float_bool_op(std::equal_to<double>{})      };
+opt_binop flt_neq      {fn_float_bool_op(std::not_equal_to<double>{})  };
+opt_binop flt_lt       {fn_float_bool_op(std::less<double>{})          };
+opt_binop flt_gt       {fn_float_bool_op(std::greater<double>{})       };
+opt_binop flt_le       {fn_float_bool_op(std::less_equal<double>{})    };
+opt_binop flt_ge       {fn_float_bool_op(std::greater_equal<double>{}) };
+opt_monop flt_negative {fn_floating_point_monop(std::negate<double>{}) };
+opt_monop flt_sqrt     {fn_floating_point_monop(sqrt)                  };
+opt_monop flt_sin      {fn_floating_point_monop(sin)                   };
+opt_monop flt_cos      {fn_floating_point_monop(cos)                   };
+opt_monop flt_tan      {fn_floating_point_monop(tan)                   };
 }
 value::type type::floating_point{[]{ return nullptr; }, {
   { {"add"},            &flt_add      },

@@ -5,6 +5,7 @@
 #include "vm.h"
 #include "value/builtin_function.h"
 #include "value/file.h"
+#include "value/opt_functions.h"
 #include "value/string.h"
 
 #include <sstream>
@@ -29,53 +30,48 @@ value::base* fn_file_init(vm::machine& vm)
   return &self;
 }
 
-value::base* fn_file_contents(vm::machine& vm)
+value::base* fn_file_contents(value::base* self)
 {
-  vm.self();
-  auto& self = static_cast<value::file&>(*vm.top());
+  auto& file = static_cast<value::file&>(*self);
   std::ostringstream str_stream;
-  str_stream << self.cur_line;
-  str_stream << self.val->rdbuf();
-  self.cur_line.clear();
+  str_stream << file.cur_line;
+  str_stream << file.val->rdbuf();
+  file.cur_line.clear();
   return gc::alloc<value::string>( str_stream.str() );
 }
 
-value::base* fn_file_start(vm::machine& vm)
+value::base* fn_file_start(value::base* self)
 {
-  vm.self();
-  return vm.top();
+  return self;
 }
 
-value::base* fn_file_get(vm::machine& vm)
+value::base* fn_file_get(value::base* self)
 {
-  vm.self();
-  const auto& self = static_cast<value::file&>(*vm.top());
-  return gc::alloc<value::string>( self.cur_line );
+  const auto& file = static_cast<value::file&>(*self);
+  return gc::alloc<value::string>( file.cur_line );
 }
 
-value::base* fn_file_increment(vm::machine& vm)
+value::base* fn_file_increment(value::base* self)
 {
-  vm.self();
-  auto& self = static_cast<value::file&>(*vm.top());
-  if (self.val->peek() == EOF)
+  auto& file = static_cast<value::file&>(*self);
+  if (file.val->peek() == EOF)
     return throw_exception("Cannot read past end of File");
-  std::getline(*self.val, self.cur_line);
-  return &self;
+  std::getline(*file.val, file.cur_line);
+  return self;
 }
 
-value::base* fn_file_at_end(vm::machine& vm)
+value::base* fn_file_at_end(value::base* self)
 {
-  vm.self();
-  auto& self = static_cast<value::file&>(*vm.top());
-  return gc::alloc<value::boolean>(self.val->peek() == EOF && !self.cur_line.size());
+  auto& file = static_cast<value::file&>(*self);
+  return gc::alloc<value::boolean>(file.val->peek() == EOF && !file.cur_line.size());
 }
 
-value::builtin_function file_init      {fn_file_init,      1};
-value::builtin_function file_contents  {fn_file_contents,  0};
-value::builtin_function file_start     {fn_file_start,     0};
-value::builtin_function file_get       {fn_file_get,       0};
-value::builtin_function file_increment {fn_file_increment, 0};
-value::builtin_function file_at_end    {fn_file_at_end,    0};
+value::builtin_function file_init {fn_file_init, 1};
+value::opt_monop file_contents  {fn_file_contents };
+value::opt_monop file_start     {fn_file_start    };
+value::opt_monop file_get       {fn_file_get      };
+value::opt_monop file_increment {fn_file_increment};
+value::opt_monop file_at_end    {fn_file_at_end   };
 
 }
 

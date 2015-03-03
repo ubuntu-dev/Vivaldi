@@ -3,6 +3,7 @@
 #include "gc.h"
 #include "utils/lang.h"
 #include "value/builtin_function.h"
+#include "value/opt_functions.h"
 #include "value/symbol.h"
 #include "value/string.h"
 
@@ -36,31 +37,23 @@ value::base* fn_symbol_init(vm::machine& vm)
   return &sym;
 }
 
-value::base* fn_symbol_equals(vm::machine& vm)
+value::base* fn_symbol_equals(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto arg = vm.top();
-
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( false );
-  vm.self();
-  return gc::alloc<value::boolean>(to_symbol(vm.top()) == to_symbol(arg));
+  return gc::alloc<value::boolean>(to_symbol(self) == to_symbol(arg));
 }
 
-value::base* fn_symbol_unequal(vm::machine& vm)
+value::base* fn_symbol_unequal(value::base* self, value::base* arg)
 {
-  vm.arg(0);
-  auto arg = vm.top();
-
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( true );
-  vm.self();
-  return gc::alloc<value::boolean>(to_symbol(vm.top()) != to_symbol(arg));
+  return gc::alloc<value::boolean>(to_symbol(self) != to_symbol(arg));
 }
 
-value::builtin_function symbol_init    {fn_symbol_init,    1};
-value::builtin_function symbol_equals  {fn_symbol_equals,  1};
-value::builtin_function symbol_unequal {fn_symbol_unequal, 1};
+value::builtin_function symbol_init    {fn_symbol_init, 1};
+value::opt_binop        symbol_equals  {fn_symbol_equals };
+value::opt_binop        symbol_unequal {fn_symbol_unequal};
 
 }
 
