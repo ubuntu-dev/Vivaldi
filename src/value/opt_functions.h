@@ -14,11 +14,7 @@ public:
 
   std::string value() const override;
 
-  int get_argc() const override { return 0; }
-  vector_ref<vm::command> get_body() const override;
-  vm::environment* get_enclosing() const override { return nullptr; }
-
-  std::function<base*(base*)> body;
+  std::function<base*(base*)> fn_body;
 };
 
 struct opt_binop : public basic_function {
@@ -27,11 +23,7 @@ public:
 
   std::string value() const override;
 
-  int get_argc() const override { return 1; }
-  vector_ref<vm::command> get_body() const override;
-  vm::environment* get_enclosing() const override { return nullptr; }
-
-  std::function<base*(base*, base*)> body;
+  std::function<base*(base*, base*)> fn_body;
 };
 
 }

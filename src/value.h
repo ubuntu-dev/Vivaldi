@@ -2,6 +2,7 @@
 #define VV_VALUE_H
 
 #include "symbol.h"
+#include "utils/dumb_ptr.h"
 #include "utils/vector_ref.h"
 #include "vm/instruction.h"
 
@@ -73,11 +74,22 @@ private:
 };
 
 struct basic_function : public base {
-  basic_function();
+  enum class func_type {
+    opt1,
+    opt2,
+    builtin,
+    vv
+  };
 
-  virtual int get_argc() const = 0;
-  virtual vm::environment* get_enclosing() const = 0;
-  virtual vector_ref<vm::command> get_body() const = 0;
+  basic_function(func_type type,
+                 int argc,
+                 vm::environment* enclosing,
+                 vector_ref<vm::command> body);
+
+  const func_type type;
+  const int argc;
+  const dumb_ptr<vm::environment> enclosing;
+  vector_ref<vm::command> body;
 };
 
 struct type : public base {

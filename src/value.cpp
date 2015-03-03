@@ -42,8 +42,15 @@ void value::base::mark()
       i.second->mark();
 }
 
-value::basic_function::basic_function()
-  : base {&builtin::type::function}
+value::basic_function::basic_function(func_type type,
+                                      int argc,
+                                      vm::environment* enclosing,
+                                      vector_ref<vm::command> body)
+  : base      {&builtin::type::function},
+    type      {type},
+    argc      {argc},
+    enclosing {enclosing},
+    body      {body}
 { }
 
 value::type::type(

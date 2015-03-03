@@ -247,34 +247,37 @@ void vm::machine::call(int argc)
 
   auto func = static_cast<value::basic_function*>(top());
   pop(1);
-  if (func->get_argc() != argc) {
-    pstr("wrong number of arguments--- expected " + std::to_string(func->get_argc())
+  if (func->argc != argc) {
+    pstr("wrong number of arguments--- expected " + std::to_string(func->argc)
       += ", got " + std::to_string(argc));
     exc();
     return;
   }
-  m_call_stack.emplace_back(func->get_body(),
+  m_call_stack.emplace_back(func->body,
                             nullptr,
-                            func->get_argc(),
+                            func->argc,
                             m_stack.size() - 1);
   frame().caller = func;
 
   try {
-    if (auto monop = dynamic_cast<value::opt_monop*>(func)) {
-      auto ret = monop->body(m_transient_self);
+    if (func->type == value::basic_function::func_type::opt1) {
+      auto monop = static_cast<value::opt_monop*>(func);
+      auto ret = monop->fn_body(m_transient_self);
       push(ret);
 
-    } else if (auto binop = dynamic_cast<value::opt_binop*>(func)) {
-      auto ret = binop->body(m_transient_self, top());
+    } else if (func->type == value::basic_function::func_type::opt2) {
+      auto binop = static_cast<value::opt_binop*>(func);
+      auto ret = binop->fn_body(m_transient_self, top());
       //pop(1);
       push(ret);
 
-    } else if (auto builtin = dynamic_cast<value::builtin_function*>(func)) {
+    } else if (func->type == value::basic_function::func_type::builtin) {
+      auto builtin = static_cast<value::builtin_function*>(func);
       frame().env = gc::alloc<environment>( nullptr, m_transient_self );
-      push(builtin->body(*this));
+      push(builtin->fn_body(*this));
 
     } else {
-      frame().env = gc::alloc<environment>(func->get_enclosing(), m_transient_self);
+      frame().env = gc::alloc<environment>(func->enclosing.get(), m_transient_self);
     }
   } catch (const vm_error& err) {
     push(err.error());
