@@ -112,19 +112,18 @@ enum class instruction {
 // - union member
 // - union ctor
 // - enum
-// Or *septuplicate* if you count the definitions in instruction.cpp.
 // This is somewhat displeasing, but boost::variant seems to be a slight
 // bottleneck, so here we are.
 class argument {
 public:
-  argument();
-  argument(int num);
-  argument(symbol sym);
-  argument(bool bol);
-  argument(const std::string& str);
-  argument(double flt);
-  argument(const function_t& fnc);
-  argument(const type_t& typ);
+  argument()                       : m_val{0},   m_which{arg_type::nil} { }
+  argument(int num)                : m_val{num}, m_which{arg_type::num} { }
+  argument(symbol sym)             : m_val{sym}, m_which{arg_type::sym} { }
+  argument(bool bol)               : m_val{bol}, m_which{arg_type::bol} { }
+  argument(const std::string& str) : m_val{str}, m_which{arg_type::str} { }
+  argument(double flt)             : m_val{flt}, m_which{arg_type::flt} { }
+  argument(const function_t& fnc)  : m_val{fnc}, m_which{arg_type::fnc} { }
+  argument(const type_t& typ)      : m_val{typ}, m_which{arg_type::typ} { }
 
   argument(const argument& other);
   argument(argument&& other);
@@ -132,13 +131,13 @@ public:
   argument& operator=(const argument& other);
   argument& operator=(argument&& other);
 
-  int as_int() const;
-  symbol as_sym() const;
-  bool as_bool() const;
-  const std::string& as_str() const;
-  double as_double() const;
-  const function_t& as_fn() const;
-  const type_t& as_type() const;
+  int                as_int()    const { return m_val.num; }
+  symbol             as_sym()    const { return m_val.sym; }
+  bool               as_bool()   const { return m_val.bol; }
+  const std::string& as_str()    const { return m_val.str; }
+  double             as_double() const { return m_val.flt; }
+  const function_t&  as_fn()     const { return m_val.fnc; }
+  const type_t&      as_type()   const { return m_val.typ; }
 
   ~argument();
 
