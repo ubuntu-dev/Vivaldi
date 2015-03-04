@@ -42,6 +42,7 @@ extern value::builtin_function any;
 extern value::builtin_function count;
 
 extern value::builtin_function quit;
+extern value::builtin_function reverse;
 
 }
 

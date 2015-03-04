@@ -528,7 +528,16 @@ More to come soon.
 
 #### Other ####
 
-* `quit()`&mdash; exits the program unconditionally.
+* `quit()`&mdash; Exits the program unconditionally.
+
+* `reverse(x)`&mdash; Reverses the range `x`:
+
+        >>> reverse(1 to 10)
+        => [9, 8, 7, 6, 5, 4, 3, 2, 1]
+        >>> reverse(['foo, 'bar, 'baz])
+        => ['baz, 'bar, 'foo]
+        >> reverse("foo")
+        => ["o", "o", "f"]
 
 More to be added eventually.
 

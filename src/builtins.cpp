@@ -225,6 +225,31 @@ value::base* fn_quit(vm::machine&)
   exit(0);
 }
 
+value::base* fn_reverse(vm::machine& vm)
+{
+  // Get iterator from range
+  vm.arg(0);
+  auto range = vm.top();
+  auto iter = call_method(vm, range, sym::start).value;
+
+  vm.parr(0);
+  auto* arr = static_cast<value::array*>(vm.top());
+
+  for (;;) {
+    auto at_end = call_method(vm, iter, sym::at_end).value;
+    if (truthy(at_end)) {
+      vm.pop(1); // iter
+      reverse(begin(arr->val), end(arr->val));
+      return arr;
+    }
+
+    auto next_item = call_method(vm, iter, sym::get).value;
+    arr->val.push_back(next_item);
+
+    call_method(vm, iter, sym::increment);
+  }
+}
+
 // }}}
 
 }
@@ -240,8 +265,8 @@ value::builtin_function function::all   {fn_all,    2};
 value::builtin_function function::any   {fn_any,    2};
 value::builtin_function function::count {fn_count,  2};
 
-
-value::builtin_function function::quit{fn_quit,  0};
+value::builtin_function function::quit   {fn_quit,    0};
+value::builtin_function function::reverse{fn_reverse, 1};
 
 // }}}
 // Types {{{
@@ -264,6 +289,7 @@ void builtin::make_base_env(vm::environment& base)
     { {"any"},            &builtin::function::any },
     { {"all"},            &builtin::function::all },
     { {"quit"},           &builtin::function::quit },
+    { {"reverse"},        &builtin::function::reverse },
     { {"Array"},          &builtin::type::array },
     { {"ArrayIterator"},  &builtin::type::array_iterator },
     { {"Bool"},           &builtin::type::boolean },
