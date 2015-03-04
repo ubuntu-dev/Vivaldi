@@ -27,13 +27,15 @@ vv::value::base* vv::throw_exception(value::base* value)
   throw vm_error{value};
 }
 
-vv::value::base* vv::find_method(value::type* type, symbol name)
+#include <iostream>
+vv::value::base* vv::find_method(value::type* t, symbol name)
 {
-  decltype(begin(type->methods)) iter{};
-  while (&type->parent != type && (iter = type->methods.find(name)) == end(type->methods))
-    type = static_cast<value::type*>(&type->parent);
-  if (iter != end(type->methods))
-    return iter->second;
+  decltype(begin(t->methods)) i{};
+  while ((i = t->methods.find(name)) == end(t->methods) && &t->parent != t)
+    t = static_cast<value::type*>(&t->parent);
+
+  if (i != end(t->methods))
+    return i->second;
 
   return nullptr;
 }
