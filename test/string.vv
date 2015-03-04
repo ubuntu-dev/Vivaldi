@@ -37,9 +37,16 @@ fn case(): do
   assert(upper.to_lower() == str, "'FOO'.to_lower() == 'foo'")
 end
 
+fn ord(): do
+  let ascii = "\0\1\2\3\4\5\6\7\10\11\n\v\f\r\16\17\20\21\22\23\24\25\26\27\30\31\32\33\34\35\36\37 !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\177"
+  assert(ascii.size() == 128, "ascii.size() == 128")
+  for i in 0 to ascii.size(): assert(ascii[i].ord() == i, "incorrect ord for ASCII character " + new String(i))
+end
+
 section("Strings")
 test(size, "size")
 test(indexing, "indexing")
 test(addition, "addition")
 test(starts_with, "starts_with")
-test (case, "case-changing")
+test(case, "case-changing")
+test(ord, "ASCII ord and escaping")
