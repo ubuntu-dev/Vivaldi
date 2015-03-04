@@ -12,8 +12,13 @@ namespace sym {
 
 // Defined in builtins.cpp
 
-extern vv::symbol self;
-extern vv::symbol call;
+const extern vv::symbol self;
+const extern vv::symbol call;
+
+const extern vv::symbol start;
+const extern vv::symbol at_end;
+const extern vv::symbol get;
+const extern vv::symbol increment;
 
 }
 

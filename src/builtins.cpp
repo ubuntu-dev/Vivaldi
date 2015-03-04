@@ -15,8 +15,14 @@ using namespace builtin;
 
 // Symbols {{{
 
-vv::symbol sym::self{"self"};
-vv::symbol sym::call{"call"};
+const vv::symbol sym::self{"self"};
+const vv::symbol sym::call{"call"};
+
+const vv::symbol sym::start{"start"};
+const vv::symbol sym::at_end{"at_end"};
+const vv::symbol sym::get{"get"};
+const vv::symbol sym::increment{"increment"};
+
 
 // }}}
 // Freestanding functions {{{
@@ -47,19 +53,19 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
   // Get iterator from range
   vm.arg(0);
   auto range = vm.top();
-  auto iter = call_method(vm, range, {"start"}).value;
+  auto iter = call_method(vm, range, sym::start).value;
 
   vm.arg(1);
   auto supplied_fn = vm.top();
 
   for (;;) {
-    auto at_end = call_method(vm, iter, {"at_end"}).value;
+    auto at_end = call_method(vm, iter, sym::at_end).value;
     if (truthy(at_end)) {
       vm.pop(1); // iter
       return { true, at_end };
     }
 
-    auto next_item = call_method(vm, iter, {"get"}).value;
+    auto next_item = call_method(vm, iter, sym::get).value;
 
     auto res = inner(vm, supplied_fn, next_item);
     if (res.completed) {
@@ -67,7 +73,7 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
       return res;
     }
 
-    call_method(vm, iter, {"increment"});
+    call_method(vm, iter, sym::increment);
   }
 }
 
@@ -184,25 +190,25 @@ value::base* fn_reduce(vm::machine& vm)
   vm.arg(0);
   auto range = vm.top();
   vm.pop(1);
-  auto iter = call_method(vm, range, {"start"}).value;
+  auto iter = call_method(vm, range, sym::start).value;
   vm.push(iter);
 
   vm.arg(1); // put total on stack
 
 
   for (;;) {
-    auto at_end = call_method(vm, iter, {"at_end"}).value;
+    auto at_end = call_method(vm, iter, sym::at_end).value;
     if (truthy(at_end)) {
       return vm.top();
     }
 
-    auto next_item = call_method(vm, iter, {"get"}).value;
+    auto next_item = call_method(vm, iter, sym::get).value;
     vm.push(next_item);
     vm.arg(2); // supplied function
     vm.call(2);
     vm.run_cur_scope();
 
-    call_method(vm, iter, {"increment"});
+    call_method(vm, iter, sym::increment);
   }
 }
 
