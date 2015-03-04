@@ -276,7 +276,8 @@ void vm::machine::call(int argc)
 
     } else if (func->type == value::basic_function::func_type::builtin) {
       auto builtin = static_cast<value::builtin_function*>(func);
-      frame().env = gc::alloc<environment>( nullptr, m_transient_self );
+      if (m_transient_self)
+        frame().env = gc::alloc<environment>( nullptr, m_transient_self );
       push(builtin->fn_body(*this));
 
     } else {
