@@ -144,6 +144,7 @@ Simple mutable array type:
 * `init(x)`&mdash; Returns a copy of the Array `x`.
 * `size()`&mdash; Returns the size of `self`.
 * `append(x)`&mdash; Pushes the value `x` onto the end of `self`.
+* `pop()`&mdash; Returns the last value in `self`, and removes it from `self`.
 * `at(x)`&mdash; Returns the value at index `x`.
 * `set_at(x, y)`&mdash; Sets the value at index `x` to `y`, returning `y`.
 * `start()`&mdash; Returns an iterator pointing to the beginning of `self`.

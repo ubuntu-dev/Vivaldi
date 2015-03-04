@@ -38,6 +38,14 @@ value::base* fn_array_append(value::base* self, value::base* arg)
   return self;
 }
 
+value::base* fn_array_pop(value::base* self)
+{
+  auto arr = static_cast<value::array*>(self);
+  auto val = arr->val.back();
+  arr->val.pop_back();
+  return val;
+}
+
 value::base* fn_array_at(value::base* self, value::base* arg)
 {
   if (arg->type != &type::integer)
@@ -210,6 +218,7 @@ value::base* fn_array_iterator_less(value::base* self, value::base* arg)
 value::builtin_function array_init   {fn_array_init,   1};
 value::opt_monop        array_size   {fn_array_size     };
 value::opt_binop        array_append {fn_array_append   };
+value::opt_monop        array_pop    {fn_array_pop      };
 value::opt_binop        array_at     {fn_array_at       };
 value::builtin_function array_set_at {fn_array_set_at, 2};
 value::opt_monop        array_start  {fn_array_start    };
@@ -233,6 +242,7 @@ value::type type::array {gc::alloc<value::array>, {
   { {"init"},   &array_init },
   { {"size"},   &array_size },
   { {"append"}, &array_append },
+  { {"pop"},    &array_pop },
   { {"at"},     &array_at },
   { {"set_at"}, &array_set_at },
   { {"start"},  &array_start },
