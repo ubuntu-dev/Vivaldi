@@ -166,8 +166,12 @@ value::base* fn_string_split(vm::machine& vm)
 
   size_t substrs{};
 
-  while (str.size()) {
+  for (;;) {
     ++substrs;
+    if (!str.size()) {
+      vm.pstr("");
+      break;
+    }
     auto next_sep = str.find(sep);
     if (next_sep == boost::string_ref::npos) {
       vm.pstr({begin(str), end(str)});
