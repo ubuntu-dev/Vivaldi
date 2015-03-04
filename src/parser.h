@@ -26,7 +26,6 @@ struct token {
     close_brace,
 
     dot,
-    quote,
     semicolon,
     colon,
     comma,
@@ -83,6 +82,7 @@ struct token {
     integer,
     floating_point,
     string,
+    symbol,
     boolean,
     nil,
 

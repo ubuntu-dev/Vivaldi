@@ -566,12 +566,9 @@ val_res val_string(vector_ref<token> tokens)
 
 val_res val_symbol(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::quote)
+  if (!tokens.size() || tokens.front().which != token::type::symbol)
     return {};
-  auto name_res = val_variable(tokens.subvec(1)); // '''
-  if (name_res || name_res.invalid())
-    return name_res;
-  return {tokens.subvec(1), "expected symbol name"}; // '''
+  return tokens.subvec(1); // symbol
 }
 
 template <typename F>

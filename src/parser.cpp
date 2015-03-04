@@ -729,10 +729,10 @@ parse_res<> parse_while_loop(token_string tokens)
 
 parse_res<> parse_symbol(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::quote)
+  if (!tokens.size() || tokens.front().which != token::type::symbol)
     return {};
-  symbol name{tokens[1].str};
-  tokens = tokens.subvec(2); // ''' name
+  symbol name{tokens[0].str};
+  tokens = tokens.subvec(1); // symbol
   return {{ std::make_unique<literal::symbol>( name ), tokens }};
 }
 

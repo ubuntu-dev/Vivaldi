@@ -86,6 +86,21 @@ tok_res digit_token(boost::string_ref line)
 }
 
 // }}}
+// '\'' {{{
+
+tok_res sym_token(boost::string_ref line)
+{
+  auto name = line.substr(1);
+  auto last = std::find_if_not(begin(name), end(name), isnamechar);
+  if (last == begin(name) || isdigit(name.front()))
+    return { {token::type::invalid, {begin(line), last}},
+             ltrim(line.substr(last - begin(line))) };
+
+  std::string sym{begin(name), last};
+  return { {token::type::symbol, sym}, ltrim(line.substr(last - begin(line)))};
+}
+
+// }}}
 // '=' {{{
 
 tok_res eq_tokens(boost::string_ref line)
@@ -283,7 +298,6 @@ tok_res first_token(boost::string_ref line)
   case ':': return {{token::type::colon,     ":"}, ltrim(line.substr(1))};
   case ';': return {{token::type::semicolon, ";"}, ltrim(line.substr(1))};
   case '.': return {{token::type::dot,       "."}, ltrim(line.substr(1))};
-  case '\'': return {{token::type::quote,    "'"}, ltrim(line.substr(1))};
 
   case '+': return {{token::type::plus,    "+"}, ltrim(line.substr(1))};
   case '-': return {{token::type::dash,    "-"}, ltrim(line.substr(1))};
@@ -301,6 +315,7 @@ tok_res first_token(boost::string_ref line)
   case '8':
   case '9': return digit_token(line);
   case '0': return zero_token(line);
+  case '\'': return sym_token(line);
   case '=': return eq_tokens(line);
   case '!': return bang_tokens(line);
   case '*': return star_tokens(line);
