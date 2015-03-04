@@ -206,11 +206,19 @@ value::base* fn_reduce(vm::machine& vm)
       return vm.top();
     }
 
+    auto total = vm.top();
     auto next_item = call_method(vm, iter, sym::get).value;
     vm.push(next_item);
+    vm.push(total);
+
     vm.arg(2); // supplied function
     vm.call(2);
     vm.run_cur_scope();
+
+    // replace old total with new
+    total = vm.top();
+    vm.pop(2); // new total, orig total
+    vm.push(total);
 
     call_method(vm, iter, sym::increment);
   }
