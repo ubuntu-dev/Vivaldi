@@ -1,0 +1,190 @@
+// The world's worst Lisp interpreter. Sample program; stick it in a file and
+// run it via 'vivaldi lisp.vv my_file' to run it:
+//
+//   (def reverse (fn (orig new)
+//                 (if (nullp orig) new
+//                     (reverse (cdr orig) (cons (car orig) new)))))
+//   (prn (reverse (quote (1 2 3 4 5)) nil))
+
+// Classes {{{
+
+class ConsCell
+  fn init(car, cdr): do
+    self._car = car
+    self._cdr = cdr
+  end
+
+  fn car(): self._car
+  fn cdr(): self._cdr
+
+  fn length(): do
+    let len = 0
+    let c = self
+    while (c): do
+      len = len + 1
+      c = c.cdr()
+    end
+    len
+  end
+end
+
+class Lambda
+  fn init(args, body): do
+    self._args = args
+    self._body = body
+  end
+
+  fn eval(args, env): do
+    let nenv = new Dictionary(env)
+    if args.length() != self._args.length(): except "wrong number of arguments"
+
+    let argnames = self._args
+    while argnames: do
+      nenv[argnames.car()] = args.car()
+      argnames = argnames.cdr()
+      args = args.cdr()
+    end
+    eval(self._body, nenv)
+  end
+end
+
+//// Parsing
+
+// I should get around to implementing String::replace
+fn replace_all(str, orig, replacement): do
+  let split = reverse(str.split(orig))
+  let first = split.pop()
+  reduce(reverse(split), first, fn (t, i): t + replacement + i)
+end
+
+fn tokenize(str): do
+  str = replace_all(str, "(", " ( ")
+  str = replace_all(str, ")", " ) ")
+  filter(str.split(" "), fn (x): x.size() != 0)
+end
+
+fn parse_atom(x): cond
+  x == "nil":                                   nil,
+  x.ord() >= "0".ord() && x.ord() <= "9".ord(): x.to_int(),
+  true:                                         new Symbol(x)
+
+fn parse(tokens): do
+  if tokens.at_end(): except "premature end of file"
+
+  let token = tokens.get()
+  tokens.increment()
+
+  if token == "(": do
+    let list = new ConsCell(nil, nil)
+    let cur = list
+    while tokens.get() != ")": do
+      cur._cdr = new ConsCell(parse(tokens), nil)
+      cur = cur._cdr
+    end
+    tokens.increment() // ')'
+    return list.cdr()
+  end
+
+  if token == ")": except "unexpected ')'"
+
+  parse_atom(token)
+end
+
+// }}}
+// Printing {{{
+
+fn print_inner_cons_cell(x): do
+  if (x.type() != ConsCell): do
+    print_lisp_obj(x)
+    return nil
+  end
+
+  print_lisp_obj(x.car())
+
+  if (x.cdr() == nil): do
+    print(")")
+    return nil
+  end
+  if (x.cdr().type() != ConsCell): do
+    print(" . ")
+    print_lisp_obj(x.cdr())
+    print(")")
+    return nil
+  end
+  print(" ")
+  print_inner_cons_cell(x.cdr())
+end
+
+fn print_lisp_obj(x): do
+  if x.type() == ConsCell: do
+    print("(")
+    print_inner_cons_cell(x)
+    return nil
+  end
+  cond
+    x.type() == Symbol: print(new String(x)),
+    x.type() == Lambda: print("<lambda>"),
+    true:               print(x)
+end
+
+fn puts_lisp_obj(x): do
+  print_lisp_obj(x)
+  puts("")
+end
+
+// }}}
+// Evaluation {{{
+
+fn ev1(args, env): eval(args.car(), env)
+fn ev2(args, env): eval(args.cdr().car(), env)
+
+fn argmap(arglist, env): cond
+  !arglist: nil,
+  true:     new ConsCell(eval(arglist.car(), env), argmap(arglist.cdr(), env))
+
+fn eval(expr, env): do
+  if expr.type() == Symbol: return env[expr]
+  if expr.type() != ConsCell: return expr
+
+  let x = expr.car()
+  let args = expr.cdr()
+
+  cond
+    x == 'quote:   args.car(),
+    x == 'car:     ev1(args, env).car(),
+    x == 'cdr:     ev1(args, env).cdr(),
+    x == 'cons:    new ConsCell(ev1(args, env), ev2(args, env)),
+    x == 'nullp:   ev1(args, env) == nil,
+    x == 'eqp:     ev1(args, env) == ev2(args, env),
+    x == 'length:  ev1(args, env).length(),
+    x == 'not:     !ev1(args, env),
+    x == 'plus:    ev1(args, env) + ev2(args, env),
+    x == 'minus:   ev1(args, env) - ev2(args, env),
+    x == 'times:   ev1(args, env) * ev2(args, env),
+    x == 'divides: ev1(args, env) / ev2(args, env),
+    x == 'def:     env[args.car()] = ev2(args, env),
+    x == 'if:      eval((cond ev1(args, env): args.cdr().car(),
+                         true:                args.cdr().cdr().car()),
+                        env),
+    x == 'fn:      new Lambda(args.car(), args.cdr().car()),
+    x == 'prn:     puts_lisp_obj(ev1(args, env)),
+    true:          eval(x, env).eval(argmap(args, env), env)
+end
+
+// }}}
+// Running files {{{
+
+if argv.size() != 1: except "expected one file as command-line argument"
+let file = new File(argv[0])
+let exprs = []
+let raw = ""
+for line in file: raw = raw + " " + line
+
+let tokens = tokenize(raw)
+let iter = tokens.start()
+while !iter.at_end(): exprs.append(parse(iter))
+
+let env = {}
+for i in exprs: eval(i, env)
+
+// }}}
