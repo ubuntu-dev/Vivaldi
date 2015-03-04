@@ -117,6 +117,8 @@ Simple, immutable string class. Currently supports:
   and `false` otherwise.
 * `ord()`&mdash; Returns the integer value of `self.at(0)` (unless `self` is
   empty, which results in an exception).
+* `split(x)`&mdash; Returns an Array of each substrings of `self` separated by
+  the String `x`.
 * `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a String equal in value
   to `self`, and `false` otherwise (vice versa for `unequal`).
 
