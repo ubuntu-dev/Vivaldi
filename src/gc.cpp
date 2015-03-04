@@ -93,87 +93,70 @@ union gc::internal::value_type {
 // defined in gc.h and mess up build times
 void gc::internal::set_value_type(value_type* val, value::array&& other)
 {
-  val->~value_type();
   new (val) value::array{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::array_iterator&& other)
 {
-  val->~value_type();
   new (val) value::array_iterator{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::base&& other)
 {
-  val->~value_type();
   new (val) value::base{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::builtin_function&& other)
 {
-  val->~value_type();
   new (val) value::builtin_function{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::dictionary&& other)
 {
-  val->~value_type();
   new (val) value::dictionary{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::file&& other)
 {
-  val->~value_type();
   new (val) value::file{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::floating_point&& other)
 {
-  val->~value_type();
   new (val) value::floating_point{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::function&& other)
 {
-  val->~value_type();
   new (val) value::function{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::integer&& other)
 {
-  val->~value_type();
   new (val) value::integer{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::opt_monop&& other)
 {
-  val->~value_type();
   new (val) value::opt_monop{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::opt_binop&& other)
 {
-  val->~value_type();
   new (val) value::opt_binop{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::range&& other)
 {
-  val->~value_type();
   new (val) value::range{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::string&& other)
 {
-  val->~value_type();
   new (val) value::string{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::string_iterator&& other)
 {
-  val->~value_type();
   new (val) value::string_iterator{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::symbol&& other)
 {
-  val->~value_type();
   new (val) value::symbol{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, value::type&& other)
 {
-  val->~value_type();
   new (val) value::type{std::move(other)};
 }
 void gc::internal::set_value_type(value_type* val, vm::environment&& other)
 {
-  val->~value_type();
   new (val) vm::environment{std::move(other)};
 }
 
@@ -229,7 +212,6 @@ void gc::internal::sweep()
         j.unmark();
       else
         j.clear();
-        //set_value_type(&j, value::nil{});
     }
   }
 }
