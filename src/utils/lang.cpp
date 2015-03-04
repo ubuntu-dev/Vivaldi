@@ -29,10 +29,11 @@ vv::value::base* vv::throw_exception(value::base* value)
 
 vv::value::base* vv::find_method(value::type* type, symbol name)
 {
-  while (&type->parent != type && !type->methods.count(name))
+  decltype(begin(type->methods)) iter{};
+  while (&type->parent != type && (iter = type->methods.find(name)) == end(type->methods))
     type = static_cast<value::type*>(&type->parent);
-  if (type->methods.count(name))
-    return type->methods[name];
+  if (iter != end(type->methods))
+    return iter->second;
 
   return nullptr;
 }

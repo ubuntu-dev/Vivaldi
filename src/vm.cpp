@@ -169,8 +169,9 @@ void vm::machine::pdict(int size)
 void vm::machine::read(symbol sym)
 {
   for (auto i = frame().env; i; i = i->enclosing) {
-    if (i->local.count(sym)) {
-      push(i->local.at(sym));
+    auto iter = i->local.find(sym);
+    if (iter != end(i->local)) {
+      push(iter->second);
       return;
     }
   }
@@ -181,8 +182,9 @@ void vm::machine::read(symbol sym)
 void vm::machine::write(symbol sym)
 {
   for (auto i = frame().env; i; i = i->enclosing) {
-    if (i->local.count(sym)) {
-      i->local.at(sym) = top();
+    auto iter = i->local.find(sym);
+    if (iter != end(i->local)) {
+      iter->second = top();
       return;
     }
   }
@@ -220,8 +222,9 @@ void vm::machine::readm(symbol sym)
   m_transient_self = top();
   pop(1);
 
-  if (m_transient_self->members.count(sym)) {
-    push(m_transient_self->members.at(sym));
+  auto iter = m_transient_self->members.find(sym);
+  if (iter != end(m_transient_self->members)) {
+    push(iter->second);
   } else if (auto method = find_method(m_transient_self->type, sym)) {
     push(method);
   } else {
