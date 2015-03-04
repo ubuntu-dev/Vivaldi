@@ -37,7 +37,7 @@ void vm::machine::run()
   while (frame().instr_ptr.size()) {
     // Get next instruction (and argument, if it exists), and increment the
     // instruction pointer
-    auto command = frame().instr_ptr.front();
+    const auto& command = frame().instr_ptr.front();
     frame().instr_ptr = frame().instr_ptr.subvec(1);
     run_single_command(command);
   }
@@ -50,7 +50,7 @@ void vm::machine::run_cur_scope()
   while (frame().instr_ptr.size()) {
     // Get next instruction (and argument, if it exists), and increment the
     // instruction pointer
-    auto command = frame().instr_ptr.front();
+    const auto& command = frame().instr_ptr.front();
     frame().instr_ptr = frame().instr_ptr.subvec(1);
 
     if (command.instr == vm::instruction::ret && m_call_stack.size() == exit_sz) {
