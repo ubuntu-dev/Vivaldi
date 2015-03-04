@@ -155,6 +155,32 @@ value::base* fn_string_ord(value::base* self)
   return gc::alloc<value::integer, int>( str[0] );
 }
 
+value::base* fn_string_split(vm::machine& vm)
+{
+  vm.self();
+  boost::string_ref str{static_cast<value::string*>(vm.top())->val};
+  vm.arg(0);
+  if (vm.top()->type != &type::string)
+    return throw_exception("Strings can only be split by other Strings");
+  const auto& sep = static_cast<value::string*>(vm.top())->val;
+
+  size_t substrs{};
+
+  while (str.size()) {
+    ++substrs;
+    auto next_sep = str.find(sep);
+    if (next_sep == boost::string_ref::npos) {
+      vm.pstr({begin(str), end(str)});
+      break;
+    }
+    auto substr = str.substr(0, next_sep);
+    vm.pstr({begin(substr), end(substr)});
+    str = str.substr(next_sep + sep.size());
+  }
+  vm.parr(substrs);
+  return vm.top();
+}
+
 // }}}
 // string_iterator {{{
 
@@ -264,6 +290,7 @@ value::opt_monop string_to_upper    {fn_string_to_upper   };
 value::opt_monop string_to_lower    {fn_string_to_lower   };
 value::opt_binop string_starts_with {fn_string_starts_with};
 value::opt_monop string_ord         {fn_string_ord        };
+value::builtin_function string_split {fn_string_split, 1};
 
 value::opt_monop string_iterator_at_start  {fn_string_iterator_at_start };
 value::opt_monop string_iterator_at_end    {fn_string_iterator_at_end   };
@@ -291,7 +318,8 @@ value::type type::string {gc::alloc<value::string>, {
   { {"to_upper"},    &string_to_upper    },
   { {"to_lower"},    &string_to_lower    },
   { {"starts_with"}, &string_starts_with },
-  { {"ord"},         &string_ord }
+  { {"ord"},         &string_ord         },
+  { {"split"},       &string_split       }
 }, builtin::type::object, {"String"}};
 
 value::type type::string_iterator {[]{ return nullptr; }, {
