@@ -20,6 +20,10 @@ const extern vv::symbol at_end;
 const extern vv::symbol get;
 const extern vv::symbol increment;
 
+const extern vv::symbol add;
+const extern vv::symbol subtract;
+const extern vv::symbol times;
+const extern vv::symbol divides;
 }
 
 namespace function {

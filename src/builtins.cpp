@@ -23,6 +23,10 @@ const vv::symbol sym::at_end{"at_end"};
 const vv::symbol sym::get{"get"};
 const vv::symbol sym::increment{"increment"};
 
+const vv::symbol sym::add{"add"};
+const vv::symbol sym::subtract{"subtract"};
+const vv::symbol sym::times{"times"};
+const vv::symbol sym::divides{"divides"};
 
 // }}}
 // Freestanding functions {{{

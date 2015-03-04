@@ -453,22 +453,22 @@ void int_optimization(vm::machine& vm, const F& fn, vv::symbol sym)
 
 void vm::machine::opt_add()
 {
-  int_optimization(*this, std::plus<int>{}, {"add"});
+  int_optimization(*this, std::plus<int>{}, builtin::sym::add);
 }
 
 void vm::machine::opt_sub()
 {
-  int_optimization(*this, std::minus<int>{}, {"subtract"});
+  int_optimization(*this, std::minus<int>{}, builtin::sym::subtract);
 }
 
 void vm::machine::opt_mul()
 {
-  int_optimization(*this, std::multiplies<int>{}, {"times"});
+  int_optimization(*this, std::multiplies<int>{}, builtin::sym::times);
 }
 
 void vm::machine::opt_div()
 {
-  int_optimization(*this, std::divides<int>{}, {"divides"});
+  int_optimization(*this, std::divides<int>{}, builtin::sym::divides);
 }
 
 void vm::machine::opt_not()
