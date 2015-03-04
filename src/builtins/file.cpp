@@ -54,8 +54,12 @@ value::base* fn_file_get(value::base* self)
 value::base* fn_file_increment(value::base* self)
 {
   auto& file = static_cast<value::file&>(*self);
-  if (file.val->peek() == EOF)
-    return throw_exception("Cannot read past end of File");
+  if (file.val->peek() == EOF) {
+    if (!file.cur_line.size())
+      return throw_exception("Cannot read past end of File");
+    file.cur_line.clear();
+    return self;
+  }
   std::getline(*file.val, file.cur_line);
   return self;
 }
