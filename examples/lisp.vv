@@ -48,7 +48,8 @@ class Lambda
   end
 end
 
-//// Parsing
+// }}}
+// Parsing {{{
 
 // I should get around to implementing String::replace
 fn replace_all(str, orig, replacement): do
