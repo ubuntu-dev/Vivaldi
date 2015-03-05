@@ -70,7 +70,7 @@ void run_repl()
 
   while (!std::cin.eof()) {
     for (const auto& expr : get_valid_line()) {
-      auto body = expr->generate();
+      auto body = expr->code();
       vv::vm::call_frame frame{body, env};
       vv::vm::machine machine{std::move(frame), repl_catcher};
       machine.run();

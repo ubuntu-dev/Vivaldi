@@ -62,6 +62,8 @@ public:
 
   void chdir(const std::string& new_dir);
 
+  void noop();
+
   void opt_add();
   void opt_sub();
   void opt_mul();

@@ -423,6 +423,8 @@ void vm::machine::chdir(const std::string& dir)
   boost::filesystem::current_path(dir);
 }
 
+void vm::machine::noop() { }
+
 // }}}
 // Optimizations {{{
 
@@ -550,6 +552,8 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::exc:   exc();   break;
 
   case instruction::chdir:      chdir(arg.as_str()); break;
+
+  case instruction::noop: break;
 
   case instruction::opt_add: opt_add(); break;
   case instruction::opt_sub: opt_sub(); break;

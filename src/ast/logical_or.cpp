@@ -20,12 +20,12 @@ std::vector<vm::command> ast::logical_or::generate() const
   //   push_bool false
   //   jmp 2
   //   push_bool true
-  auto vec = m_left->generate();
+  auto vec = m_left->code();
   vec.emplace_back(vm::instruction::jt);
   auto jmp_to_false_idx = vec.size() - 1;
   vec.emplace_back(vm::instruction::pop, 1);
 
-  auto right = m_right->generate();
+  auto right = m_right->code();
   copy(begin(right), end(right), back_inserter(vec));
   vec.emplace_back(vm::instruction::jt, 3);
   vec.emplace_back(vm::instruction::pop, 1);

@@ -15,8 +15,8 @@ ast::member_assignment::member_assignment(
 
 std::vector<vm::command> ast::member_assignment::generate() const
 {
-  auto vec = m_value->generate();
-  auto obj = m_object->generate();
+  auto vec = m_value->code();
+  auto obj = m_object->code();
   copy(begin(obj), end(obj), back_inserter(vec));
   vec.emplace_back(vm::instruction::writem, m_name);
 

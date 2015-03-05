@@ -13,7 +13,7 @@ ast::variable_declaration::variable_declaration(
 
 std::vector<vm::command> ast::variable_declaration::generate() const
 {
-  auto vec = m_value->generate();
+  auto vec = m_value->code();
   vec.emplace_back(vm::instruction::let, m_name);
   return vec;
 }

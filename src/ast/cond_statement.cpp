@@ -20,13 +20,13 @@ std::vector<vm::command> ast::cond_statement::generate() const
 
   for (const auto& i : m_body) {
     vec.emplace_back(vm::instruction::pop, 1); // pop prev failed test result
-    auto test = i.first->generate();
+    auto test = i.first->code();
     copy(begin(test), end(test), back_inserter(vec));
     vec.emplace_back(vm::instruction::jf);
     auto jump_to_next_test_idx = vec.size() - 1;
 
     vec.emplace_back(vm::instruction::pop, 1); // pop test result
-    auto body = i.second->generate();
+    auto body = i.second->code();
     copy(begin(body), end(body), back_inserter(vec));
     vec.emplace_back(vm::instruction::jmp);
     jump_to_end_idxs.push_back(vec.size() - 1);

@@ -98,6 +98,9 @@ enum class instruction {
   /// Changes current directory to that passed as a string literal
   chdir,
 
+  /// Does nothing; filler
+  noop,
+
   opt_add,
   opt_sub,
   opt_mul,

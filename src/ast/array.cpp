@@ -13,7 +13,7 @@ std::vector<vm::command> ast::array::generate() const
   std::vector<vm::command> vec;
 
   for (const auto& i : m_members) {
-    auto arg = i->generate();
+    auto arg = i->code();
     copy(begin(arg), end(arg), back_inserter(vec));
   }
 

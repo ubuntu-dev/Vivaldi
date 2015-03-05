@@ -18,6 +18,7 @@ namespace ast {
 class expression {
 public:
   virtual std::vector<vm::command> generate() const = 0;
+  std::vector<vm::command> code() const;
   virtual ~expression() { }
 };
 

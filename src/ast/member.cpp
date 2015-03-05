@@ -11,7 +11,7 @@ ast::member::member(std::unique_ptr<ast::expression>&& object, vv::symbol name)
 
 std::vector<vm::command> ast::member::generate() const
 {
-  auto vec = m_object->generate();
+  auto vec = m_object->code();
   vec.emplace_back(vm::instruction::readm, m_name);
   return vec;
 }

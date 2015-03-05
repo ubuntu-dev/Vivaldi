@@ -19,7 +19,7 @@ std::vector<vm::command> ast::type_definition::generate() const
 {
   std::unordered_map<symbol, vm::function_t> methods;
   for (const auto& i : m_methods) {
-    auto arg = i.second.generate().front().arg;
+    auto arg = i.second.code().front().arg;
     methods[i.first] = arg.as_fn();
   }
 

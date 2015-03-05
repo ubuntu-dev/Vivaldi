@@ -23,7 +23,7 @@ std::vector<vm::command> ast::function_definition::generate() const
     definition.emplace_back(vm::instruction::pop, 1);
   }
 
-  auto body = m_body->generate();
+  auto body = m_body->code();
   copy(begin(body), end(body), back_inserter(definition));
   definition.emplace_back(vm::instruction::ret, false);
 
