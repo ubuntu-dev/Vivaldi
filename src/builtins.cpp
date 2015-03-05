@@ -157,8 +157,8 @@ value::base* fn_map(vm::machine& vm)
   vm.parr(0);
   auto mapped = static_cast<value::array*>(vm.top());
 
-  transformed_range(vm, [&](auto*, auto* val)
-                           { mapped->val.push_back(val); return false; });
+  transformed_range(vm, [mapped](auto*, auto* val)
+                                { mapped->val.push_back(val); return false; });
 
   vm.pop(1); // filtered
   return mapped;

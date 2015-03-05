@@ -44,7 +44,7 @@ vm::machine* g_vm;
 
 // Think of this as just a chunk of memory with ~256 bytes; it's done as a union
 // to ensure that we get the proper maximum size and don't inadvertently slice
-// anything.  Every builtin type (except nil and builtin, since they're handled
+// anything.  Every builtin type (except nil and bool, since they're handled
 // separately) should be included.
 union gc::internal::value_type {
   value::array            array;

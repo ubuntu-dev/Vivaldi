@@ -20,7 +20,6 @@
 #include "value/symbol.h"
 
 #include <boost/filesystem.hpp>
-#include <iostream>
 
 using namespace vv;
 
@@ -511,14 +510,14 @@ void vm::machine::run_single_command(const vm::command& command)
     m_transient_self = nullptr;
 
   switch (instr) {
-  case instruction::pbool: pbool(arg.as_bool());       break;
-  case instruction::pflt:  pflt(arg.as_double());      break;
-  case instruction::pfn:   pfn(arg.as_fn());   break;
-  case instruction::pint:  pint(arg.as_int());         break;
-  case instruction::pnil:  pnil();                      break;
-  case instruction::pstr:  pstr(arg.as_str()); break;
-  case instruction::psym:  psym(arg.as_sym());      break;
-  case instruction::ptype: ptype(arg.as_type());     break;
+  case instruction::pbool: pbool(arg.as_bool());  break;
+  case instruction::pflt:  pflt(arg.as_double()); break;
+  case instruction::pfn:   pfn(arg.as_fn());      break;
+  case instruction::pint:  pint(arg.as_int());    break;
+  case instruction::pnil:  pnil();                break;
+  case instruction::pstr:  pstr(arg.as_str());    break;
+  case instruction::psym:  psym(arg.as_sym());    break;
+  case instruction::ptype: ptype(arg.as_type());  break;
 
   case instruction::parr:  parr(arg.as_int());  break;
   case instruction::pdict: pdict(arg.as_int()); break;
@@ -527,18 +526,18 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::write: write(arg.as_sym()); break;
   case instruction::let:   let(arg.as_sym());   break;
 
-  case instruction::self:   self();                   break;
+  case instruction::self:   self();                  break;
   case instruction::arg:    this->arg(arg.as_int()); break;
-  case instruction::readm:  readm(arg.as_sym());  break;
-  case instruction::writem: writem(arg.as_sym()); break;
+  case instruction::readm:  readm(arg.as_sym());     break;
+  case instruction::writem: writem(arg.as_sym());    break;
   case instruction::call:   call(arg.as_int());      break;
   case instruction::pobj:   pobj(arg.as_int());      break;
 
-  case instruction::eblk: eblk();              break;
-  case instruction::lblk: lblk();              break;
+  case instruction::eblk: eblk();             break;
+  case instruction::lblk: lblk();             break;
   case instruction::ret:  ret(arg.as_bool()); break;
 
-  case instruction::dup: dup();              break;
+  case instruction::dup: dup();             break;
   case instruction::pop: pop(arg.as_int()); break;
 
   case instruction::req: req(arg.as_str()); break;
@@ -551,7 +550,7 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::popc:  popc();  break;
   case instruction::exc:   exc();   break;
 
-  case instruction::chdir:      chdir(arg.as_str()); break;
+  case instruction::chdir: chdir(arg.as_str()); break;
 
   case instruction::noop: break;
 

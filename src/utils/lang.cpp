@@ -27,7 +27,6 @@ vv::value::base* vv::throw_exception(value::base* value)
   throw vm_error{value};
 }
 
-#include <iostream>
 vv::value::base* vv::find_method(value::type* t, symbol name)
 {
   decltype(begin(t->methods)) i{};
@@ -39,5 +38,3 @@ vv::value::base* vv::find_method(value::type* t, symbol name)
 
   return nullptr;
 }
-
-int to_int(const std::string& str);

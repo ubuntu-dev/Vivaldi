@@ -12,13 +12,16 @@ std::vector<vm::command> ast::block::generate() const
 {
   // Conceptually, *every* block statement consists of
   //   eblk
-  //   push_nil
+  //   pnil
+  //   pop
   //   expr_1
+  //   pop
   //   expr_2
+  //   pop
   //   ...
   //   expr_n
   //   lblk
-  // But since the only time the push_nil is actually used is when there are no
+  // But since the only time the pnil is actually used is when there are no
   // expressions, and since in that case the e/lblk don't change any semantics,
   // there's no reason not to special-case it
 
