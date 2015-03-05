@@ -83,6 +83,16 @@ bool is_jump(const vm::command& com)
   return is_cjmp(com) || is_ncjmp(com);
 }
 
+std::vector<size_t> jump_targets(const std::vector<vm::command>& code)
+{
+  std::vector<size_t> targets;
+  for (size_t i{}; i != code.size(); ++i)
+    if (is_jump(code[i]))
+      targets.push_back(i + 1 + code[i].arg.as_int());
+  sort(begin(targets), end(targets));
+  return targets;
+}
+
 // }}}
 // Optimization functions {{{
 
@@ -120,7 +130,9 @@ bool optimize_instructions(std::vector<vm::command>& code)
 
   auto i = find_if(begin(code), end(code), is_opt_fn);
   for (; i != end(code); i = find_if(i, end(code), is_opt_fn)) {
-    auto next = i + 1;
+    auto next = find_if(i + 1, end(code),
+                        [](const auto& c)
+                          { return c.instr != vm::instruction::noop; });
     if (next != end(code)) {
       if (next->instr == vm::instruction::call && next->arg.as_int() == 1) {
         changed = true;
@@ -138,12 +150,16 @@ bool optimize_instructions(std::vector<vm::command>& code)
 
 bool optimize_noops(std::vector<vm::command>& code)
 {
+  auto immut = jump_targets(code);
+
   auto changed = false;
 
   auto i = find_if(begin(code), end(code), is_prim_push);
   for (; i != end(code); i = find_if(i, end(code), is_prim_push)) {
     auto next = i + 1;
-    if (next != end(code)) {
+    if (next != end(code) &&
+        !binary_search(begin(immut), end(immut), i    - begin(code)) &&
+        !binary_search(begin(immut), end(immut), next - begin(code))) {
       if (next->instr == vm::instruction::pop && next->arg.as_int() == 1) {
         changed = true;
 
@@ -196,10 +212,14 @@ bool optimize_cond_jumps(std::vector<vm::command>& code)
 {
   auto changed = false;
 
+  auto immut = jump_targets(code);
+
   auto i = find_if(++begin(code), end(code), is_cjmp);
   for (; i != end(code); i = find_if(i, end(code), is_cjmp)) {
     auto condition = i - 1;
-    if (is_prim_push(*condition)) {
+    if (is_prim_push(*condition) &&
+        !binary_search(begin(immut), end(immut), i         - begin(code)) &&
+        !binary_search(begin(immut), end(immut), condition - begin(code))) {
 
       changed = true;
       bool truthiness;
@@ -238,6 +258,21 @@ bool optimize_abs_jumps(std::vector<vm::command>& code)
   return true;
 }
 
+bool optimize_noop_instrs(std::vector<vm::command>& code)
+{
+  if (any_of(begin(code), end(code), is_jump))
+    return false;
+
+  auto last_valid = remove_if(begin(code), end(code),
+                              [](const auto& c)
+                                { return c.instr == vm::instruction::noop; });
+  if (last_valid != end(code)) {
+    code.erase(last_valid, end(code));
+    return true;
+  }
+  return false;
+}
+
 // }}}
 
 bool optimize_once(std::vector<vm::command>& code)
@@ -249,17 +284,8 @@ bool optimize_once(std::vector<vm::command>& code)
   if (optimize_constants(code))    changed = true;
   if (optimize_cond_jumps(code))   changed = true;
   if (optimize_abs_jumps(code))    changed = true;
+  if (optimize_noop_instrs(code))  changed = true;
 
-  auto jmp_idx = find_if(begin(code), end(code), is_jump);
-  if (jmp_idx == end(code)) {
-    auto last_valid = remove_if(begin(code), end(code),
-                                [](const auto& c)
-                                  { return c.instr == vm::instruction::noop; });
-    if (last_valid != end(code)) {
-      changed = true;
-      code.erase(last_valid, end(code));
-    }
-  }
   return changed;
 }
 
