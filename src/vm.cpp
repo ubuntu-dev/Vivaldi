@@ -168,8 +168,8 @@ void vm::machine::pdict(int size)
 void vm::machine::read(symbol sym)
 {
   for (auto i = frame().env; i; i = i->enclosing) {
-    auto iter = i->local.find(sym);
-    if (iter != std::end(i->local)) {
+    auto iter = i->members.find(sym);
+    if (iter != std::end(i->members)) {
       push(iter->second);
       return;
     }
@@ -181,8 +181,8 @@ void vm::machine::read(symbol sym)
 void vm::machine::write(symbol sym)
 {
   for (auto i = frame().env; i; i = i->enclosing) {
-    auto iter = i->local.find(sym);
-    if (iter != std::end(i->local)) {
+    auto iter = i->members.find(sym);
+    if (iter != std::end(i->members)) {
       iter->second = top();
       return;
     }
@@ -193,11 +193,11 @@ void vm::machine::write(symbol sym)
 
 void vm::machine::let(symbol sym)
 {
-  if (frame().env->local.contains(sym)) {
+  if (frame().env->members.contains(sym)) {
     pstr("variable " + to_string(sym) += " already exists");
     exc();
   } else {
-    frame().env->local.insert(sym, top());
+    frame().env->members.insert(sym, top());
   }
 }
 
@@ -347,8 +347,8 @@ void vm::machine::ret(bool copy)
   auto cur_env = frame().env;
   m_call_stack.pop_back();
   if (copy)
-    for (const auto& i : cur_env->local)
-      frame().env->local[i.first] = i.second;
+    for (const auto& i : cur_env->members)
+      frame().env->members[i.first] = i.second;
 }
 
 void vm::machine::req(const std::string& filename)

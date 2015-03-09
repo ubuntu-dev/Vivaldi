@@ -15,10 +15,6 @@ void vm::environment::mark()
   if (enclosing && !enclosing->marked())
     enclosing->mark();
 
-  for (auto& i : local)
-    if (!i.second->marked())
-      i.second->mark();
-
   if (self && !self->marked())
     self->mark();
 }

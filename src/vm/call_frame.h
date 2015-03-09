@@ -20,8 +20,6 @@ public:
 
   // Frame in which current function (ie closure) was defined
   dumb_ptr<environment> enclosing;
-  // Local variables
-  hash_map<symbol, value::base*> local;
   // self, if this is a method call
   dumb_ptr<value::base> self;
 

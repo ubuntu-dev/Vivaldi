@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 
     vv::builtin::make_base_env(*env);
     auto arg_array = vv::gc::alloc<vv::value::array>( );
-    env->local[{"argv"}] = arg_array;
+    env->members[{"argv"}] = arg_array;
 
     auto cast_argv = static_cast<vv::value::array*>( arg_array );
     transform(argv + 2, argv + argc, back_inserter(cast_argv->val),

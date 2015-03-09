@@ -286,7 +286,7 @@ value::type type::function {[]{ return nullptr; }, {
 
 void builtin::make_base_env(vm::environment& base)
 {
-  base.local = {
+  base.members = {
     { {"print"},          &builtin::function::print },
     { {"puts"},           &builtin::function::puts },
     { {"gets"},           &builtin::function::gets },
