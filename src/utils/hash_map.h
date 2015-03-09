@@ -186,12 +186,20 @@ private:
 
   void rehash()
   {
-    std::vector<std::forward_list<std::pair<K, V>>> old( m_buckets.size() + 6 );
-    std::swap(m_buckets, old);
-    m_sz = 0;
-    for (auto& i : old)
-      for (auto& j : i)
-        insert(std::move(j.first), std::move(j.second));
+    std::forward_list<std::pair<K, V>> members;
+    for (auto& i : m_buckets) {
+      if (members.empty()) {
+        members = std::move(i);
+      } else {
+        members.splice_after(std::begin(members), std::move(i));
+      }
+    }
+    m_buckets.resize(m_buckets.size() + 6);
+
+    for (auto& i : members) {
+      auto& bucket = m_buckets[m_hash(i.first) % m_buckets.size()];
+      bucket.emplace_front(std::move(i));
+    }
   }
 };
 
