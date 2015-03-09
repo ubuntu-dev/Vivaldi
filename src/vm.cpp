@@ -197,7 +197,7 @@ void vm::machine::let(symbol sym)
     pstr("variable " + to_string(sym) += " already exists");
     exc();
   } else {
-    frame().env->local[sym] = top();
+    frame().env->local.insert(sym, top());
   }
 }
 
