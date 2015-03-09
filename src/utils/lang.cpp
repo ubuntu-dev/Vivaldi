@@ -29,11 +29,12 @@ vv::value::base* vv::throw_exception(value::base* value)
 
 vv::value::base* vv::find_method(value::type* t, symbol name)
 {
-  decltype(begin(t->methods)) i{};
-  while ((i = t->methods.find(name)) == end(t->methods) && &t->parent != t)
+  //decltype(std::begin(t->methods)) i{};
+  auto i = std::begin(t->methods);
+  while ((i = t->methods.find(name)) == std::end(t->methods) && &t->parent != t)
     t = static_cast<value::type*>(&t->parent);
 
-  if (i != end(t->methods))
+  if (i != std::end(t->methods))
     return i->second;
 
   return nullptr;

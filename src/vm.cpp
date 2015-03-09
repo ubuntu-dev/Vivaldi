@@ -134,10 +134,10 @@ void vm::machine::ptype(const type_t& type)
   read(type.parent);
   auto parent = top();
 
-  std::unordered_map<symbol, value::base*> methods;
+  hash_map<symbol, value::base*> methods;
   for (const auto& i : type.methods) {
     pfn(i.second);
-    methods[i.first] = top();
+    methods.insert(i.first, top());
   }
   auto newtype = gc::alloc<value::type>( nullptr, methods, *parent, type.name );
 
@@ -169,7 +169,7 @@ void vm::machine::read(symbol sym)
 {
   for (auto i = frame().env; i; i = i->enclosing) {
     auto iter = i->local.find(sym);
-    if (iter != end(i->local)) {
+    if (iter != std::end(i->local)) {
       push(iter->second);
       return;
     }
@@ -182,7 +182,7 @@ void vm::machine::write(symbol sym)
 {
   for (auto i = frame().env; i; i = i->enclosing) {
     auto iter = i->local.find(sym);
-    if (iter != end(i->local)) {
+    if (iter != std::end(i->local)) {
       iter->second = top();
       return;
     }
@@ -193,7 +193,7 @@ void vm::machine::write(symbol sym)
 
 void vm::machine::let(symbol sym)
 {
-  if (frame().env->local.count(sym)) {
+  if (frame().env->local.contains(sym)) {
     pstr("variable " + to_string(sym) += " already exists");
     exc();
   } else {
@@ -222,7 +222,7 @@ void vm::machine::readm(symbol sym)
   pop(1);
 
   auto iter = m_transient_self->members.find(sym);
-  if (iter != end(m_transient_self->members)) {
+  if (iter != std::end(m_transient_self->members)) {
     push(iter->second);
   } else if (auto method = find_method(m_transient_self->type, sym)) {
     push(method);
@@ -436,7 +436,7 @@ void int_optimization(vm::machine& vm, const F& fn, vv::symbol sym)
   vm.pop(1);
   auto second = vm.top();
 
-  if (first->type == &builtin::type::integer && !first->members.count(sym)) {
+  if (first->type == &builtin::type::integer && !first->members.contains(sym)) {
     if (second->type == &builtin::type::integer) {
       vm.pop(1);
       auto left = static_cast<value::integer*>(first)->val;
@@ -478,7 +478,7 @@ void vm::machine::opt_not()
   const static symbol sym{"not"};
 
   auto val = top();
-  if (!val->members.count(sym)) {
+  if (!val->members.contains(sym)) {
     if (find_method(val->type, sym) == builtin::type::object.methods.at(sym)) {
       auto res = !truthy(val);
       pop(1);

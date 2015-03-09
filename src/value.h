@@ -3,10 +3,10 @@
 
 #include "symbol.h"
 #include "utils/dumb_ptr.h"
+#include "utils/hash_map.h"
 #include "utils/vector_ref.h"
 #include "vm/instruction.h"
 
-#include <unordered_map>
 #include <vector>
 
 namespace vv {
@@ -53,7 +53,7 @@ struct base {
 
   // Contains local, variable-specific members (methods are stored inside of
   // their owning classes)
-  std::unordered_map<vv::symbol, value::base*> members;
+  hash_map<vv::symbol, value::base*> members;
   type* type;
 
   // Used in Dictionaries; overridden by classes with any useful concept of
@@ -94,7 +94,7 @@ struct basic_function : public base {
 
 struct type : public base {
   type(const std::function<value::base*()>& constructor,
-       const std::unordered_map<vv::symbol, value::base*>& methods,
+       const hash_map<vv::symbol, value::base*>& methods,
        value::base& parent,
        vv::symbol name);
 
@@ -102,7 +102,7 @@ struct type : public base {
   // locally, the class will search its type's methods, and that type's parent's
   // methods, and so on recursively until it's found or there are no more
   // parents left.
-  std::unordered_map<vv::symbol, value::base*> methods;
+  hash_map<vv::symbol, value::base*> methods;
 
   // Very simple constructor, that just provides an allocated bit of memory of
   // the appropriate type. Any actual initialization (including reading passed

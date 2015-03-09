@@ -6,9 +6,8 @@
 #include "symbol.h"
 #include "value.h"
 #include "utils/dumb_ptr.h"
+#include "utils/hash_map.h"
 #include "utils/vector_ref.h"
-
-#include <unordered_map>
 
 namespace vv {
 
@@ -22,7 +21,7 @@ public:
   // Frame in which current function (ie closure) was defined
   dumb_ptr<environment> enclosing;
   // Local variables
-  std::unordered_map<symbol, value::base*> local;
+  hash_map<symbol, value::base*> local;
   // self, if this is a method call
   dumb_ptr<value::base> self;
 

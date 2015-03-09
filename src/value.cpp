@@ -55,7 +55,7 @@ value::basic_function::basic_function(func_type type,
 
 value::type::type(
     const std::function<value::base*()>& new_constructor,
-    const std::unordered_map<vv::symbol, value::base*>& new_methods,
+    const hash_map<vv::symbol, value::base*>& new_methods,
     value::base& new_parent,
     vv::symbol new_name)
   : base        {&builtin::type::custom_type},
