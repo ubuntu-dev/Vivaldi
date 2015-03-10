@@ -23,24 +23,15 @@ using namespace vv;
 using namespace gc;
 using namespace internal;
 
+// Constants {{{
+
 value::nil gc::internal::g_nil{};
 value::boolean gc::internal::g_true{true};
 value::boolean gc::internal::g_false{false};
 std::array<value::integer, 1024> gc::internal::g_ints;
 
-namespace {
-
-// Using list, instead of vector, for two reasons:
-// - copying value_type's is both infeasible and expensive
-// - pointers to value_type's (i.e. iterators in g_vals) can never be
-//   invalidated, lest everything blow up
-using gc_chunk = std::array<value_type, 512>;
-std::list<gc_chunk> g_vals( 4 );
-
-// Stored here for GC marking
-vm::machine* g_vm;
-
-}
+// }}}
+// value_type {{{
 
 // Think of this as just a chunk of memory with ~256 bytes; it's done as a union
 // to ensure that we get the proper maximum size and don't inadvertently slice
@@ -160,6 +151,21 @@ void gc::internal::set_value_type(value_type* val, vm::environment&& other)
   new (val) vm::environment{std::move(other)};
 }
 
+// }}}
+// Internals {{{
+
+namespace {
+
+// Using list, instead of vector, for two reasons:
+// - copying value_type's is both infeasible and expensive
+// - pointers to value_type's (i.e. iterators in g_vals) can never be
+//   invalidated, lest everything blow up
+using gc_chunk = std::array<value_type, 512>;
+std::list<gc_chunk> g_vals( 4 );
+
+// Stored here for GC marking
+vm::machine* g_vm;
+
 void get_next(std::list<gc_chunk>::iterator& major, value_type*& minor)
 {
   while (major != end(g_vals)) {
@@ -170,6 +176,11 @@ void get_next(std::list<gc_chunk>::iterator& major, value_type*& minor)
     minor = begin(*major);
   }
 }
+
+}
+
+// }}}
+// External functions {{{
 
 value_type* gc::internal::get_next_empty()
 {
@@ -229,3 +240,5 @@ void gc::init()
 }
 
 void gc::empty() { }
+
+// }}}
