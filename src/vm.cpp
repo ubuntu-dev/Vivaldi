@@ -26,6 +26,7 @@ using namespace vv;
 vm::machine::machine(call_frame&& frame,
                      const std::function<void(vm::machine&)>& exception_handler)
   : m_call_stack        {frame},
+    m_transient_self    {nullptr},
     m_exception_handler {exception_handler}
 {
   gc::set_running_vm(*this);
