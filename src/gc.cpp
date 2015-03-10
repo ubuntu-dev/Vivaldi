@@ -31,13 +31,16 @@ value::boolean gc::internal::g_false{false};
 std::array<value::integer, 1024> gc::internal::g_ints;
 
 // }}}
+
 // value_type {{{
+
+namespace {
 
 // Think of this as just a chunk of memory with ~256 bytes; it's done as a union
 // to ensure that we get the proper maximum size and don't inadvertently slice
 // anything.  Every builtin type (except nil and bool, since they're handled
 // separately) should be included.
-union gc::internal::value_type {
+union value_type {
   value::array            array;
   value::array_iterator   array_iterator;
   value::base             base;
@@ -80,73 +83,75 @@ union gc::internal::value_type {
   ~value_type() { if (!empty()) (&base)->~base(); }
 };
 
+}
+
 // done like this, instead of as template, so that value_type doesn't have to be
 // defined in gc.h and mess up build times
-void gc::internal::set_value_type(value_type* val, value::array&& other)
+void gc::internal::set_value_type(value::base* val, value::array&& other)
 {
   new (val) value::array{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::array_iterator&& other)
+void gc::internal::set_value_type(value::base* val, value::array_iterator&& other)
 {
   new (val) value::array_iterator{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::base&& other)
+void gc::internal::set_value_type(value::base* val, value::base&& other)
 {
   new (val) value::base{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::builtin_function&& other)
+void gc::internal::set_value_type(value::base* val, value::builtin_function&& other)
 {
   new (val) value::builtin_function{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::dictionary&& other)
+void gc::internal::set_value_type(value::base* val, value::dictionary&& other)
 {
   new (val) value::dictionary{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::file&& other)
+void gc::internal::set_value_type(value::base* val, value::file&& other)
 {
   new (val) value::file{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::floating_point&& other)
+void gc::internal::set_value_type(value::base* val, value::floating_point&& other)
 {
   new (val) value::floating_point{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::function&& other)
+void gc::internal::set_value_type(value::base* val, value::function&& other)
 {
   new (val) value::function{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::integer&& other)
+void gc::internal::set_value_type(value::base* val, value::integer&& other)
 {
   new (val) value::integer{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::opt_monop&& other)
+void gc::internal::set_value_type(value::base* val, value::opt_monop&& other)
 {
   new (val) value::opt_monop{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::opt_binop&& other)
+void gc::internal::set_value_type(value::base* val, value::opt_binop&& other)
 {
   new (val) value::opt_binop{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::range&& other)
+void gc::internal::set_value_type(value::base* val, value::range&& other)
 {
   new (val) value::range{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::string&& other)
+void gc::internal::set_value_type(value::base* val, value::string&& other)
 {
   new (val) value::string{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::string_iterator&& other)
+void gc::internal::set_value_type(value::base* val, value::string_iterator&& other)
 {
   new (val) value::string_iterator{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::symbol&& other)
+void gc::internal::set_value_type(value::base* val, value::symbol&& other)
 {
   new (val) value::symbol{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, value::type&& other)
+void gc::internal::set_value_type(value::base* val, value::type&& other)
 {
   new (val) value::type{std::move(other)};
 }
-void gc::internal::set_value_type(value_type* val, vm::environment&& other)
+void gc::internal::set_value_type(value::base* val, vm::environment&& other)
 {
   new (val) vm::environment{std::move(other)};
 }
@@ -177,12 +182,30 @@ void get_next(std::list<gc_chunk>::iterator& major, value_type*& minor)
   }
 }
 
+void mark()
+{
+  if (g_vm)
+    g_vm->mark();
+}
+
+void sweep()
+{
+  for (auto& i : g_vals) {
+    for (auto& j : i) {
+      if (j.marked())
+        j.unmark();
+      else
+        j.clear();
+    }
+  }
+}
+
 }
 
 // }}}
 // External functions {{{
 
-value_type* gc::internal::get_next_empty()
+value::base* gc::internal::get_next_empty()
 {
   static auto major = begin(g_vals);
   static auto minor = begin(*major);
@@ -206,25 +229,7 @@ value_type* gc::internal::get_next_empty()
   // since minor is by definition empty at this point, *don't* include it in the
   // next-empty search
   get_next(major, ++minor);
-  return ret;
-}
-
-void gc::internal::mark()
-{
-  if (g_vm)
-    g_vm->mark();
-}
-
-void gc::internal::sweep()
-{
-  for (auto& i : g_vals) {
-    for (auto& j : i) {
-      if (j.marked())
-        j.unmark();
-      else
-        j.clear();
-    }
-  }
+  return &ret->base;
 }
 
 void gc::set_running_vm(vm::machine& vm)

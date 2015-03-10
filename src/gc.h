@@ -15,25 +15,23 @@ namespace gc {
 
 namespace internal {
 
-union value_type;
-
-void set_value_type(value_type* val, value::array&& array);
-void set_value_type(value_type* val, value::array_iterator&& array_iterator);
-void set_value_type(value_type* val, value::base&& base);
-void set_value_type(value_type* val, value::builtin_function&& builtin_function);
-void set_value_type(value_type* val, value::dictionary&& dictionary);
-void set_value_type(value_type* val, value::file&& file);
-void set_value_type(value_type* val, value::floating_point&& floating_point);
-void set_value_type(value_type* val, value::function&& function);
-void set_value_type(value_type* val, value::integer&& integer);
-void set_value_type(value_type* val, value::opt_monop&& monop);
-void set_value_type(value_type* val, value::opt_binop&& binop);
-void set_value_type(value_type* val, value::range&& range);
-void set_value_type(value_type* val, value::string&& string);
-void set_value_type(value_type* val, value::string_iterator&&  string_iterator);
-void set_value_type(value_type* val, value::symbol&& symbol);
-void set_value_type(value_type* val, value::type&& type);
-void set_value_type(value_type* val, vm::environment&& environment);
+void set_value_type(value::base* val, value::array&& array);
+void set_value_type(value::base* val, value::array_iterator&& array_iterator);
+void set_value_type(value::base* val, value::base&& base);
+void set_value_type(value::base* val, value::builtin_function&& builtin_function);
+void set_value_type(value::base* val, value::dictionary&& dictionary);
+void set_value_type(value::base* val, value::file&& file);
+void set_value_type(value::base* val, value::floating_point&& floating_point);
+void set_value_type(value::base* val, value::function&& function);
+void set_value_type(value::base* val, value::integer&& integer);
+void set_value_type(value::base* val, value::opt_monop&& monop);
+void set_value_type(value::base* val, value::opt_binop&& binop);
+void set_value_type(value::base* val, value::range&& range);
+void set_value_type(value::base* val, value::string&& string);
+void set_value_type(value::base* val, value::string_iterator&&  string_iterator);
+void set_value_type(value::base* val, value::symbol&& symbol);
+void set_value_type(value::base* val, value::type&& type);
+void set_value_type(value::base* val, vm::environment&& environment);
 
 // Optimize common values
 extern value::nil g_nil;
@@ -41,10 +39,7 @@ extern value::boolean g_true;
 extern value::boolean g_false;
 extern std::array<value::integer, 1024> g_ints;
 
-void mark();
-void sweep();
-
-value_type* get_next_empty();
+value::base* get_next_empty();
 
 template <typename T>
 inline value::base* emplace(T&& val)
