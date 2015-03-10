@@ -1,6 +1,7 @@
 #include "range.h"
 
 #include "builtins.h"
+#include "gc.h"
 
 using namespace vv;
 
@@ -27,7 +28,7 @@ void value::range::mark()
   // We need to ensure neither start not end are nullptr, since this could be
   // happening between allocation and initialization
   if (start && !start->marked())
-    start->mark();
+    gc::mark(*start);
   if (end && !end->marked())
-    end->mark();
+    gc::mark(*end);
 }

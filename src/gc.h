@@ -106,6 +106,8 @@ void set_running_vm(vm::machine& vm);
 // Called in main at the start and end of the program. TODO: RAII
 void init();
 
+void mark(value::base& object);
+
 }
 
 }

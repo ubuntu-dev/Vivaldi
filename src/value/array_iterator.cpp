@@ -1,6 +1,7 @@
 #include "array_iterator.h"
 
 #include "builtins.h"
+#include "gc.h"
 #include "value/array.h"
 
 using namespace vv;
@@ -17,5 +18,5 @@ void value::array_iterator::mark()
 {
   base::mark();
   if (!arr.marked())
-    arr.mark();
+    gc::mark(arr);
 }

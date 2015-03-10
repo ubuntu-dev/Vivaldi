@@ -68,7 +68,6 @@ union value_type {
 
   bool marked() const { return base.marked(); }
   void unmark() { base.unmark(); }
-  void mark() { (&base)->mark(); }
 
   bool empty() const { return blank == 0; }
   void clear()
@@ -211,7 +210,7 @@ value::base* gc::internal::get_next_empty()
   static auto minor = begin(*major);
 
   if (major == end(g_vals)) {
-    mark();
+    ::mark();
     sweep();
     major = begin(g_vals);
     minor = begin(*major);
@@ -242,6 +241,11 @@ void gc::init()
   int value = 0;
   for (auto& i : internal::g_ints)
     i.val = value++;
+}
+
+void gc::mark(value::base& object)
+{
+  object.mark();
 }
 
 // }}}

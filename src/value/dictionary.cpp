@@ -1,6 +1,7 @@
 #include "dictionary.h"
 
 #include "builtins.h"
+#include "gc.h"
 
 using namespace vv;
 
@@ -24,8 +25,8 @@ void value::dictionary::mark()
   base::mark();
   for (auto& pair : val) {
     if (!pair.first->marked())
-      pair.first->mark();
+      gc::mark(*pair.first);
     if (!pair.second->marked())
-      pair.second->mark();
+      gc::mark(*pair.second);
   }
 }

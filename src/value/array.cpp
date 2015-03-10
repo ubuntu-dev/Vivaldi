@@ -27,5 +27,5 @@ void value::array::mark()
   base::mark();
   for (auto* i : val)
     if (!i->marked())
-      i->mark();
+      gc::mark(*i);
 }

@@ -77,18 +77,18 @@ void vm::machine::mark()
 {
   for (auto* i : m_stack)
     if (!i->marked())
-      i->mark();
+      gc::mark(*i);
 
   if (m_transient_self && !m_transient_self->marked())
-    m_transient_self->mark();
+    gc::mark(*m_transient_self);
 
   for (auto& i : m_call_stack) {
     if (i.caller && !i.caller->marked())
-      i.caller->mark();
+      gc::mark(*i.caller);
     if (i.catcher && !i.catcher->marked())
-      i.catcher->mark();
+      gc::mark(*i.catcher);
     if (i.env && !i.env->marked())
-      i.env->mark();
+      gc::mark(*i.env);
   }
 }
 

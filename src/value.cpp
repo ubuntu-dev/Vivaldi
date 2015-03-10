@@ -36,10 +36,10 @@ void value::base::mark()
 {
   m_marked = true;
   if (type && !type->marked())
-    type->mark();
+    gc::mark(*type);
   for (auto& i : members)
     if (!i.second->marked())
-      i.second->mark();
+      gc::mark(*i.second);
 }
 
 value::basic_function::basic_function(func_type type,
@@ -98,9 +98,9 @@ void value::type::mark()
   base::mark();
   for (const auto& i : methods)
     if (!i.second->marked())
-      i.second->mark();
+      gc::mark(*i.second);
   if (!parent.marked())
-    parent.mark();
+    gc::mark(parent);
 }
 
 size_t std::hash<vv::value::base*>::operator()(const vv::value::base* b) const

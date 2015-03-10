@@ -1,6 +1,7 @@
 #include "string_iterator.h"
 
 #include "builtins.h"
+#include "gc.h"
 #include "value/string.h"
 
 using namespace vv;
@@ -20,5 +21,5 @@ void value::string_iterator::mark()
 {
   base::mark();
   if (!str.marked())
-    str.mark();
+    gc::mark(str);
 }

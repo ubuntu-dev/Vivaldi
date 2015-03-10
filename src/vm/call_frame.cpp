@@ -1,5 +1,7 @@
 #include "call_frame.h"
 
+#include "gc.h"
+
 using namespace vv;
 
 vm::environment::environment(environment* new_enclosing,
@@ -13,10 +15,10 @@ void vm::environment::mark()
   base::mark();
 
   if (enclosing && !enclosing->marked())
-    enclosing->mark();
+    gc::mark(*enclosing);
 
   if (self && !self->marked())
-    self->mark();
+    gc::mark(*self);
 }
 
 vm::call_frame::call_frame(vector_ref<vm::command> instr_ptr,
