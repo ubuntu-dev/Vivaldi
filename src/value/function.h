@@ -15,7 +15,6 @@ struct function : public basic_function {
            vm::environment* enclosure);
 
   std::string value() const override;
-  void mark() override;
 
   std::vector<vm::command> vec_body;
 };
