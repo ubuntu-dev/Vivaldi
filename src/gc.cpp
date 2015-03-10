@@ -244,6 +244,4 @@ void gc::init()
     i.val = value++;
 }
 
-void gc::empty() { }
-
 // }}}

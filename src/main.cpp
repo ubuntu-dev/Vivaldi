@@ -86,13 +86,11 @@ int main(int argc, char** argv)
 
   if (argc == 1) {
     run_repl();
-    vv::gc::empty();
 
   } else {
     auto tok_res = vv::get_file_contents(argv[1]);
     if (!tok_res.successful()) {
       std::cerr << tok_res.error() << '\n';
-      vv::gc::empty();
       return 64; // bad usage
     }
 
@@ -119,7 +117,6 @@ int main(int argc, char** argv)
     if (excepted)
       std::cerr << "Caught exception: " << vm.top()->value() << '\n';
 
-    vv::gc::empty();
     return excepted ? 65 : 0; // data err
   }
 }

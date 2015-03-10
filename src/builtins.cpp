@@ -229,7 +229,6 @@ value::base* fn_reduce(vm::machine& vm)
 
 value::base* fn_quit(vm::machine&)
 {
-  gc::empty();
   exit(0);
 }
 
