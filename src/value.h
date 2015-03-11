@@ -69,10 +69,6 @@ struct base {
   bool marked() const { return m_marked; }
   void unmark() { m_marked = false; }
 
-  // GC hook
-  void* left{nullptr};
-  void* right{nullptr};
-
 private:
   bool m_marked;
 };
