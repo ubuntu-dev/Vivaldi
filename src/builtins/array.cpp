@@ -7,6 +7,8 @@
 #include "value/builtin_function.h"
 #include "value/opt_functions.h"
 
+#include <iostream>
+
 using namespace vv;
 using namespace builtin;
 
@@ -98,6 +100,44 @@ value::base* fn_array_add(value::base* self, value::base* arg)
   auto other = static_cast<value::array*>(arg);
   copy(begin(other->val), end(other->val), back_inserter(arr->val));
   return arr;
+}
+
+value::base* fn_array_equals(vm::machine& vm)
+{
+  vm.self();
+  auto* self = vm.top();
+  vm.arg(0);
+  auto* arg = vm.top();
+  vm.pop(2);
+
+  if (self == arg)
+    return gc::alloc<value::boolean>( true );
+  if (arg->type != &type::array)
+    return gc::alloc<value::boolean>( false );
+
+  auto& arr1 = static_cast<value::array*>(self)->val;
+  auto& arr2 = static_cast<value::array*>(arg)->val;
+
+  auto eq = std::equal(begin(arr1), end(arr1), begin(arr2), end(arr2),
+                       [&](auto* first, auto* second)
+  {
+    vm.push(second);
+    vm.push(first);
+    vm.readm(builtin::sym::equals);
+    vm.call(1);
+    vm.run_cur_scope();
+    auto* res = vm.top();
+    vm.pop(1);
+    return truthy(res);
+  });
+
+  std::cerr << "res: " << std::boolalpha << eq << '\n';
+  return gc::alloc<value::boolean>( eq );
+}
+
+value::base* fn_array_unequal(vm::machine& vm)
+{
+  return gc::alloc<value::boolean>( !truthy(fn_array_equals(vm)) );
 }
 
 // }}}
@@ -215,15 +255,17 @@ value::base* fn_array_iterator_less(value::base* self, value::base* arg)
 
 // }}}
 
-value::builtin_function array_init   {fn_array_init,   1};
-value::opt_monop        array_size   {fn_array_size     };
-value::opt_binop        array_append {fn_array_append   };
-value::opt_monop        array_pop    {fn_array_pop      };
-value::opt_binop        array_at     {fn_array_at       };
-value::builtin_function array_set_at {fn_array_set_at, 2};
-value::opt_monop        array_start  {fn_array_start    };
-value::opt_monop        array_stop   {fn_array_stop     };
-value::opt_binop        array_add    {fn_array_add      };
+value::builtin_function array_init    {fn_array_init,    1};
+value::opt_monop        array_size    {fn_array_size      };
+value::opt_binop        array_append  {fn_array_append    };
+value::opt_monop        array_pop     {fn_array_pop       };
+value::opt_binop        array_at      {fn_array_at        };
+value::builtin_function array_set_at  {fn_array_set_at,  2};
+value::opt_monop        array_start   {fn_array_start     };
+value::opt_monop        array_stop    {fn_array_stop      };
+value::opt_binop        array_add     {fn_array_add       };
+value::builtin_function array_equals  {fn_array_equals,  1};
+value::builtin_function array_unequal {fn_array_unequal, 1};
 
 value::opt_monop array_iterator_at_start  {fn_array_iterator_at_start };
 value::opt_monop array_iterator_at_end    {fn_array_iterator_at_end   };
@@ -239,15 +281,17 @@ value::opt_binop array_iterator_subtract  {fn_array_iterator_subtract };
 }
 
 value::type type::array {gc::alloc<value::array>, {
-  { {"init"},   &array_init },
-  { {"size"},   &array_size },
-  { {"append"}, &array_append },
-  { {"pop"},    &array_pop },
-  { {"at"},     &array_at },
-  { {"set_at"}, &array_set_at },
-  { {"start"},  &array_start },
-  { {"stop"},   &array_stop },
-  { {"add"},    &array_add }
+  { {"init"},    &array_init },
+  { {"size"},    &array_size },
+  { {"append"},  &array_append },
+  { {"pop"},     &array_pop },
+  { {"at"},      &array_at },
+  { {"set_at"},  &array_set_at },
+  { {"start"},   &array_start },
+  { {"stop"},    &array_stop },
+  { {"add"},     &array_add },
+  { {"equals"},  &array_equals },
+  { {"unequal"}, &array_unequal },
 }, builtin::type::object, {"Array"}};
 
 value::type type::array_iterator {[]{ return nullptr; }, {

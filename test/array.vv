@@ -25,6 +25,31 @@ fn arr_addition(): do
   assert(combined[6] == 7, "combined[6] == 7")
 end
 
+fn arr_comp(): do
+  let arr = [1, 2, 3, "foo"]
+  let same = [1, 2, 3, "foo"]
+  assert(arr == arr, "arr == arr")
+  assert(arr == same, "arr == same")
+  assert(!(arr != arr), "!(arr != arr)")
+  assert(!(arr != same), "!(arr != same)")
+
+  assert(arr != 5, "arr != 5")
+
+  let different = ["foo", 56]
+  assert(!(arr == different), "!(arr == different)")
+  assert(arr != different, "arr != different")
+
+  class Foo
+    fn equals(x): true
+  end
+  class Bar
+    fn equals(x): false
+  end
+
+  assert([new Foo(), 56] == [new Foo(), 56], "[new Foo(), 56] == [new Foo(), 56]")
+  assert([new Bar(), 56] != [new Bar(), 56], "[new Bar(), 56] != [new Bar(), 56]")
+end
+
 fn arr_iter(): do
   let arr = [1, 2, 4, 8, 16]
   assert(arr.start().get() == 1, "reading from iterator")
@@ -43,4 +68,5 @@ test(arr_size, "size")
 test(arr_order, "order")
 test(arr_indexing, "indexing")
 test(arr_addition, "addition")
+test(arr_comp, "comparison")
 test(arr_iter, "iterators")

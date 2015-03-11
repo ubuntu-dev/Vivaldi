@@ -151,6 +151,10 @@ Simple mutable array type:
 * `stop()`&mdash; Returns an iterator pointing to the end of `self`.
 * `add(x)`&mdash; Returns the concatenation of `self` and Array `x`, leaving `self`
   unchanged.
+* `equals(x)`&mdash; Returns `true` if `x` is an Array with identical members to
+  `self` (as compared by calling `a == b` for each corresponding member of
+  `self` and `x` as `a` and `b` respectively), and `false` otherwise.
+* `unequal(x)`&mdash; Returns `!(self == x)`.
 
 #### Dictionaries ####
 Mutable hash-map type. At the moment, there's no way to override a type's

@@ -28,6 +28,9 @@ const vv::symbol sym::subtract{"subtract"};
 const vv::symbol sym::times{"times"};
 const vv::symbol sym::divides{"divides"};
 
+const vv::symbol sym::equals{"equals"};
+const vv::symbol sym::unequal{"unequal"};
+
 // }}}
 // Freestanding functions {{{
 

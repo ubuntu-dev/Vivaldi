@@ -24,6 +24,9 @@ const extern vv::symbol add;
 const extern vv::symbol subtract;
 const extern vv::symbol times;
 const extern vv::symbol divides;
+
+const extern vv::symbol equals;
+const extern vv::symbol unequal;
 }
 
 namespace function {
