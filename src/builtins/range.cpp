@@ -25,7 +25,7 @@ value::base* fn_range_init(vm::machine& vm)
 
 value::base* fn_range_start(value::base* self)
 {
-  return self;
+  return gc::alloc<value::range>(*static_cast<value::range*>(self));
 }
 
 value::base* fn_range_size(vm::machine& vm)

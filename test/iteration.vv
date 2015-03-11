@@ -41,6 +41,13 @@ fn range_test(): do
   assert(inv_arr[4] == 6, "inv_arr[4] == 6")
 end
 
+fn range_persistence_test(): do
+  let r = 1 to 100
+  for i in r: i
+  assert(r.size() == 99, "(1 to 100).size() == 99")
+end
+
 section("Iteration")
 test(for_loop, "custom type in for loop")
 test(range_test, "custom type in Range")
+test(range_persistence_test, "reusing Range")

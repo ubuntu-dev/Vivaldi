@@ -188,8 +188,8 @@ A range covers [start, end):
 * `init(x, y)`&mdash; Returns a Range from `x` to `y`. If they're not comparable or
   incrementable, this won't blow up *immediately*&mdash; only when you first try to
   use it.
-* `start()`&mdash; Just returns `self`; see the section on Iterators to understand
-  why.
+* `start()`&mdash; Just returns a copy of `self`; see the section on Iterators
+  to understand why.
 * `size()`&mdash; Returns `y - x`. Don't call this if subtraction won't work!
 * `at_end()`&mdash; Returns if `x == y` (well, actually, if `!(y > x)`, so a Range
   from `1.3` to `5.0` doesn't go on infinitely).
@@ -337,7 +337,7 @@ A range is even simpler; it only needs to support one method, `start()`, that
 returns an iterator pointing to its first element. In the standard library, both
 `Array` and `String` are ranges, and `ArrayIterator` and `String` are their
 corresponding iterators. `Range` is both a range (natch!) and an iterator&mdash;
-calling `start()` on a range just returns itself.
+calling `start()` on a range just returns a copy of itself.
 
 Iterators are used to implement for loops:
 
