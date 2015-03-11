@@ -15,39 +15,21 @@ namespace gc {
 
 namespace internal {
 
-void set_value_type(value::base* val, value::array&& array);
-void set_value_type(value::base* val, value::array_iterator&& array_iterator);
-void set_value_type(value::base* val, value::base&& base);
-void set_value_type(value::base* val, value::builtin_function&& builtin_function);
-void set_value_type(value::base* val, value::dictionary&& dictionary);
-void set_value_type(value::base* val, value::file&& file);
-void set_value_type(value::base* val, value::floating_point&& floating_point);
-void set_value_type(value::base* val, value::function&& function);
-void set_value_type(value::base* val, value::integer&& integer);
-void set_value_type(value::base* val, value::opt_monop&& monop);
-void set_value_type(value::base* val, value::opt_binop&& binop);
-void set_value_type(value::base* val, value::range&& range);
-void set_value_type(value::base* val, value::string&& string);
-void set_value_type(value::base* val, value::string_iterator&&  string_iterator);
-void set_value_type(value::base* val, value::symbol&& symbol);
-void set_value_type(value::base* val, value::type&& type);
-void set_value_type(value::base* val, vm::environment&& environment);
+value::base* get_next_empty();
+
+template <typename T>
+value::base* emplace(T&& item)
+{
+  auto slot = get_next_empty();
+  new (slot) T{std::forward<T>(item)};
+  return slot;
+}
 
 // Optimize common values
 extern value::nil g_nil;
 extern value::boolean g_true;
 extern value::boolean g_false;
 extern std::array<value::integer, 1024> g_ints;
-
-value::base* get_next_empty();
-
-template <typename T>
-inline value::base* emplace(T&& val)
-{
-  auto empty = get_next_empty();
-  set_value_type(empty, std::move(val));
-  return reinterpret_cast<value::base*>(empty);
-}
 
 }
 
@@ -60,7 +42,8 @@ inline T* alloc(Args&&... args)
   return static_cast<T*>(internal::emplace(T{args...}));
 }
 
-// Optimized template overrides for alloc:
+// Optimized template overrides for alloc (warning: ugly) {{{
+
 template <>
 inline value::boolean* alloc<value::boolean, bool>(bool&& val)
 {
@@ -101,9 +84,11 @@ inline value::integer* alloc<value::integer>()
   return alloc<value::integer, int>(0);
 }
 
+// }}}
+
 void set_running_vm(vm::machine& vm);
 
-// Called in main at the start and end of the program. TODO: RAII
+// Called in main at the start of the program
 void init();
 
 void mark(value::base& object);
