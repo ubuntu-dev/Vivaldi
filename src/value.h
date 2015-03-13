@@ -37,6 +37,7 @@ struct opt_monop;
 struct opt_binop;
 struct range;
 struct regex;
+struct regex_result;
 struct string;
 struct string_iterator;
 struct symbol;

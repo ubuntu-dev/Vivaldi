@@ -311,6 +311,7 @@ void builtin::make_base_env(vm::environment& base)
     { {"Object"},         &builtin::type::object },
     { {"Range"},          &builtin::type::range },
     { {"RegEx"},          &builtin::type::regex },
+    { {"RegExResult"},    &builtin::type::regex_result },
     { {"String"},         &builtin::type::string },
     { {"StringIterator"}, &builtin::type::string_iterator },
     { {"Symbol"},         &builtin::type::symbol },

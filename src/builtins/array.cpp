@@ -275,6 +275,7 @@ value::opt_monop array_iterator_increment {fn_array_iterator_increment};
 value::opt_monop array_iterator_decrement {fn_array_iterator_decrement};
 value::opt_binop array_iterator_add       {fn_array_iterator_add      };
 value::opt_binop array_iterator_subtract  {fn_array_iterator_subtract };
+
 }
 
 value::type type::array {gc::alloc<value::array>, {

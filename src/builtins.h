@@ -66,6 +66,7 @@ extern value::type object;
 extern value::type nil;
 extern value::type range;
 extern value::type regex;
+extern value::type regex_result;
 extern value::type string;
 extern value::type string_iterator;
 extern value::type symbol;

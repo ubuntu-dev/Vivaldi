@@ -39,7 +39,7 @@ inline T* alloc(Args&&... args)
   static_assert(!std::is_same<T, value::boolean>::value, "unspecialized for bool");
   static_assert(!std::is_same<T, value::nil>::value, "unspecialized for nil");
   static_assert(!std::is_same<T, value::integer>::value, "unspecialized for integer");
-  return static_cast<T*>(internal::emplace(T{args...}));
+  return static_cast<T*>(internal::emplace(T{std::forward<Args>(args)...}));
 }
 
 // Optimized template overrides for alloc (warning: ugly) {{{
