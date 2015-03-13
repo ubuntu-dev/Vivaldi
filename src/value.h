@@ -36,6 +36,7 @@ struct nil;
 struct opt_monop;
 struct opt_binop;
 struct range;
+struct regex;
 struct string;
 struct string_iterator;
 struct symbol;

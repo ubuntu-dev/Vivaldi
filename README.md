@@ -130,6 +130,21 @@ Simple, immutable string class. Currently supports:
 * `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a Symbol equal in value
   to `self`, and `false` otherwise (vice versa for `unequal`).
 
+#### RegExes ####
+Extremely basic regular expression class:
+
+    let regex = new RegEx("foo.*bar")
+    regex.match_index("no match") // nil
+    regex.match_index("this string contains 'foobazbar'") // 22
+
+* `init(x)`&mdash; if `x` is a RegEx, creates a copy of `x`; if `x` is a String,
+  returns a RegEx made by compiling `x`; excepts otherwise.
+* `match_index(x)`&mdash; If `self` matches any substring of `x`, returns the
+  index of the first matching substring within `x` as an Integer; otherwise,
+  returns `nil`.
+
+Vastly expanded functionality to come soon.
+
 #### Arrays ####
 Simple mutable array type:
 

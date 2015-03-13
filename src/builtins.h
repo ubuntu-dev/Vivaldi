@@ -64,10 +64,11 @@ extern value::type function;
 extern value::type integer;
 extern value::type object;
 extern value::type nil;
+extern value::type range;
+extern value::type regex;
 extern value::type string;
 extern value::type string_iterator;
 extern value::type symbol;
-extern value::type range;
 
 }
 

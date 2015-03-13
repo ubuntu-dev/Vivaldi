@@ -28,6 +28,7 @@ add_executable(vivaldi
   src/builtins/integer.cpp
   src/builtins/nil.cpp
   src/builtins/range.cpp
+  src/builtins/regex.cpp
   src/builtins/string.cpp
   src/builtins/symbol.cpp
 
@@ -80,6 +81,7 @@ add_executable(vivaldi
   src/value/nil.cpp
   src/value/opt_functions.cpp
   src/value/range.cpp
+  src/value/regex.cpp
   src/value/string.cpp
   src/value/string_iterator.cpp
   src/value/symbol.cpp
