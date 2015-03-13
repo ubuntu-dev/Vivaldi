@@ -80,10 +80,34 @@ value::base* fn_regex_result_at(value::base* self, value::base* arg)
 {
   if (arg->type != &type::integer)
     return throw_exception("Index must be an Integer");
-  auto idx = to_int(*arg);
+
+  auto idx = static_cast<size_t>(to_int(*arg));
   auto& match = static_cast<value::regex_result&>(*self).val;
 
+  if (idx >= match.size()) {
+    return throw_exception("Out of range (expected 0-"
+                           + std::to_string(match.size()) += ", got "
+                           + std::to_string(idx) += ')');
+  }
+
   return gc::alloc<value::string>( match[idx].str() );
+}
+
+value::base* fn_regex_result_index(value::base* self, value::base* arg)
+{
+  if (arg->type != &type::integer)
+    return throw_exception("Index must be an Integer");
+
+  auto idx = static_cast<size_t>(to_int(*arg));
+  auto& match = static_cast<value::regex_result&>(*self).val;
+
+  if (idx >= match.size()) {
+    return throw_exception("Out of range (expected 0-"
+                           + std::to_string(match.size()) += ", got "
+                           + std::to_string(idx) += ')');
+  }
+
+  return gc::alloc<value::integer>( static_cast<int>(match.position(idx)) );
 }
 
 value::base* fn_regex_result_size(value::base* self)
@@ -98,8 +122,9 @@ value::builtin_function regex_init{fn_regex_init, 1};
 value::opt_binop regex_match      {fn_regex_match};
 value::opt_binop regex_match_index{fn_regex_match_index};
 
-value::opt_binop regex_result_at  {fn_regex_result_at};
-value::opt_monop regex_result_size{fn_regex_result_size};
+value::opt_binop regex_result_at   {fn_regex_result_at};
+value::opt_binop regex_result_index{fn_regex_result_index};
+value::opt_monop regex_result_size {fn_regex_result_size};
 
 }
 
@@ -110,6 +135,7 @@ value::type type::regex {gc::alloc<value::regex>, {
 }, builtin::type::object, {"RegEx"}};
 
 value::type type::regex_result {[]{ return nullptr; }, {
-  { {"at"},   &regex_result_at   },
-  { {"size"}, &regex_result_size }
+  { {"at"},    &regex_result_at    },
+  { {"index"}, &regex_result_index },
+  { {"size"},  &regex_result_size  }
 }, builtin::type::object, {"RegExResult"}};
