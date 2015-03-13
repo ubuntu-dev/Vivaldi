@@ -51,19 +51,17 @@ std::string message_for(token_string tokens,
 
 }
 
-read_file_result vv::get_file_contents(const std::string& filename)
+read_file_result vv::get_file_contents(const std::string& filename,
+                                       const std::string& cur_path)
 {
-  std::ifstream file{filename};
+  auto real_filename = absolute(boost::filesystem::path{filename}, cur_path);
+  std::ifstream file{real_filename.native()};
   if (!file)
     return { "", '"' + filename + "\": file not found" };
 
   auto path = boost::filesystem::path{filename}.parent_path();
-  // Use absolute path, so that a require in the current directory (e.g.
-  // 'require "foo.vv"' instead of 'require "./foo.vv"') doesn't lead
-  // to us trying to change the CWD to "". Really I could just special-case
-  // that, but this seems more prudent in case there are other edge cases I'm
-  // not thinking of
-  path = absolute(path);
+  // Search in current search path, NOT cwd
+  path = absolute(path, cur_path);
 
   auto tokens = tokenize(file);
   auto validator = is_valid(tokens);
@@ -73,7 +71,7 @@ read_file_result vv::get_file_contents(const std::string& filename)
   auto exprs = parse(tokens);
   std::vector<vm::command> body;
   // set working directory to path of file, so nested 'require's don't bork
-  body.emplace_back(vm::instruction::chdir, path.native());
+  body.emplace_back(vm::instruction::chreqp, path.native());
   body.emplace_back(vm::instruction::pnil); // HACK--- for pops below
   for (const auto& i : exprs) {
     auto code = i->code();

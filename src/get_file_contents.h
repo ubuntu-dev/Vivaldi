@@ -37,7 +37,8 @@ private:
   std::string m_dir;
 };
 
-read_file_result get_file_contents(const std::string& filename);
+read_file_result get_file_contents(const std::string& filename,
+                                   const std::string& path = "");
 
 }
 

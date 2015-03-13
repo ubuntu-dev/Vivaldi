@@ -19,15 +19,14 @@
 #include "value/string.h"
 #include "value/symbol.h"
 
-#include <boost/filesystem.hpp>
-
 using namespace vv;
 
 vm::machine::machine(call_frame&& frame,
                      const std::function<void(vm::machine&)>& exception_handler)
   : m_call_stack        {frame},
     m_transient_self    {nullptr},
-    m_exception_handler {exception_handler}
+    m_exception_handler {exception_handler},
+    m_req_path          {""}
 {
   gc::set_running_vm(*this);
 }
@@ -354,7 +353,7 @@ void vm::machine::ret(bool copy)
 
 void vm::machine::req(const std::string& filename)
 {
-  auto contents = get_file_contents(filename);
+  auto contents = get_file_contents(filename, m_req_path);
   if (!contents.successful()) {
     pstr(contents.error());
     exc();
@@ -418,9 +417,9 @@ void vm::machine::exc()
   }
 }
 
-void vm::machine::chdir(const std::string& dir)
+void vm::machine::chreqp(const std::string& path)
 {
-  boost::filesystem::current_path(dir);
+  m_req_path = path;
 }
 
 void vm::machine::noop() { }
@@ -551,7 +550,7 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::popc:  popc();  break;
   case instruction::exc:   exc();   break;
 
-  case instruction::chdir: chdir(arg.as_str()); break;
+  case instruction::chreqp: chreqp(arg.as_str()); break;
 
   case instruction::noop: break;
 

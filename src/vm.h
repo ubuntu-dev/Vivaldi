@@ -60,7 +60,7 @@ public:
   void popc();
   void exc();
 
-  void chdir(const std::string& new_dir);
+  void chreqp(const std::string& new_path);
 
   void noop();
 
@@ -84,6 +84,7 @@ private:
   value::base* m_transient_self;
 
   std::function<void(machine&)> m_exception_handler;
+  std::string m_req_path;
 };
 
 }

@@ -95,8 +95,8 @@ enum class instruction {
   /// throws top value as an exception
   exc,
 
-  /// Changes current directory to that passed as a string literal
-  chdir,
+  /// Changes the 'require' search path to that passed as a string literal
+  chreqp,
 
   /// Does nothing; filler
   noop,
