@@ -1,0 +1,35 @@
+require "assert.vv"
+
+fn test_match_index(): do
+  let re = new RegEx("foo.*bar")
+  let str = "this sentence contains foobazbar"
+  assert(re.match_index(str) == 23, "re.match_index(str) == 23")
+
+  assert(re.match_index("foobar") == 0, "re.match_index(\"foobar\") == 0")
+  assert(re.match_index("nope") == nil, "re.match_index(\"nope\") == nil")
+end
+
+fn test_regex_result(): do
+  let excepted = false
+  try: new RegExResult()
+  catch _: excepted = true
+  assert(excepted, "nonconstructability in RegExResult")
+end
+
+fn test_match(): do
+  let re = new RegEx("(foobar).*(foo[a-z]*bar)")
+  let str = "foobar, foobazbar"
+  let match = re.match(str)
+  assert(match.size() == 3, "match.size() == 3")
+  assert(match[0] == "foobar, foobazbar", "match[0] == \"foobar, foobazbar\"")
+  assert(match[1] == "foobar", "match[1] == \"foobar\"")
+  assert(match[2] == "foobazbar", "match[1] == \"foobazbar\"")
+  assert(match.index(0) == 0, "match.index(0) == 0")
+  assert(match.index(1) == 0, "match.index(1) == 0")
+  assert(match.index(2) == 8, "match.index(1) == 8")
+end
+
+section("RegExes")
+test(test_match_index, "match_index")
+test(test_match, "match")
+test(test_regex_result, "RegExResult")
