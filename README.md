@@ -139,9 +139,25 @@ Extremely basic regular expression class:
 
 * `init(x)`&mdash; if `x` is a RegEx, creates a copy of `x`; if `x` is a String,
   returns a RegEx made by compiling `x`; excepts otherwise.
+* `match(x)`&mdash; returns a RegExResult (see below) of the first match of
+`self` in `x`.
 * `match_index(x)`&mdash; If `self` matches any substring of `x`, returns the
   index of the first matching substring within `x` as an Integer; otherwise,
   returns `nil`.
+
+RegExResult is a class for managing submatches. It can only be instantiated from
+appropriate RegEx methods (only `match` at the moment):
+
+* `size()`: Number of submatches, plus one for the complete match.
+* `at(x)`: Returns the string value of the `x`th match, where 0 is the complete
+  match. For instance,
+
+        let res = new RegEx("(foo)(bar)").match("foobar")
+        res[0] == "foobar"
+        res[1] == "foo"
+        res[2] == "bar"
+* `index(x)`: Returns the starting index of the `x`th match in the string `self`
+  was created from; for instance, in the above example, `res.index(2)` is `3`.
 
 Vastly expanded functionality to come soon.
 
