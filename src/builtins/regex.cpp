@@ -2,6 +2,7 @@
 
 #include "gc.h"
 #include "utils/lang.h"
+#include "utils/error.h"
 #include "value/builtin_function.h"
 #include "value/opt_functions.h"
 #include "value/regex.h"
@@ -25,6 +26,27 @@ const std::regex& to_regex(const value::base& val)
 const std::string& to_string(const value::base& val)
 {
   return static_cast<const value::string&>(val).val;
+}
+
+std::pair<const std::smatch&, size_t> get_match_idx(value::base* self, value::base* arg)
+{
+  if (arg->type != &type::integer) {
+    auto str = gc::alloc<value::string>("Index must be an Integer");
+    throw vm_error{str};
+  }
+
+  auto idx = static_cast<size_t>(to_int(*arg));
+  auto& match = static_cast<value::regex_result&>(*self).val;
+
+  if (idx >= match.size()) {
+    auto str = gc::alloc<value::string>("Out of range (expected 0-" +
+                                        std::to_string(match.size())
+                                        += ", got " + std::to_string(idx)
+                                        += ')');
+    throw vm_error{str};
+  }
+
+  return {match, idx};
 }
 
 // regex {{{
@@ -78,36 +100,15 @@ value::base* fn_regex_match_index(value::base* self, value::base* arg)
 
 value::base* fn_regex_result_at(value::base* self, value::base* arg)
 {
-  if (arg->type != &type::integer)
-    return throw_exception("Index must be an Integer");
 
-  auto idx = static_cast<size_t>(to_int(*arg));
-  auto& match = static_cast<value::regex_result&>(*self).val;
-
-  if (idx >= match.size()) {
-    return throw_exception("Out of range (expected 0-"
-                           + std::to_string(match.size()) += ", got "
-                           + std::to_string(idx) += ')');
-  }
-
-  return gc::alloc<value::string>( match[idx].str() );
+  auto res = get_match_idx(self, arg);
+  return gc::alloc<value::string>( res.first[res.second].str() );
 }
 
 value::base* fn_regex_result_index(value::base* self, value::base* arg)
 {
-  if (arg->type != &type::integer)
-    return throw_exception("Index must be an Integer");
-
-  auto idx = static_cast<size_t>(to_int(*arg));
-  auto& match = static_cast<value::regex_result&>(*self).val;
-
-  if (idx >= match.size()) {
-    return throw_exception("Out of range (expected 0-"
-                           + std::to_string(match.size()) += ", got "
-                           + std::to_string(idx) += ')');
-  }
-
-  return gc::alloc<value::integer>( static_cast<int>(match.position(idx)) );
+  auto res = get_match_idx(self, arg);
+  return gc::alloc<value::integer>( static_cast<int>(res.first.position(res.second)) );
 }
 
 value::base* fn_regex_result_size(value::base* self)
