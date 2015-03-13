@@ -3,6 +3,7 @@
 #include "get_file_contents.h"
 #include "parser.h"
 #include "vm.h"
+#include "utils/error.h"
 #include "value/array.h"
 #include "value/builtin_function.h"
 #include "value/nil.h"
@@ -14,13 +15,6 @@
 void write_error(const std::string& error)
 {
   std::cerr << "\033[1;31m" << error << "\033[22;39m\n";
-}
-
-void repl_catcher(vv::vm::machine& vm)
-{
-  write_error("caught exception: " + vm.top()->value());
-  vm.pop(1);
-  vm.pnil();
 }
 
 std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
@@ -72,9 +66,13 @@ void run_repl()
     for (const auto& expr : get_valid_line()) {
       auto body = expr->code();
       vv::vm::call_frame frame{body, env};
-      vv::vm::machine machine{std::move(frame), repl_catcher};
-      machine.run();
-      std::cout << "=> " << machine.top()->value() << '\n';
+      vv::vm::machine machine{std::move(frame)};
+      try {
+        machine.run();
+        std::cout << "=> " << machine.top()->value() << '\n';
+      } catch (const vv::vm_error& err) {
+        write_error("caught exception: " + err.error()->value());
+      }
     }
   }
   std::cout << '\n'; // stick prompt on newline on ^D
@@ -94,15 +92,13 @@ int main(int argc, char** argv)
       return 64; // bad usage
     }
 
-    auto excepted = false;
-
     //auto base_frame = vv::gc::alloc<vv::vm::call_frame>( tok_res.result() );
     //auto frame = static_cast<vv::vm::call_frame*>(base_frame);
     auto env = vv::gc::alloc<vv::vm::environment>( );
     vv::builtin::make_base_env(*env);
     vv::vm::call_frame frame{tok_res.result(), env};
 
-    vv::vm::machine vm{std::move(frame), [&](auto&){ excepted = true; }};
+    vv::vm::machine vm{std::move(frame)};
 
     vv::builtin::make_base_env(*env);
     auto arg_array = vv::gc::alloc<vv::value::array>( );
@@ -112,11 +108,11 @@ int main(int argc, char** argv)
     transform(argv + 2, argv + argc, back_inserter(cast_argv->val),
               vv::gc::alloc<vv::value::string, std::string>);
 
-    vm.run();
-
-    if (excepted)
-      std::cerr << "Caught exception: " << vm.top()->value() << '\n';
-
-    return excepted ? 65 : 0; // data err
+    try {
+      vm.run();
+    } catch (vv::vm_error& err) {
+      std::cerr << "Caught exception: " << err.error()->value() << '\n';
+      return 65; // data err
+    }
   }
 }

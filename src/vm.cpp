@@ -21,11 +21,9 @@
 
 using namespace vv;
 
-vm::machine::machine(call_frame&& frame,
-                     const std::function<void(vm::machine&)>& exception_handler)
+vm::machine::machine(call_frame&& frame)
   : m_call_stack        {frame},
     m_transient_self    {nullptr},
-    m_exception_handler {exception_handler},
     m_req_path          {""}
 {
   gc::set_running_vm(*this);
@@ -394,27 +392,7 @@ void vm::machine::popc()
 
 void vm::machine::exc()
 {
-  auto except_val = top();
-
-  auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - 1,
-                      [](const auto& i) { return i.catcher; });
-
-  if (last != rbegin(m_call_stack)) {
-    auto last_erased = last.base();
-    m_stack.erase(begin(m_stack) + last_erased->frame_ptr - last_erased->argc + 1,
-                  end(m_stack));
-  }
-  m_call_stack.erase(last.base(), end(m_call_stack));
-  push(except_val);
-
-  if (frame().catcher) {
-    push(frame().catcher.get());
-    popc();
-    call(1);
-  } else {
-    m_exception_handler(*this);
-    frame().instr_ptr = {}; // bail out before anything blows up
-  }
+  except_until(1);
 }
 
 void vm::machine::chreqp(const std::string& path)
@@ -570,9 +548,11 @@ void vm::machine::except_until(size_t stack_pos)
   auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - stack_pos,
                       [](const auto& i) { return i.catcher; });
 
-  auto last_erased = last.base();
-  m_stack.erase(begin(m_stack) + last_erased->frame_ptr - last_erased->argc,
-                end(m_stack));
+  if (last != rbegin(m_call_stack)) {
+    auto last_erased = last.base();
+    m_stack.erase(begin(m_stack) + last_erased->frame_ptr - last_erased->argc,
+                  end(m_stack));
+  }
   m_call_stack.erase(last.base(), end(m_call_stack));
   push(except_val);
 

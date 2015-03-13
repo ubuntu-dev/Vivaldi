@@ -9,8 +9,7 @@ namespace vm {
 
 class machine {
 public:
-  machine(call_frame&& frame,
-          const std::function<void(vm::machine&)>& exception_handler);
+  machine(call_frame&& frame);
 
   void run();
   void run_cur_scope();
@@ -83,7 +82,6 @@ private:
 
   value::base* m_transient_self;
 
-  std::function<void(machine&)> m_exception_handler;
   std::string m_req_path;
 };
 
