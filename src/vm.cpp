@@ -306,6 +306,7 @@ void vm::machine::pobj(int argc)
   if (!top()) {
     pop(1);
     pstr("cannot directly construct objects of type " + ctor_type->value());
+    exc();
     return;
   }
   top()->type = type;
