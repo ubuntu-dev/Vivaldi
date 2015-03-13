@@ -5,29 +5,7 @@
 using namespace vv;
 using namespace parser;
 
-// Available tokens:
-// '{', '}'
-// '[', ']'
-// '(', ')'
-// '.'
-// ','
-// ':'
-// '='
-// '=='
-// '+', '-'
-// '*', '/', '%'
-// '!', '~'
-// '^', '&', '|'
-// '&&', '||'
-// '<', '>', '<=', '>='
-// '''
-// (strings)
-// (names)
-// (numbers)
-// (hexadecimal numbers)
-// (binary numbers)
-// (octal numbers)
-// (newline)
+// token::type enumeration defined in parser.h
 
 namespace {
 
