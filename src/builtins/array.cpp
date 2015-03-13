@@ -7,8 +7,6 @@
 #include "value/builtin_function.h"
 #include "value/opt_functions.h"
 
-#include <iostream>
-
 using namespace vv;
 using namespace builtin;
 
@@ -131,7 +129,6 @@ value::base* fn_array_equals(vm::machine& vm)
     return truthy(res);
   });
 
-  std::cerr << "res: " << std::boolalpha << eq << '\n';
   return gc::alloc<value::boolean>( eq );
 }
 
