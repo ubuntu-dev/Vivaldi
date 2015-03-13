@@ -227,6 +227,29 @@ tok_res string_token(boost::string_ref line)
 }
 
 // }}}
+// '`' {{{
+
+tok_res regex_token(boost::string_ref line)
+{
+  std::string token{};
+  line.remove_prefix(1);
+  while (line.front() != '`') {
+    if (line.front() == '\\') {
+      line.remove_prefix(1);
+      char chr;
+      tie(chr, line) = escaped(line);
+      token += chr;
+    } else {
+      token += line.front();
+      line.remove_prefix(1);
+    }
+    if (!line.size())
+      return { {token::type::invalid, token}, line };
+  }
+  return { {token::type::regex, token}, ltrim(line.substr(1))};
+}
+
+// }}}
 // '/' {{{
 
 tok_res slash_token(boost::string_ref line)
@@ -324,6 +347,7 @@ tok_res first_token(boost::string_ref line)
   case '<': return lt_tokens(line);
   case '>': return gt_tokens(line);
   case '"': return string_token(line);
+  case '`': return regex_token(line);
   case '/': return slash_token(line);
   default:  return name_token(line);
   }

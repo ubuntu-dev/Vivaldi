@@ -24,6 +24,11 @@ std::vector<vm::command> ast::literal::nil::generate() const
   return { {vm::instruction::pnil} };
 }
 
+std::vector<vm::command> ast::literal::regex::generate() const
+{
+  return { {vm::instruction::pre, m_val} };
+}
+
 std::vector<vm::command> ast::literal::string::generate() const
 {
   return { {vm::instruction::pstr, m_val} };

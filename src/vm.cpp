@@ -16,6 +16,7 @@
 #include "value/function.h"
 #include "value/nil.h"
 #include "value/opt_functions.h"
+#include "value/regex.h"
 #include "value/string.h"
 #include "value/symbol.h"
 
@@ -142,6 +143,11 @@ void vm::machine::ptype(const type_t& type)
   pop(methods.size() + 1); // methods and parent
   push(newtype);
   let(type.name);
+}
+
+void vm::machine::pre(const std::string& val)
+{
+  push(gc::alloc<value::regex>( std::regex{val} ));
 }
 
 void vm::machine::parr(int size)
@@ -497,6 +503,8 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::pstr:  pstr(arg.as_str());    break;
   case instruction::psym:  psym(arg.as_sym());    break;
   case instruction::ptype: ptype(arg.as_type());  break;
+
+  case instruction::pre: pre(arg.as_str()); break;
 
   case instruction::parr:  parr(arg.as_int());  break;
   case instruction::pdict: pdict(arg.as_int()); break;

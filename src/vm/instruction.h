@@ -41,6 +41,9 @@ enum class instruction {
   /// Pushes the provided Type literal onto the stack
   ptype,
 
+  /// creates a RegEx out of the provided string, and pushes it onto the stack
+  pre,
+
   /// pushes an Array made out of the provided number of pushed args
   parr,
   /// pushes a Dictionary made out of the provided number of pushed args

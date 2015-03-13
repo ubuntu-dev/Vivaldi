@@ -28,6 +28,8 @@ public:
   void psym(symbol val);
   void ptype(const type_t& type);
 
+  void pre(const std::string& val);
+
   void parr(int size);
   void pdict(int size);
 

@@ -1,7 +1,7 @@
 require "assert.vv"
 
 fn test_match_index(): do
-  let re = new RegEx("foo.*bar")
+  let re = `foo.*bar`
   let str = "this sentence contains foobazbar"
   assert(re.match_index(str) == 23, "re.match_index(str) == 23")
 
@@ -17,7 +17,7 @@ fn test_regex_result(): do
 end
 
 fn test_match(): do
-  let re = new RegEx("(foobar).*(foo[a-z]*bar)")
+  let re = `(foobar).*(foo[a-z]*bar)`
   let str = "foobar, foobazbar"
   let match = re.match(str)
   assert(match.size() == 3, "match.size() == 3")

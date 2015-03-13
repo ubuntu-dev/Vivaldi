@@ -99,6 +99,7 @@ parse_res<> parse_integer(token_string tokens);
 parse_res<> parse_float(token_string tokens);
 parse_res<> parse_bool(token_string tokens);
 parse_res<> parse_nil(token_string tokens);
+parse_res<> parse_regex(token_string tokens);
 parse_res<> parse_string(token_string tokens);
 
 template <typename F>
@@ -592,8 +593,9 @@ parse_res<> parse_literal(token_string tokens)
   if ((res = parse_integer(tokens))) return res;
   if ((res = parse_bool(tokens)))    return res;
   if ((res = parse_nil(tokens)))     return res;
-  if ((res = parse_symbol(tokens)))  return res;
+  if ((res = parse_regex(tokens)))   return res;
   if ((res = parse_string(tokens)))  return res;
+  if ((res = parse_symbol(tokens)))  return res;
   return res;
 }
 
@@ -727,15 +729,6 @@ parse_res<> parse_while_loop(token_string tokens)
 // }}}
 // Literals {{{
 
-parse_res<> parse_symbol(token_string tokens)
-{
-  if (!tokens.size() || tokens.front().which != token::type::symbol)
-    return {};
-  symbol name{tokens[0].str};
-  tokens = tokens.subvec(1); // symbol
-  return {{ std::make_unique<literal::symbol>( name ), tokens }};
-}
-
 parse_res<> parse_integer(token_string tokens)
 {
   if (!tokens.size() || tokens.front().which != token::type::integer)
@@ -773,6 +766,16 @@ parse_res<> parse_nil(token_string tokens)
   return {{ std::make_unique<literal::nil>( ), tokens }};
 }
 
+parse_res<> parse_regex(token_string tokens)
+{
+  if (!tokens.size() || tokens.front().which != token::type::regex)
+    return {};
+  // inc/decrement to remove quotes
+  std::string val{tokens.front().str};
+  tokens = tokens.subvec(1); // val
+  return {{ std::make_unique<literal::regex>( val ), tokens }};
+}
+
 parse_res<> parse_string(token_string tokens)
 {
   if (!tokens.size() || tokens.front().which != token::type::string)
@@ -781,6 +784,15 @@ parse_res<> parse_string(token_string tokens)
   std::string val{++begin(tokens.front().str), --end(tokens.front().str)};
   tokens = tokens.subvec(1); // val
   return {{ std::make_unique<literal::string>( val ), tokens }};
+}
+
+parse_res<> parse_symbol(token_string tokens)
+{
+  if (!tokens.size() || tokens.front().which != token::type::symbol)
+    return {};
+  symbol name{tokens[0].str};
+  tokens = tokens.subvec(1); // symbol
+  return {{ std::make_unique<literal::symbol>( name ), tokens }};
 }
 
 // }}}

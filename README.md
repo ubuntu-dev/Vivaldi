@@ -133,7 +133,7 @@ Simple, immutable string class. Currently supports:
 #### RegExes ####
 Extremely basic regular expression class:
 
-    let regex = new RegEx("foo.*bar")
+    let regex = `foo.*bar`
     regex.match_index("no match") // nil
     regex.match_index("this string contains 'foobazbar'") // 22
 
@@ -152,7 +152,7 @@ appropriate RegEx methods (only `match` at the moment):
 * `at(x)`: Returns the string value of the `x`th match, where 0 is the complete
   match. For instance,
 
-        let res = new RegEx("(foo)(bar)").match("foobar")
+        let res = `(foo)(bar)`.match("foobar")
         res[0] == "foobar"
         res[1] == "foo"
         res[2] == "bar"

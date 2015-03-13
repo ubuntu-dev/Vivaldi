@@ -50,6 +50,7 @@ val_res val_bool(vector_ref<token> tokens);
 val_res val_float(vector_ref<token> tokens);
 val_res val_integer(vector_ref<token> tokens);
 val_res val_nil(vector_ref<token> tokens);
+val_res val_regex(vector_ref<token> tokens);
 val_res val_string(vector_ref<token> tokens);
 val_res val_symbol(vector_ref<token> tokens);
 
@@ -360,6 +361,7 @@ val_res val_literal(vector_ref<token> tokens)
   if ((res = val_float(tokens))   || res.invalid()) return res;
   if ((res = val_integer(tokens)) || res.invalid()) return res;
   if ((res = val_nil(tokens))     || res.invalid()) return res;
+  if ((res = val_regex(tokens))   || res.invalid()) return res;
   if ((res = val_string(tokens))  || res.invalid()) return res;
   if ((res = val_symbol(tokens))  || res.invalid()) return res;
   return {};
@@ -555,6 +557,13 @@ val_res val_nil(vector_ref<token> tokens)
   if (!tokens.size() || tokens.front().which != token::type::nil)
     return {};
   return tokens.subvec(1); // 'nil'
+}
+
+val_res val_regex(vector_ref<token> tokens)
+{
+  if (!tokens.size() || tokens.front().which != token::type::regex)
+    return {};
+  return tokens.subvec(1); // string
 }
 
 val_res val_string(vector_ref<token> tokens)

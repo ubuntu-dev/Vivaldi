@@ -38,6 +38,14 @@ public:
   std::vector<vm::command> generate() const override;
 };
 
+class regex : public expression {
+public:
+  regex(const std::string& val) : m_val{val} { }
+  std::vector<vm::command> generate() const override;
+private:
+  std::string m_val;
+};
+
 class string : public expression {
 public:
   string(const std::string& val) : m_val{val} { }

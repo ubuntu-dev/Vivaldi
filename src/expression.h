@@ -49,6 +49,7 @@ class boolean;
 class floating_point;
 class integer;
 class nil;
+class regex;
 class string;
 class symbol;
 

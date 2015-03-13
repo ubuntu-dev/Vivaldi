@@ -81,6 +81,7 @@ struct token {
 
     integer,
     floating_point,
+    regex,
     string,
     symbol,
     boolean,
