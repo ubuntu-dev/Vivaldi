@@ -257,8 +257,7 @@ tok_res slash_token(boost::string_ref line)
   if (line.size() == 1 || line[1] != '/')
     return { {token::type::slash, "/"}, ltrim(line.substr(1))};
   // Whoops, comment
-  line.remove_prefix(1 + std::find(begin(line), end(line), '\n') - begin(line));
-  return { {token::type::newline, "\n"}, line};
+  return { {token::type::newline, "\n"}, {}};
 }
 
 // }}}
