@@ -250,17 +250,6 @@ tok_res regex_token(boost::string_ref line)
 }
 
 // }}}
-// '/' {{{
-
-tok_res slash_token(boost::string_ref line)
-{
-  if (line.size() == 1 || line[1] != '/')
-    return { {token::type::slash, "/"}, line.substr(1)};
-  // Whoops, comment
-  return { {token::type::newline, "\n"}, {}};
-}
-
-// }}}
 // /./ {{{
 
 token::type type_for(const std::string& name)
@@ -326,6 +315,7 @@ tok_res first_token(boost::string_ref line)
   case '~': return {{token::type::tilde,   "~"}, line.substr(1)};
   case '^': return {{token::type::caret,   "^"}, line.substr(1)};
   case '%': return {{token::type::percent, "%"}, line.substr(1)};
+  case '/': return {{token::type::slash,   "/"}, line.substr(1)};
 
   case '1':
   case '2':
@@ -347,7 +337,6 @@ tok_res first_token(boost::string_ref line)
   case '>': return gt_tokens(line);
   case '"': return string_token(line);
   case '`': return regex_token(line);
-  case '/': return slash_token(line);
   default:  return name_token(line);
   }
 }
@@ -364,7 +353,7 @@ std::vector<token> parser::tokenize(std::istream& input)
     getline(input, current_line);
     boost::string_ref line{current_line};
     line = ltrim(line); // remove leading whitespace from line
-    while (line.size()) {
+    while (line.size() && !line.starts_with("//")) {
       auto res = first_token(line);
       tokens.push_back(res.first);
       line = ltrim(res.second);
