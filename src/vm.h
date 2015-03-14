@@ -7,16 +7,24 @@ namespace vv {
 
 namespace vm {
 
+/// Class implementing Vivaldi's virtual machine.
 class machine {
 public:
   machine(call_frame&& frame);
 
+  /// Run the current code until completion.
   void run();
+  /// Run the current code until we attempt to exit (or except out of) the call
+  /// frame on top of the call stack at the time run_cur_scope, at which point
+  /// control is returned to the calling C++ function.
   void run_cur_scope();
 
+  /// Returns the value on top of the stack.
   value::base* top();
+  /// Pushes the provided value onto the stack.
   void push(value::base* newtop);
 
+  /// GC interface; mark all objects immediately reachable from within the VM.
   void mark();
 
   void pbool(bool val);

@@ -21,6 +21,7 @@ class machine;
 class environment;
 }
 
+/// Classes representing Vivaldi objects.
 namespace value {
 
 struct array;

@@ -12,103 +12,111 @@ namespace vm {
 
 struct command;
 
+/// Simple struct for passing around Vivaldi functions.
 struct function_t {
   int argc;
   std::vector<command> body;
 };
 
+/// Simple struct for passing around Vivaldi types.
 struct type_t {
   symbol name;
   symbol parent;
   std::unordered_map<symbol, function_t> methods;
 };
 
+/// Individual Vivaldi VM opcodes.
 enum class instruction {
-  /// pushes the provided Bool literal onto the stack
+  /// pushes the provided Bool literal onto the stack.
   pbool,
-  /// pushes the provided Float literal onto the stack
+  /// pushes the provided Float literal onto the stack.
   pflt,
-  /// pushes the provided Function literal onto the stack
+  /// pushes the provided Function literal onto the stack.
   pfn,
-  /// pushes the provided Integer literal onto the stack
+  /// pushes the provided Integer literal onto the stack.
   pint,
-  /// pushes a Nil literal onto the stack
+  /// pushes a Nil literal onto the stack.
   pnil,
-  /// pushes the provided String literal onto the stack
+  /// pushes the provided String literal onto the stack.
   pstr,
-  /// pushes the provided Symbol literal onto the stack
+  /// pushes the provided Symbol literal onto the stack.
   psym,
-  /// Pushes the provided Type literal onto the stack
+  /// Pushes the provided Type literal onto the stack.
   ptype,
 
-  /// creates a RegEx out of the provided string, and pushes it onto the stack
+  /// creates a RegEx out of the provided string, and pushes it onto the stack.
   pre,
 
-  /// pushes an Array made out of the provided number of pushed args
+  /// pushes an Array made out of the provided number of pushed args.
   parr,
-  /// pushes a Dictionary made out of the provided number of pushed args
+  /// pushes a Dictionary made out of the provided number of pushed args.
   pdict,
 
-  /// reads a variable onto the stack
+  /// reads a variable onto the stack.
   read,
-  /// writes the top value to a variable
+  /// writes the top value to a variable.
   write,
-  /// creates a new variable with the value on top of the stack
+  /// creates a new variable with the value on top of the stack.
   let,
 
-  /// reads self onto the stack
+  /// reads self onto the stack.
   self,
-  /// retrieves the nth passed argument, where n is the provided integer
+  /// retrieves the nth passed argument, where n is the provided integer.
   arg,
-  /// reads a member onto the stack
+  /// reads a member onto the stack.
   readm,
-  /// pops the top off the stack, and pushes its member with the provided name
+  /// pops the top off the stack, and pushes its member with the provided name.
   writem,
-  /// calls the top of the stack, using the provided number of pushed arguments
+  /// calls the top of the stack, using the provided number of pushed arguments.
   call,
-  /// creates new object of the type on top of the stack
+  /// creates new object of the type on top of the stack.
   pobj,
 
-  /// pushes a (shallow) copy of the top of the stack onto the stack
+  /// pushes a (shallow) copy of the top of the stack onto the stack.
   dup,
-  /// removes the provided number of objects from the top of the stack
+  /// removes the provided number of objects from the top of the stack.
   pop,
 
-  /// enters a new block
+  /// enters a new block.
   eblk,
-  /// leaves current block
+  /// leaves current block.
   lblk,
   /// returns from a function; if provided argument is true, copy members of
-  /// local frame to parent
+  /// local frame to parent.
   ret,
 
-  /// loads and run a file with the provided name
+  /// loads and run a file with the provided name.
   req,
 
-  /// unconditionally jumps the provided number of commands
+  /// unconditionally jumps the provided number of commands.
   jmp,
-  /// jump the provided number of commands if the top value is falsy
+  /// jump the provided number of commands if the top value is falsy.
   jf,
-  /// jump the provided number of commands if the top value is trutyh
+  /// jump the provided number of commands if the top value is truthy.
   jt,
-  /// pushes top value as a new function for catching exceptions
+  /// pushes top value as a new function for catching exceptions.
   pushc,
-  /// pops an exception catcher and discards it, leaving top value unchanged
+  /// pops an exception catcher and discards it, leaving top value unchanged.
   popc,
-  /// throws top value as an exception
+  /// throws top value as an exception.
   exc,
 
-  /// Changes the 'require' search path to that passed as a string literal
+  /// Changes the 'require' search path to that passed as a string literal.
   chreqp,
 
-  /// Does nothing; filler
+  /// Does nothing; filler.
   noop,
 
+  /// Optimized 'add' method call.
   opt_add,
+  /// Optimized 'subtract' method call.
   opt_sub,
+  /// Optimized 'times' method call.
   opt_mul,
+  /// Optimized 'divides' method call.
   opt_div,
 
+  /// Optimized 'not' method call.
   opt_not,
 };
 
@@ -120,6 +128,11 @@ enum class instruction {
 // - enum
 // This is somewhat displeasing, but boost::variant seems to be a slight
 // bottleneck, so here we are.
+/// Represents an argument in a VM command.
+
+/// Each VM command consists of an instruction and, optionally, an argument
+/// (either an int, a symbol, a bool, an std::string, a double, a function_t, or
+/// a type_t); all these possible values are represented by this class.
 class argument {
 public:
   argument()                       : m_val{0},   m_which{arg_type::nil} { }
