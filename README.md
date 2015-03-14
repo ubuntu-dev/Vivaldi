@@ -119,6 +119,8 @@ Simple, immutable string class. Currently supports:
   empty, which results in an exception).
 * `split(x)`&mdash; Returns an Array of each substrings of `self` separated by
   the String `x`.
+* `replace(x, y)`&mdash; Returns a String with all occurrences of RegEx `x`
+  replaced by String `y`.
 * `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a String equal in value
   to `self`, and `false` otherwise (vice versa for `unequal`).
 

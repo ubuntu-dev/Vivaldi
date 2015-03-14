@@ -5,6 +5,7 @@
 #include "utils/string_helpers.h"
 #include "value/builtin_function.h"
 #include "value/opt_functions.h"
+#include "value/regex.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
 #include "value/symbol.h"
@@ -185,6 +186,26 @@ value::base* fn_string_split(vm::machine& vm)
   return vm.top();
 }
 
+value::base* fn_string_replace(vm::machine& vm)
+{
+  vm.arg(1);
+  if (vm.top()->type != &type::string)
+    return throw_exception("Replacements must be other Strings");
+  const auto& replacement = to_string(vm.top());
+
+  vm.arg(0);
+  if (vm.top()->type != &type::regex)
+    return throw_exception("Strings can only be replaced by RegExes");
+  const auto& re = static_cast<value::regex*>(vm.top())->val;
+
+  vm.self();
+  const auto& str = to_string(vm.top());
+
+  vm.pop(3);
+
+  return gc::alloc<value::string>( regex_replace(str, re, replacement) );
+}
+
 // }}}
 // string_iterator {{{
 
@@ -280,21 +301,22 @@ value::base* fn_string_iterator_unequal(value::base* self, value::base* arg)
 
 // }}}
 
-value::builtin_function string_init {fn_string_init, 1};
-value::opt_monop string_size        {fn_string_size       };
-value::opt_binop string_equals      {fn_string_equals     };
-value::opt_binop string_unequal     {fn_string_unequal    };
-value::opt_binop string_add         {fn_string_add        };
-value::opt_binop string_times       {fn_string_times      };
-value::opt_monop string_to_int      {fn_string_to_int     };
-value::opt_binop string_at          {fn_string_at         };
-value::opt_monop string_start       {fn_string_start      };
-value::opt_monop string_stop        {fn_string_stop       };
-value::opt_monop string_to_upper    {fn_string_to_upper   };
-value::opt_monop string_to_lower    {fn_string_to_lower   };
-value::opt_binop string_starts_with {fn_string_starts_with};
-value::opt_monop string_ord         {fn_string_ord        };
-value::builtin_function string_split {fn_string_split, 1};
+value::builtin_function string_init   {fn_string_init, 1};
+value::opt_monop string_size          {fn_string_size       };
+value::opt_binop string_equals        {fn_string_equals     };
+value::opt_binop string_unequal       {fn_string_unequal    };
+value::opt_binop string_add           {fn_string_add        };
+value::opt_binop string_times         {fn_string_times      };
+value::opt_monop string_to_int        {fn_string_to_int     };
+value::opt_binop string_at            {fn_string_at         };
+value::opt_monop string_start         {fn_string_start      };
+value::opt_monop string_stop          {fn_string_stop       };
+value::opt_monop string_to_upper      {fn_string_to_upper   };
+value::opt_monop string_to_lower      {fn_string_to_lower   };
+value::opt_binop string_starts_with   {fn_string_starts_with};
+value::opt_monop string_ord           {fn_string_ord        };
+value::builtin_function string_split   {fn_string_split,   1};
+value::builtin_function string_replace {fn_string_replace, 2};
 
 value::opt_monop string_iterator_at_start  {fn_string_iterator_at_start };
 value::opt_monop string_iterator_at_end    {fn_string_iterator_at_end   };
@@ -323,7 +345,8 @@ value::type type::string {gc::alloc<value::string>, {
   { {"to_lower"},    &string_to_lower    },
   { {"starts_with"}, &string_starts_with },
   { {"ord"},         &string_ord         },
-  { {"split"},       &string_split       }
+  { {"split"},       &string_split       },
+  { {"replace"},     &string_replace     }
 }, builtin::type::object, {"String"}};
 
 value::type type::string_iterator {[]{ return nullptr; }, {

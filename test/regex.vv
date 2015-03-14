@@ -29,7 +29,14 @@ fn test_match(): do
   assert(match.index(2) == 8, "match.index(1) == 8")
 end
 
+fn test_replace(): do
+  let str = "foobazbar"
+  let rep = str.replace(`foo(.*)bar`, "[$1]")
+  assert(rep == "[baz]", "rep == \"[baz]\"")
+end
+
 section("RegExes")
 test(test_match_index, "match_index")
 test(test_match, "match")
 test(test_regex_result, "RegExResult")
+test(test_replace, "String replace")
