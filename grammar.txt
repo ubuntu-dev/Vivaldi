@@ -94,6 +94,7 @@
             | <float>
             | <integer>
             | <nil>
+            | <regex>
             | <string>
             | <symbol>
 
@@ -127,6 +128,8 @@
          | 'false'
 
 <nil> ::= 'nil'
+
+<regex> ::= /`.*`/
 
 <string> ::= /".*"/
 
