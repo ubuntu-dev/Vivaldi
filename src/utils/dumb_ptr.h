@@ -3,16 +3,20 @@
 
 namespace vv {
 
-// Forms a dumb, non-owning 'smart' pointer, essentially identical to a regular
-// pointer sans arithmetic.
+/// Forms a dumb, non-owning 'smart' pointer.
+
+/// This class is essentially identical to a regular pointer sans arithmetic.
 template <typename T>
 class dumb_ptr {
 public:
   dumb_ptr(T* ptr = nullptr) : m_ptr{ptr} { }
 
+  /// Returns the underlying raw pointer.
   T* get() const { return m_ptr; }
 
+  /// Returns a reference to the observed object.
   T& operator*() const { return *m_ptr; }
+
   operator bool() const { return m_ptr; }
   T* operator->() const { return m_ptr; }
 
