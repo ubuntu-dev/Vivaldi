@@ -8,6 +8,9 @@ namespace vv {
 
 namespace builtin {
 
+/// Commonly used symbols.
+
+/// Defined for convenience and to prevent repeated constructions.
 namespace sym {
 
 // Defined in builtins.cpp
@@ -29,6 +32,7 @@ const extern vv::symbol equals;
 const extern vv::symbol unequal;
 }
 
+/// Standalone functions in the standard library.
 namespace function {
 
 // Defined in builtins.cpp
@@ -49,6 +53,7 @@ extern value::builtin_function reverse;
 
 }
 
+/// Types in the standard library.
 namespace type {
 
 // Each class has its own file in the builtins/ directory
@@ -73,6 +78,7 @@ extern value::type symbol;
 
 }
 
+/// Populate the provided environment with standard library types and functions.
 void make_base_env(vm::environment& base);
 
 }
