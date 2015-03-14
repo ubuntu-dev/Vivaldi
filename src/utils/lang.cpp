@@ -32,7 +32,7 @@ vv::value::base* vv::find_method(value::type* t, symbol name)
   //decltype(std::begin(t->methods)) i{};
   auto i = std::begin(t->methods);
   while ((i = t->methods.find(name)) == std::end(t->methods) && &t->parent != t)
-    t = static_cast<value::type*>(&t->parent);
+    t = &t->parent;
 
   if (i != std::end(t->methods))
     return i->second;

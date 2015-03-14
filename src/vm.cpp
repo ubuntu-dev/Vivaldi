@@ -131,14 +131,20 @@ void vm::machine::psym(symbol val)
 void vm::machine::ptype(const type_t& type)
 {
   read(type.parent);
-  auto parent = top();
+  auto parent_arg = top();
+  if (parent_arg->type != &builtin::type::custom_type) {
+    pstr("Types can only inherit from other Types");
+    exc();
+    return;
+  }
+  auto& parent = static_cast<value::type&>(*parent_arg);
 
   hash_map<symbol, value::base*> methods;
   for (const auto& i : type.methods) {
     pfn(i.second);
     methods.insert(i.first, top());
   }
-  auto newtype = gc::alloc<value::type>( nullptr, methods, *parent, type.name );
+  auto newtype = gc::alloc<value::type>( nullptr, methods, parent, type.name );
 
   pop(methods.size() + 1); // methods and parent
   push(newtype);
@@ -304,7 +310,7 @@ void vm::machine::pobj(int argc)
 
   auto ctor_type = type;
   while (!ctor_type->constructor)
-    ctor_type = static_cast<value::type*>(&ctor_type->parent);
+    ctor_type = &ctor_type->parent;
   pop(1);
   push(ctor_type->constructor());
   // Hack--- nonconstructible types (e.g. Integer) have constructors that return

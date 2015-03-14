@@ -121,7 +121,7 @@ struct basic_function : public base {
 struct type : public base {
   type(const std::function<value::base*()>& constructor,
        const hash_map<vv::symbol, value::base*>& methods,
-       value::base& parent,
+       value::type& parent,
        vv::symbol name);
 
   // Class methods.
@@ -159,7 +159,7 @@ struct type : public base {
 
   // Parent class. Parent classes are stored as references, since they're
   // unchangeable and can't ever be null (Object's just points to itself).
-  value::base& parent;
+  value::type& parent;
 
   // Name of class. Stored in class so value() can be prettier than just
   // "<type>".
