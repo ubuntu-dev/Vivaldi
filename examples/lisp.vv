@@ -51,16 +51,8 @@ end
 // }}}
 // Parsing {{{
 
-// I should get around to implementing String::replace
-fn replace_all(str, orig, replacement): do
-  let split = reverse(str.split(orig))
-  let first = split.pop()
-  reduce(reverse(split), first, fn (t, i): t + replacement + i)
-end
-
 fn tokenize(str): do
-  str = replace_all(str, "(", " ( ")
-  str = replace_all(str, ")", " ) ")
+  str = str.replace(`([\(\)])`, " $1 ")
   filter(str.split(" "), fn (x): x.size() != 0)
 end
 
