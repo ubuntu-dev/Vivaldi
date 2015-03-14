@@ -1,5 +1,15 @@
 require "assert.vv"
 
+fn test_regex_creation(): do
+  let val = `foo.*bar`
+  `foo(bar)`
+
+  let excepted = false
+  try: `foo(`
+  catch e: excepted = true
+  assert(excepted, "Excepting on invalid regex literal")
+end
+
 fn test_match_index(): do
   let re = `foo.*bar`
   let str = "this sentence contains foobazbar"
@@ -36,6 +46,7 @@ fn test_replace(): do
 end
 
 section("RegExes")
+test(test_regex_creation, "literals and validation")
 test(test_match_index, "match_index")
 test(test_match, "match")
 test(test_regex_result, "RegExResult")

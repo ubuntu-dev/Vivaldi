@@ -153,7 +153,12 @@ void vm::machine::ptype(const type_t& type)
 
 void vm::machine::pre(const std::string& val)
 {
-  push(gc::alloc<value::regex>( std::regex{val}, val ));
+  try {
+    push(gc::alloc<value::regex>( std::regex{val}, val ));
+  } catch (const std::regex_error& e) {
+    pstr(std::string{"Invalid regex: "} += e.what());
+    exc();
+  }
 }
 
 void vm::machine::parr(int size)
