@@ -6,11 +6,10 @@
 
 namespace vv {
 
-/// Simple symbol class.
-
-/// Symbols are, essentially, immutable, cheaply copyable and comparable
-/// strings. They're used throughout Vivaldi both as a builtin type and for
-/// variable/member lookup.
+// Simple symbol class.
+// Symbols are, essentially, immutable, cheaply copyable and comparable
+// strings. They're used throughout Vivaldi both as a builtin type and for
+// variable/member lookup.
 class symbol {
 public:
   symbol(const std::string& str = "");

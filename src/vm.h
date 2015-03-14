@@ -7,25 +7,29 @@ namespace vv {
 
 namespace vm {
 
-/// Class implementing Vivaldi's virtual machine.
+// Class implementing Vivaldi's virtual machine.
 class machine {
 public:
   machine(call_frame&& frame);
 
-  /// Run the current code until completion.
+  // Run the current code until completion.
   void run();
-  /// Run the current code until we attempt to exit (or except out of) the call
-  /// frame on top of the call stack at the time run_cur_scope, at which point
-  /// control is returned to the calling C++ function.
+  // Run the current code until we attempt to exit (or except out of) the call
+  // frame on top of the call stack at the time run_cur_scope, at which point
+  // control is returned to the calling C++ function.
   void run_cur_scope();
 
-  /// Returns the value on top of the stack.
+  // Returns the value on top of the stack.
   value::base* top();
-  /// Pushes the provided value onto the stack.
+  // Pushes the provided value onto the stack.
   void push(value::base* newtop);
 
-  /// GC interface; mark all objects immediately reachable from within the VM.
+  // GC interface; mark all objects immediately reachable from within the VM.
   void mark();
+
+  // VM Instructions (publicly accessible, since base::builtin_funciton needs to
+  // be able to manipulate the VM). Documentation for all the instructions is in
+  // vm/instruction.h.
 
   void pbool(bool val);
   void pflt(double val);
@@ -72,6 +76,8 @@ public:
   void chreqp(const std::string& new_path);
 
   void noop();
+
+  // Optimization VM instructions.
 
   void opt_add();
   void opt_sub();

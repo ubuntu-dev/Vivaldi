@@ -31,7 +31,7 @@
 #include "value/string.h"
 #include "value/symbol.h"
 
-/// Implements a fairly simple recursive-descent parser
+// Implements a fairly simple recursive-descent parser
 
 using namespace vv;
 using namespace ast;
