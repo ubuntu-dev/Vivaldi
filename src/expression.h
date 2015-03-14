@@ -15,9 +15,13 @@ struct command;
 
 namespace ast {
 
+/// Base class for all AST nodes.
 class expression {
 public:
+  /// Code generator (internal; should be made protected); override to implement
+  /// AST class.
   virtual std::vector<vm::command> generate() const = 0;
+  /// Returns finalized VM code for this AST subtree.
   std::vector<vm::command> code() const;
   virtual ~expression() { }
 };
