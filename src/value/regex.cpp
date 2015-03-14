@@ -6,12 +6,13 @@
 
 using namespace vv;
 
-value::regex::regex(const std::regex& val)
+value::regex::regex(const std::regex& val, const std::string& str)
   : base {&builtin::type::regex},
-    val  {val}
+    val  {val},
+    str  {str}
 { }
 
-std::string value::regex::value() const { return "<regex>"; }
+std::string value::regex::value() const { return '`' + str + '`'; }
 
 value::regex_result::regex_result(value::string& str, std::smatch&& val)
   : base       {&builtin::type::regex_result},

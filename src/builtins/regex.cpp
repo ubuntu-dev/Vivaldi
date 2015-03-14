@@ -57,12 +57,17 @@ value::base* fn_regex_init(vm::machine& vm)
   auto& regex = static_cast<value::regex&>(*vm.top());
   vm.arg(0);
   auto arg = vm.top();
-  if (arg->type == &type::regex)
+  if (arg->type == &type::regex) {
     regex.val = to_regex(*arg);
-  else if (arg->type == &type::string)
+    regex.str = static_cast<value::regex*>(arg)->str;
+  }
+  else if (arg->type == &type::string) {
     regex.val = std::regex{to_string(*arg)};
-  else
+    regex.str = to_string(*arg);
+  }
+  else {
     return throw_exception("RegExes can only be constructed from Strings or other RegExes");
+  }
   return &regex;
 }
 

@@ -11,11 +11,13 @@ namespace value {
 
 struct regex : public base {
 public:
-  regex(const std::regex& val = {});
+  regex(const std::regex& val = {}, const std::string& str = {});
 
   std::string value() const override;
 
   std::regex val;
+  // Regex in string form (stored for pretty-printing)
+  std::string str;
 };
 
 struct regex_result : public base {

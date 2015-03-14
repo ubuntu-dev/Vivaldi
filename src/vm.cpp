@@ -153,7 +153,7 @@ void vm::machine::ptype(const type_t& type)
 
 void vm::machine::pre(const std::string& val)
 {
-  push(gc::alloc<value::regex>( std::regex{val} ));
+  push(gc::alloc<value::regex>( std::regex{val}, val ));
 }
 
 void vm::machine::parr(int size)
