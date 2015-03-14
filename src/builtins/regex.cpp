@@ -63,7 +63,7 @@ value::base* fn_regex_init(vm::machine& vm)
   }
   else if (arg->type == &type::string) {
     vm.pre(to_string(*arg));
-    regex = to_regex(*vm.top());
+    regex = *static_cast<value::regex*>(vm.top());
   }
   else {
     return throw_exception("RegExes can only be constructed from Strings or other RegExes");
