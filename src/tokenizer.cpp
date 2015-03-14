@@ -207,6 +207,23 @@ tok_res string_token(boost::string_ref line)
 // }}}
 // '`' {{{
 
+std::pair<char, boost::string_ref> escaped_regex(boost::string_ref line)
+{
+  auto nonescaped = line.front();
+  switch (nonescaped) {
+  case 'a':  return { '\a', line.substr(1) };
+  case 'b':  return { '\b', line.substr(1) };
+  case 'n':  return { '\n', line.substr(1) };
+  case 'f':  return { '\f', line.substr(1) };
+  case 'r':  return { '\r', line.substr(1) };
+  case 't':  return { '\t', line.substr(1) };
+  case 'v':  return { '\v', line.substr(1) };
+  case '0':  return { '\0', line.substr(1) };
+  case '`':  return { '`',  line.substr(1) };
+  default:   return { '\\', line };
+  }
+}
+
 tok_res regex_token(boost::string_ref line)
 {
   std::string token{};
@@ -215,7 +232,7 @@ tok_res regex_token(boost::string_ref line)
     if (line.front() == '\\') {
       line.remove_prefix(1);
       char chr;
-      tie(chr, line) = escaped(line);
+      tie(chr, line) = escaped_regex(line);
       token += chr;
     } else {
       token += line.front();
