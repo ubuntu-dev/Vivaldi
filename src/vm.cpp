@@ -570,7 +570,7 @@ void vm::machine::except_until(size_t stack_pos)
 
   if (last != rbegin(m_call_stack)) {
     auto last_erased = last.base();
-    m_stack.erase(begin(m_stack) + last_erased->frame_ptr - last_erased->argc,
+    m_stack.erase(begin(m_stack) + last_erased->frame_ptr - last_erased->argc + 1,
                   end(m_stack));
   }
   m_call_stack.erase(last.base(), end(m_call_stack));
