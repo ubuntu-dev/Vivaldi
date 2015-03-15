@@ -20,7 +20,9 @@ value::base* fn_dictionary_init(vm::machine& vm)
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type != &type::dictionary)
-    return throw_exception("Dictionaries can only be constructed from other Dictionaries");
+    return throw_exception(message::init_type_error(type::dictionary,
+                                                    type::dictionary,
+                                                    *arg->type));
   dict->val = static_cast<value::dictionary*>( arg )->val;
   return dict;
 }

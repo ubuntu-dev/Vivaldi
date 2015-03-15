@@ -8,6 +8,42 @@ namespace vv {
 
 namespace builtin {
 
+// Error messages (output by exceptions, REPL, etc.)
+namespace message {
+
+// defined in builtins.cpp
+
+const extern std::string inheritance_type_err;
+const extern std::string construction_type_err;
+const extern std::string invalid_self_access;
+const extern std::string divide_by_zero;
+
+std::string invalid_regex(const std::string& error);
+std::string no_such_variable(vv::symbol var);
+std::string already_exists(vv::symbol var);
+std::string has_no_member(const value::base& obj, vv::symbol mem);
+std::string not_callable(const value::base& callee);
+std::string wrong_argc(int expected, int recieved);
+std::string nonconstructible(const value::type& type);
+
+std::string init_type_error(const value::type& self,
+                            const value::type& expected,
+                            const value::type& recieved);
+std::string add_type_error(const value::type& self,
+                           const value::type& expected);
+std::string at_type_error(const value::type& self, const value::type& expected);
+std::string type_error(const value::type& expected, const value::type& recieved);
+
+std::string iterator_owner_error(const value::type& owner);
+std::string iterator_past_start(const value::type& self);
+std::string iterator_past_end(const value::type& self);
+std::string iterator_at_end(const value::type& self);
+
+
+std::string out_of_range(size_t lower, size_t upper, int recieved);
+
+}
+
 // Commonly used symbols; defined for convenience and to prevent repeated
 // constructions, since constructing a symbol is relatively expensive.
 namespace sym {

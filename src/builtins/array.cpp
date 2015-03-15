@@ -21,7 +21,9 @@ value::base* fn_array_init(vm::machine& vm)
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type != &type::array)
-    return throw_exception("Arrays can only be constructed from other Arrays");
+    return throw_exception(message::init_type_error(type::array,
+                                                    type::array,
+                                                    *arg->type));
   arr->val = static_cast<value::array*>( arg )->val;
   return arr;
 }
@@ -49,13 +51,11 @@ value::base* fn_array_pop(value::base* self)
 value::base* fn_array_at(value::base* self, value::base* arg)
 {
   if (arg->type != &type::integer)
-    return throw_exception("Index must be an Integer");
+    return throw_exception(message::at_type_error(type::array, type::integer));
   auto val = static_cast<value::integer*>(arg)->val;
   const auto& arr = static_cast<value::array*>(self)->val;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
-    return throw_exception("Out of range (expected 0-"
-                           + std::to_string(arr.size()) + ", got "
-                           + std::to_string(val) + ")");
+    return throw_exception(message::out_of_range(0, arr.size(), val));
   return arr[static_cast<unsigned>(val)];
 }
 
@@ -64,14 +64,12 @@ value::base* fn_array_set_at(vm::machine& vm)
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type != &type::integer)
-    return throw_exception("Index must be an Integer");
+    return throw_exception(message::at_type_error(type::array, type::integer));
   auto val = static_cast<value::integer*>(arg)->val;
   vm.self();
   auto& arr = static_cast<value::array&>(*vm.top()).val;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
-    return throw_exception("Out of range (expected 0-"
-                           + std::to_string(arr.size()) + ", got "
-                           + std::to_string(val) + ")");
+    return throw_exception(message::out_of_range(0, arr.size(), val));
   vm.arg(1);
   return arr[static_cast<unsigned>(val)] = vm.top();
 }
@@ -94,7 +92,7 @@ value::base* fn_array_add(value::base* self, value::base* arg)
 {
   auto arr = static_cast<value::array*>(self);
   if (arg->type != &type::array)
-    return throw_exception("Only Arrays can be added to other Arrays");
+    return throw_exception(message::add_type_error(type::array, type::array));
   auto other = static_cast<value::array*>(arg);
   copy(begin(other->val), end(other->val), back_inserter(arr->val));
   return arr;
@@ -121,7 +119,7 @@ value::base* fn_array_equals(vm::machine& vm)
   {
     vm.push(second);
     vm.push(first);
-    vm.readm(builtin::sym::equals);
+    vm.readm(sym::equals);
     vm.call(1);
     vm.run_cur_scope();
     auto* res = vm.top();
@@ -156,7 +154,7 @@ value::base* fn_array_iterator_get(value::base* self)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   if (iter->idx == iter->arr.val.size())
-    return throw_exception("ArrayIterator is at end of array");
+    return throw_exception(message::iterator_at_end(type::array_iterator));
   return iter->arr.val[iter->idx];
 }
 
@@ -164,7 +162,7 @@ value::base* fn_array_iterator_increment(value::base* self)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   if (iter->idx == iter->arr.val.size())
-    return throw_exception("ArrayIterators cannot be incremented past end");
+    return throw_exception(message::iterator_past_end(type::array_iterator));
   iter->idx += 1;
   return iter;
 }
@@ -173,7 +171,7 @@ value::base* fn_array_iterator_decrement(value::base* self)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   if (iter->idx == 0)
-    return throw_exception("ArrayIterators cannot be decremented past start");
+    return throw_exception(message::iterator_past_start(type::array_iterator));
   iter->idx -= 1;
   return iter;
 }
@@ -182,14 +180,14 @@ value::base* fn_array_iterator_add(value::base* self, value::base* arg)
 {
   auto iter = static_cast<value::array_iterator*>(self);
 
-  if (arg->type != &builtin::type::integer)
-    return throw_exception("Only Integers can be added to ArrayIterators");
+  if (arg->type != &type::integer)
+    return throw_exception(message::add_type_error(type::array, type::integer));
   auto offset = static_cast<value::integer*>(arg)->val;
 
   if (static_cast<int>(iter->idx) + offset < 0)
-    return throw_exception("ArrayIterators cannot be decremented past start");
+    return throw_exception(message::iterator_past_start(type::array_iterator));
   if (iter->idx + offset > iter->arr.val.size())
-    return throw_exception("ArrayIterators cannot be incremented past end");
+    return throw_exception(message::iterator_past_end(type::array_iterator));
 
   auto other = gc::alloc<value::array_iterator>( *iter );
   static_cast<value::array_iterator*>(other)->idx = iter->idx + offset;
@@ -200,16 +198,16 @@ value::base* fn_array_iterator_subtract(value::base* self, value::base* arg)
 {
   auto iter = static_cast<value::array_iterator*>(self);
 
-  if (arg->type != &builtin::type::integer)
-    return throw_exception("Only Integers can be added to ArrayIterators");
+  if (arg->type != &type::integer) {
+    return throw_exception(message::add_type_error(*self->type, type::integer));
+  }
+
   auto offset = static_cast<value::integer*>(arg)->val;
 
-  if (!offset)
-    return throw_exception("Only numeric types can be added to ArrayIterators");
   if (static_cast<int>(iter->idx) - offset < 0)
-    return throw_exception("ArrayIterators cannot be decremented past start");
+    return throw_exception(message::iterator_past_start(type::array_iterator));
   if (iter->idx - offset > iter->arr.val.size())
-    return throw_exception("ArrayIterators cannot be incremented past end");
+    return throw_exception(message::iterator_past_end(type::array_iterator));
 
   auto other = gc::alloc<value::array_iterator>( *iter );
   static_cast<value::array_iterator*>(other)->idx = iter->idx - offset;
@@ -237,7 +235,7 @@ value::base* fn_array_iterator_greater(value::base* self, value::base* arg)
   auto iter = static_cast<value::array_iterator*>(self);
   auto other = static_cast<value::array_iterator*>(arg);
   if (&iter->arr != &other->arr)
-    return throw_exception("Only ArrayIterators from the same Array can be compared");
+    return throw_exception(message::iterator_owner_error(type::array));
   return gc::alloc<value::boolean>(iter->idx > other->idx );
 }
 
@@ -246,7 +244,7 @@ value::base* fn_array_iterator_less(value::base* self, value::base* arg)
   auto iter = static_cast<value::array_iterator*>(self);
   auto other = static_cast<value::array_iterator*>(arg);
   if (&iter->arr != &other->arr)
-    return throw_exception("Only ArrayIterators from the same Array can be compared");
+    return throw_exception(message::iterator_owner_error(type::array));
   return gc::alloc<value::boolean>(iter->idx < other->idx );
 }
 
@@ -290,7 +288,7 @@ value::type type::array {gc::alloc<value::array>, {
   { {"add"},     &array_add },
   { {"equals"},  &array_equals },
   { {"unequal"}, &array_unequal },
-}, builtin::type::object, {"Array"}};
+}, type::object, {"Array"}};
 
 value::type type::array_iterator {[]{ return nullptr; }, {
   { {"at_start"},  &array_iterator_at_start },
@@ -304,4 +302,4 @@ value::type type::array_iterator {[]{ return nullptr; }, {
   { {"decrement"}, &array_iterator_decrement },
   { {"add"},       &array_iterator_add },
   { {"subtract"},  &array_iterator_subtract },
-}, builtin::type::object, {"ArrayIterator"}};
+}, type::object, {"ArrayIterator"}};

@@ -20,7 +20,9 @@ value::base* fn_file_init(vm::machine& vm)
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type != &type::string)
-    return throw_exception("Files can only be constructed from Strings");
+    return throw_exception(message::init_type_error(type::file,
+                                                    type::string,
+                                                    *arg->type));
   vm.self();
   auto& self = static_cast<value::file&>(*vm.top());
   const auto& filename = static_cast<value::string*>(arg)->val;
@@ -56,7 +58,7 @@ value::base* fn_file_increment(value::base* self)
   auto& file = static_cast<value::file&>(*self);
   if (file.val->peek() == EOF) {
     if (!file.cur_line.size())
-      return throw_exception("Cannot read past end of File");
+      return throw_exception(message::iterator_at_end(type::file));
     file.cur_line.clear();
     return self;
   }

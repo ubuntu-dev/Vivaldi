@@ -70,7 +70,7 @@ value::base* fn_string_unequal(value::base* self, value::base* arg)
 value::base* fn_string_add(value::base* self, value::base* arg)
 {
   if (arg->type != &type::string)
-    return throw_exception("Only strings can be appended to other strings");
+    return throw_exception(message::add_type_error(type::string, type::string));
 
   auto str = to_string(arg);
   auto new_str = static_cast<value::string*>(self)->val + str;
@@ -97,13 +97,11 @@ value::base* fn_string_to_int(value::base* self)
 value::base* fn_string_at(value::base* self, value::base* arg)
 {
   if (arg->type != &type::integer)
-    return throw_exception("Index must be an Integer");
+    return throw_exception(message::at_type_error(type::string, type::integer));
   auto val = static_cast<value::integer*>(arg)->val;
   const auto& str = static_cast<value::string*>(self)->val;
   if (str.size() <= static_cast<unsigned>(val) || val < 0)
-    return throw_exception("Out of range (expected 0-"
-                           + std::to_string(str.size()) + ", got "
-                           + std::to_string(val) + ")");
+    return throw_exception(message::out_of_range(0, str.size(), val));
   return gc::alloc<value::string>( std::string{str[static_cast<unsigned>(val)]} );
 }
 
@@ -225,7 +223,7 @@ value::base* fn_string_iterator_get(value::base* self)
 {
   auto iter = static_cast<value::string_iterator*>(self);
   if (iter->idx == iter->str.val.size())
-    return throw_exception("StringIterator is at end of string");
+    return throw_exception(message::iterator_at_end(type::string_iterator));
   return gc::alloc<value::string>( std::string{iter->str.val[iter->idx]} );
 }
 
@@ -233,7 +231,7 @@ value::base* fn_string_iterator_increment(value::base* self)
 {
   auto iter = static_cast<value::string_iterator*>(self);
   if (iter->idx == iter->str.val.size())
-    return throw_exception("StringIterators cannot be incremented past end");
+    return throw_exception(message::iterator_past_end(type::string_iterator));
   iter->idx += 1;
   return iter;
 }
@@ -242,7 +240,7 @@ value::base* fn_string_iterator_decrement(value::base* self)
 {
   auto iter = static_cast<value::string_iterator*>(self);
   if (iter->idx == 0)
-    return throw_exception("StringIterators cannot be decremented past start");
+    return throw_exception(message::iterator_past_start(type::string_iterator));
   iter->idx -= 1;
   return iter;
 }
@@ -252,13 +250,14 @@ value::base* fn_string_iterator_add(value::base* self, value::base* arg)
   auto iter = static_cast<value::string_iterator*>(self);
 
   if (arg->type != &type::integer)
-    return throw_exception("Only numeric types can be added to StringIterators");
+    return throw_exception(message::add_type_error(type::string_iterator,
+                                                   type::integer));
   auto offset = to_int(arg);
 
   if (static_cast<int>(iter->idx) + offset < 0)
-    return throw_exception("StringIterators cannot be decremented past start");
+    return throw_exception(message::iterator_past_start(type::string_iterator));
   if (iter->idx + offset > iter->str.val.size())
-    return throw_exception("StringIterators cannot be incremented past end");
+    return throw_exception(message::iterator_past_end(type::string_iterator));
 
   auto other = gc::alloc<value::string_iterator>( *iter );
   static_cast<value::string_iterator*>(other)->idx = iter->idx + offset;
@@ -270,13 +269,13 @@ value::base* fn_string_iterator_subtract(value::base* self, value::base* arg)
   auto iter = static_cast<value::string_iterator*>(self);
 
   if (arg->type != &type::integer)
-    return throw_exception("Only numeric types can be added to StringIterators");
+    return throw_exception("Only Integers can be subtracted from StringIterators");
   auto offset = to_int(arg);
 
   if (static_cast<int>(iter->idx) - offset < 0)
-    return throw_exception("StringIterators cannot be decremented past start");
+    return throw_exception(message::iterator_past_start(type::string_iterator));
   if (static_cast<int>(iter->idx) - offset > static_cast<int>(iter->str.val.size()))
-    return throw_exception("StringIterators cannot be incremented past end");
+    return throw_exception(message::iterator_past_end(type::string_iterator));
 
   auto other = gc::alloc<value::string_iterator>( *iter );
   static_cast<value::string_iterator*>(other)->idx = iter->idx - offset;

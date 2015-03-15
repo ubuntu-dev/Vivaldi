@@ -99,14 +99,14 @@ value::base* fn_integer_divides(value::base* self, value::base* arg)
   auto left = to_int(self);
   if (arg->type == &type::floating_point) {
     if (to_float(arg) == 0.0)
-      return throw_exception("cannot divide by zero");
+      return throw_exception(message::divide_by_zero);
     return gc::alloc<value::floating_point>( left / to_float(arg) );
   }
 
   if (arg->type != &type::integer)
     return throw_exception("Right-hand argument is not an Integer");
   if (to_int(arg) == 0)
-    return throw_exception("cannot divide by zero");
+    return throw_exception(message::divide_by_zero);
   return gc::alloc<value::integer>( left / to_int(arg));
 }
 
@@ -157,7 +157,7 @@ value::base* fn_integer_chr(value::base* self)
 {
   auto ord = to_int(self);
   if (ord < 0 || ord > 255)
-    return throw_exception("chr can only be called on integers between 0 to 256");
+    return throw_exception(message::out_of_range(0, 256, ord));
   return gc::alloc<value::string>( std::string{static_cast<char>(ord)} );
 }
 
