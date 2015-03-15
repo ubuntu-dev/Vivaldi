@@ -1,8 +1,9 @@
 #include "builtins.h"
 
 #include "gc.h"
-#include "utils/lang.h"
+#include "messages.h"
 #include "vm.h"
+#include "utils/lang.h"
 #include "value/builtin_function.h"
 #include "value/file.h"
 #include "value/opt_functions.h"

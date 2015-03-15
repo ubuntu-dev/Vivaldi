@@ -33,6 +33,7 @@ add_executable(vivaldi
   src/builtins/symbol.cpp
 
   src/builtins.cpp
+  src/messages.cpp
 
   src/tokenizer.cpp
   src/validator.cpp

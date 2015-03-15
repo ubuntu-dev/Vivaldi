@@ -3,6 +3,7 @@
 #include "builtins.h"
 #include "gc.h"
 #include "get_file_contents.h"
+#include "messages.h"
 #include "parser.h"
 #include "value.h"
 #include "utils/error.h"
@@ -133,7 +134,7 @@ void vm::machine::ptype(const type_t& type)
   read(type.parent);
   auto parent_arg = top();
   if (parent_arg->type != &builtin::type::custom_type) {
-    pstr(builtin::message::inheritance_type_err);
+    pstr(message::inheritance_type_err);
     exc();
     return;
   }
@@ -156,7 +157,7 @@ void vm::machine::pre(const std::string& val)
   try {
     push(gc::alloc<value::regex>( std::regex{val}, val ));
   } catch (const std::regex_error& e) {
-    pstr(builtin::message::invalid_regex(e.what()));
+    pstr(message::invalid_regex(e.what()));
     exc();
   }
 }
@@ -189,7 +190,7 @@ void vm::machine::read(symbol sym)
       return;
     }
   }
-  pstr(builtin::message::no_such_variable(sym));
+  pstr(message::no_such_variable(sym));
   exc();
 }
 
@@ -202,14 +203,14 @@ void vm::machine::write(symbol sym)
       return;
     }
   }
-  pstr(builtin::message::no_such_variable(sym));
+  pstr(message::no_such_variable(sym));
   exc();
 }
 
 void vm::machine::let(symbol sym)
 {
   if (frame().env->members.contains(sym)) {
-    pstr(builtin::message::already_exists(sym));
+    pstr(message::already_exists(sym));
     exc();
   } else {
     frame().env->members.insert(sym, top());
@@ -221,7 +222,7 @@ void vm::machine::self()
   if (frame().env->self) {
     push(frame().env->self.get());
   } else {
-    pstr(builtin::message::invalid_self_access);
+    pstr(message::invalid_self_access);
     exc();
   }
 }
@@ -242,7 +243,7 @@ void vm::machine::readm(symbol sym)
   } else if (auto method = find_method(m_transient_self->type, sym)) {
     push(method);
   } else {
-    pstr(builtin::message::has_no_member(*m_transient_self, sym));
+    pstr(message::has_no_member(*m_transient_self, sym));
     exc();
   }
 }
@@ -257,7 +258,7 @@ void vm::machine::writem(symbol sym)
 void vm::machine::call(int argc)
 {
   if (top()->type != &builtin::type::function) {
-    pstr(builtin::message::not_callable(*top()));
+    pstr(message::not_callable(*top()));
     exc();
     return;
   }
@@ -265,7 +266,7 @@ void vm::machine::call(int argc)
   auto func = static_cast<value::basic_function*>(top());
   pop(1);
   if (func->argc != argc) {
-    pstr(builtin::message::wrong_argc(func->argc, argc));
+    pstr(message::wrong_argc(func->argc, argc));
     exc();
     return;
   }
@@ -305,7 +306,7 @@ void vm::machine::call(int argc)
 void vm::machine::pobj(int argc)
 {
   if (top()->type != &builtin::type::custom_type) {
-    pstr(builtin::message::construction_type_err);
+    pstr(message::construction_type_err);
     exc();
     return;
   }
@@ -321,7 +322,7 @@ void vm::machine::pobj(int argc)
   // nullptr
   if (!top()) {
     pop(1);
-    pstr(builtin::message::nonconstructible(*ctor_type));
+    pstr(message::nonconstructible(*ctor_type));
     exc();
     return;
   }

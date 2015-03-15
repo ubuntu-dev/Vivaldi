@@ -1,6 +1,7 @@
 #include "builtins.h"
 
 #include "gc.h"
+#include "messages.h"
 #include "utils/lang.h"
 #include "value/builtin_function.h"
 #include "value/integer.h"

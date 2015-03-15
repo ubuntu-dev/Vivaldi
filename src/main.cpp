@@ -1,6 +1,7 @@
 #include "builtins.h"
 #include "gc.h"
 #include "get_file_contents.h"
+#include "messages.h"
 #include "parser.h"
 #include "vm.h"
 #include "utils/error.h"
@@ -73,7 +74,7 @@ void run_repl()
         machine.run();
         std::cout << "=> " << machine.top()->value() << '\n';
       } catch (const vv::vm_error& err) {
-        write_error(vv::builtin::message::caught_exception(*err.error()));
+        write_error(vv::message::caught_exception(*err.error()));
       }
     }
   }
@@ -113,7 +114,7 @@ int main(int argc, char** argv)
     try {
       vm.run();
     } catch (vv::vm_error& err) {
-      std::cerr << vv::builtin::message::caught_exception(*err.error()) << '\n';
+      std::cerr << vv::message::caught_exception(*err.error()) << '\n';
       return 65; // data err
     }
   }
