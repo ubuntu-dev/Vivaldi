@@ -26,6 +26,7 @@ namespace value {
 
 struct array;
 struct array_iterator;
+struct blob;
 struct boolean;
 struct builtin_function;
 struct dictionary;

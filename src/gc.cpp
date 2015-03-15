@@ -165,6 +165,11 @@ void gc::set_running_vm(vm::machine& vm)
   g_vm = &vm;
 }
 
+vm::machine& gc::get_running_vm()
+{
+  return *g_vm;
+}
+
 void gc::init()
 {
   int value = 0;

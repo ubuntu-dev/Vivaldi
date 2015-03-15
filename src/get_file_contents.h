@@ -40,6 +40,8 @@ private:
 read_file_result get_file_contents(const std::string& filename,
                                    const std::string& path = "");
 
+bool read_c_lib(const std::string& filename);
+
 }
 
 #endif

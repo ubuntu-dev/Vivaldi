@@ -3,10 +3,13 @@
 #include "builtins.h"
 #include "gc.h"
 #include "parser.h"
+#include "utils/dynamic_library.h"
 #include "value/string.h"
 #include "vm.h"
 
 #include <boost/filesystem.hpp>
+
+#include <dlfcn.h>
 
 #include <fstream>
 #include <sstream>
@@ -79,4 +82,18 @@ read_file_result vv::get_file_contents(const std::string& filename,
     copy(begin(code), end(code), back_inserter(body));
   }
   return { path.native(), move(body) };
+}
+
+bool vv::read_c_lib(const std::string& filename)
+{
+  try {
+    dynamic_library dylib{filename};
+    auto init = dylib.get_sym<void(*)()>("vv_init_lib");
+
+    init();
+
+  } catch (const dylib_error& err) {
+    return false;
+  }
+  return true;
 }

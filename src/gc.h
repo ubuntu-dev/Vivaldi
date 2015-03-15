@@ -87,6 +87,7 @@ inline value::integer* alloc<value::integer>()
 // }}}
 
 void set_running_vm(vm::machine& vm);
+vm::machine& get_running_vm();
 
 // Called in main at the start of the program
 void init();

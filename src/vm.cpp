@@ -369,6 +369,13 @@ void vm::machine::ret(bool copy)
 
 void vm::machine::req(const std::string& filename)
 {
+  if (boost::string_ref(filename).ends_with(".dylib")) {
+    if (!read_c_lib(filename)) {
+      pstr("Unable to load C extension");
+      exc();
+    }
+  }
+
   auto contents = get_file_contents(filename, m_req_path);
   if (!contents.successful()) {
     pstr(contents.error());

@@ -9,8 +9,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversi
 include_directories("src" SYSTEM "/usr/local/include")
 link_directories("/usr/local/lib")
 
-add_executable(vivaldi
-  src/main.cpp
+add_library(vv_internal STATIC
 
   src/gc.cpp
   src/symbol.cpp
@@ -72,6 +71,7 @@ add_executable(vivaldi
 
   src/value/array.cpp
   src/value/array_iterator.cpp
+  src/value/blob.cpp
   src/value/boolean.cpp
   src/value/builtin_function.cpp
   src/value/dictionary.cpp
@@ -90,4 +90,12 @@ add_executable(vivaldi
   src/vm/call_frame.cpp
   src/vm/instruction.cpp)
 
-target_link_libraries(vivaldi boost_system boost_filesystem)
+add_library(vv SHARED
+  src/c_api.cpp)
+
+add_executable(vivaldi
+  src/main.cpp)
+
+target_link_libraries(vv_internal boost_system boost_filesystem)
+target_link_libraries(vivaldi vv_internal)
+target_link_libraries(vv vv_internal)
