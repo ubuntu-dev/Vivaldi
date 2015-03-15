@@ -32,10 +32,14 @@ std::string wrong_argc(int expected, int recieved);
 // Attempt to directly construct a nonconstructible object (e.g. Integer)
 std::string nonconstructible(const value::type& type);
 
-// Constructor called with wrong arguments
+// Constructor called with wrong argument type
 std::string init_type_error(const value::type& self,
                             const value::type& expected,
                             const value::type& recieved);
+// Constructor called with wrong argument type, if more than one type is
+// permissible
+std::string init_multi_type_error(const value::type& self,
+                                  const value::type& recieved);
 // Addition type error
 std::string add_type_error(const value::type& self,
                            const value::type& expected);

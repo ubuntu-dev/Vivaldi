@@ -1,6 +1,7 @@
 #include "builtins.h"
 
 #include "gc.h"
+#include "messages.h"
 #include "utils/lang.h"
 #include "value/builtin_function.h"
 #include "value/opt_functions.h"
@@ -33,7 +34,7 @@ value::base* fn_symbol_init(vm::machine& vm)
   if (arg->type == &type::string)
     sym.val = vv::symbol{to_string(arg)};
   else
-    return throw_exception("Symbols can only be constructed a String or another Symbol");
+    return throw_exception(message::init_multi_type_error(type::symbol, *arg->type));
   return &sym;
 }
 

@@ -64,6 +64,13 @@ std::string message::init_type_error(const value::type& self,
          ", not " + recieved.value();
 }
 
+std::string message::init_multi_type_error(const value::type& self,
+                                           const value::type& recieved)
+{
+  return "Objects of type " + self.value() +=
+         " cannot be constructed from objects of type " + recieved.value();
+}
+
 std::string message::add_type_error(const value::type& self,
                                     const value::type& expected)
 {
