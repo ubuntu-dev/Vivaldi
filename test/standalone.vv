@@ -60,6 +60,33 @@ fn test_reverse(): do
   assert(reverse("").size() == 0, "reverse(\"\").size() == 0")
 end
 
+fn test_sort(): do
+  let unsorted = [1, 5, 4, 2, 3, 0, 1]
+  let sorted = sort(unsorted)
+  assert(sorted == [0, 1, 1, 2, 3, 4, 5], "sorted == [0, 1, 1, 2, 3, 4, 5]")
+  let sort_rng = sort(1 to 5)
+  assert(sort_rng == [1, 2, 3, 4], "sort_rng == [1, 2, 3, 4]")
+
+  let sort_empty = sort([])
+  assert(sort_empty == [], "sort([]) == []")
+
+  class Sortable
+    fn init(x): self._x = x
+    fn less(other): self._x > other._x
+    fn x(): self._x
+  end
+
+  let arr = map(1 to 5, fn (i): new Sortable(i))
+  let sorted_arr = sort(arr)
+  let deboxed = map(sorted_arr, fn (i): i.x())
+
+  assert(deboxed.size() == 4, "deboxed.size() == 4")
+  assert(deboxed[0] == 4, "deboxed[0] == 4")
+  assert(deboxed[1] == 3, "deboxed[1] == 3")
+  assert(deboxed[2] == 2, "deboxed[2] == 2")
+  assert(deboxed[3] == 1, "deboxed[3] == 1")
+end
+
 section("Standalone Functions")
 
 test(test_filter, "filter")
@@ -67,3 +94,4 @@ test(test_map, "map")
 test(test_counting, "count, any, all")
 test(test_reduce, "reduce")
 test(test_reverse, "reverse")
+test(test_sort, "sort")

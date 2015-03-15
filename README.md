@@ -558,6 +558,9 @@ In addition to the above types, Vivaldi has a select few miscellaneous builtins:
           y
         end
 
+* `sort(x)`&mdash; Returns an Array containing the members of range `x` sorted
+  using `less`.
+
 * `any(x, y)`&mdash; Returns `true` if any member of range `x` satisfies
   predicate function `y`, and `false` otherwise.
 

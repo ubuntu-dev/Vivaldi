@@ -43,6 +43,7 @@ extern value::builtin_function gets;
 extern value::builtin_function filter;
 extern value::builtin_function map;
 extern value::builtin_function reduce;
+extern value::builtin_function sort;
 extern value::builtin_function all;
 extern value::builtin_function any;
 extern value::builtin_function count;

@@ -227,6 +227,43 @@ value::base* fn_reduce(vm::machine& vm)
   }
 }
 
+value::base* fn_sort(vm::machine& vm)
+{
+  vm.parr(0);
+  auto& array = static_cast<value::array&>(*vm.top());
+
+  vm.arg(0);
+  auto range = vm.top();
+  vm.pop(1);
+  auto iter = call_method(vm, range, sym::start).value;
+  vm.push(iter);
+
+  for (;;) {
+    auto at_end = call_method(vm, iter, sym::at_end).value;
+    if (truthy(at_end))
+      break;
+
+    auto next_item = call_method(vm, iter, sym::get).value;
+    array.val.push_back(next_item);
+
+    call_method(vm, iter, sym::increment);
+  }
+
+  std::sort(begin(array.val), end(array.val), [&](auto* left, auto* right)
+  {
+    vm.push(right);
+    vm.push(left);
+    vm.readm({"less"});
+    vm.call(1);
+    vm.run_cur_scope();
+    auto res = vm.top();
+    vm.pop(1);
+    return truthy(res);
+  });
+
+  return &array;
+}
+
 // }}}
 // Other {{{
 
@@ -271,6 +308,7 @@ value::builtin_function function::gets{ fn_gets,  0};
 value::builtin_function function::filter{fn_filter, 2};
 value::builtin_function function::map   {fn_map,    2};
 value::builtin_function function::reduce{fn_reduce, 3};
+value::builtin_function function::sort  {fn_sort,   1};
 value::builtin_function function::all   {fn_all,    2};
 value::builtin_function function::any   {fn_any,    2};
 value::builtin_function function::count {fn_count,  2};
@@ -296,6 +334,7 @@ void builtin::make_base_env(vm::environment& base)
     { {"filter"},         &builtin::function::filter },
     { {"map"},            &builtin::function::map },
     { {"reduce"},         &builtin::function::reduce },
+    { {"sort"},           &builtin::function::sort },
     { {"any"},            &builtin::function::any },
     { {"all"},            &builtin::function::all },
     { {"quit"},           &builtin::function::quit },
