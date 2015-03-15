@@ -1,7 +1,8 @@
 #include "builtins.h"
 
-#include "utils/lang.h"
 #include "gc.h"
+#include "messages.h"
+#include "utils/lang.h"
 #include "value/opt_functions.h"
 #include "value/floating_point.h"
 #include "value/integer.h"
@@ -63,7 +64,7 @@ value::base* fn_floating_point_divides(value::base* self, value::base* arg)
   if (!is_float(arg))
     return throw_exception("Right-hand argument is not a Float");
   if (to_float(arg) == 0)
-    return throw_exception("Cannot divide by zero");
+    return throw_exception(message::divide_by_zero);
   return gc::alloc<value::floating_point>( to_float(self) / to_float(arg) );
 }
 

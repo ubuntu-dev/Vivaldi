@@ -1,6 +1,7 @@
 #include "builtins.h"
 #include "gc.h"
 #include "get_file_contents.h"
+#include "messages.h"
 #include "parser.h"
 #include "vm.h"
 #include "utils/error.h"
@@ -36,15 +37,17 @@ std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
       break;
 
     if (validator.invalid() && validator->size()) {
-      std::string error{"invalid syntax"};
+      std::ostringstream error;
+      error << "Invalid syntax";
       if (validator.invalid()) {
-        error += " at "
-              + (validator->front().which == vv::parser::token::type::newline
-                  ? "end of line: "
-                  : '\'' + validator->front().str + "': ")
-              + validator.error();
+        error << " at ";
+        if (validator->front().which == vv::parser::token::type::newline)
+          error << "end of line: ";
+        else
+          error << '\'' << validator->front().str << "': ";
+        error << validator.error();
       }
-      write_error(error);
+      write_error(error.str());
       tokens.clear();
       std::cout << ">>> ";
     } else {
@@ -71,7 +74,7 @@ void run_repl()
         machine.run();
         std::cout << "=> " << machine.top()->value() << '\n';
       } catch (const vv::vm_error& err) {
-        write_error("caught exception: " + err.error()->value());
+        write_error(vv::message::caught_exception(*err.error()));
       }
     }
   }
@@ -111,7 +114,7 @@ int main(int argc, char** argv)
     try {
       vm.run();
     } catch (vv::vm_error& err) {
-      std::cerr << "Caught exception: " << err.error()->value() << '\n';
+      std::cerr << vv::message::caught_exception(*err.error()) << '\n';
       return 65; // data err
     }
   }

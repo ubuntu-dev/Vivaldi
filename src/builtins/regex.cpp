@@ -1,6 +1,7 @@
 #include "builtins.h"
 
 #include "gc.h"
+#include "messages.h"
 #include "utils/lang.h"
 #include "utils/error.h"
 #include "value/builtin_function.h"
@@ -31,7 +32,8 @@ const std::string& to_string(const value::base& val)
 std::pair<const std::smatch&, size_t> get_match_idx(value::base* self, value::base* arg)
 {
   if (arg->type != &type::integer) {
-    auto str = gc::alloc<value::string>("Index must be an Integer");
+    auto str = gc::alloc<value::string>(message::at_type_error(type::regex_result,
+                                        type::integer));
     throw vm_error{str};
   }
 
@@ -39,10 +41,7 @@ std::pair<const std::smatch&, size_t> get_match_idx(value::base* self, value::ba
   auto& match = static_cast<value::regex_result&>(*self).val;
 
   if (idx >= match.size()) {
-    auto str = gc::alloc<value::string>("Out of range (expected 0-" +
-                                        std::to_string(match.size())
-                                        += ", got " + std::to_string(idx)
-                                        += ')');
+    auto str = gc::alloc<value::string>(message::out_of_range(0, match.size(), idx));
     throw vm_error{str};
   }
 
