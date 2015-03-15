@@ -125,6 +125,11 @@ std::string message::out_of_range(size_t lower, size_t upper, int recieved)
   return sstm.str();
 }
 
+std::string message::caught_exception(const value::base& err)
+{
+  return "Caught execption: " + err.value();
+}
+
 // }}}
 // Symbols {{{
 

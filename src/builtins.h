@@ -42,6 +42,8 @@ std::string iterator_at_end(const value::type& self);
 
 std::string out_of_range(size_t lower, size_t upper, int recieved);
 
+std::string caught_exception(const value::base& error);
+
 }
 
 // Commonly used symbols; defined for convenience and to prevent repeated

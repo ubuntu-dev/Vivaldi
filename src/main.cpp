@@ -71,7 +71,7 @@ void run_repl()
         machine.run();
         std::cout << "=> " << machine.top()->value() << '\n';
       } catch (const vv::vm_error& err) {
-        write_error("caught exception: " + err.error()->value());
+        write_error(vv::builtin::message::caught_exception(*err.error()));
       }
     }
   }
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
     try {
       vm.run();
     } catch (vv::vm_error& err) {
-      std::cerr << "Caught exception: " << err.error()->value() << '\n';
+      std::cerr << vv::builtin::message::caught_exception(*err.error()) << '\n';
       return 65; // data err
     }
   }
