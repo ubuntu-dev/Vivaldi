@@ -123,6 +123,9 @@ Simple, immutable string class. Currently supports:
   replaced by String `y`.
 * `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a String equal in value
   to `self`, and `false` otherwise (vice versa for `unequal`).
+* `less(x)`, `greater(x)`, `less_equals(x)`, `greater_equals(x)`&mdash; Return
+  the result of the appropriate lexographical comparsion between `self` and
+  String `x`.
 
 #### Symbols ####
 `'symbol_name` - as in Ruby or Lisp:

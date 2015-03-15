@@ -43,6 +43,13 @@ fn ord(): do
   for i in 0 to ascii.size(): assert(ascii[i].ord() == i, "incorrect ord for ASCII character " + new String(i))
 end
 
+fn comparison(): do
+  assert("foo" < "foobar", "\"foo\" < \"foobar\"")
+  assert("foobar" > "foo", "\"foobar\" > \"foo\"")
+  assert("foo" <= "foo", "\"foo\" <= \"foo\"")
+  assert("abcde" >= "ABCDE", "\"abcde\" <= \"ABCDE\"")
+end
+
 section("Strings")
 test(size, "size")
 test(indexing, "indexing")
@@ -50,3 +57,4 @@ test(addition, "addition")
 test(starts_with, "starts_with")
 test(case, "case-changing")
 test(ord, "ASCII ord and escaping")
+test(comparison, "comparison")
