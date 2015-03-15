@@ -31,7 +31,7 @@ value::base* fn_symbol_init(vm::machine& vm)
   auto arg = vm.top();
   if (arg->type == &type::symbol)
     sym.val = to_symbol(arg);
-  if (arg->type == &type::string)
+  else if (arg->type == &type::string)
     sym.val = vv::symbol{to_string(arg)};
   else
     return throw_exception(message::init_multi_type_error(type::symbol, *arg->type));
