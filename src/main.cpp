@@ -36,15 +36,17 @@ std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
       break;
 
     if (validator.invalid() && validator->size()) {
-      std::string error{"invalid syntax"};
+      std::ostringstream error;
+      error << "Invalid syntax";
       if (validator.invalid()) {
-        error += " at "
-              + (validator->front().which == vv::parser::token::type::newline
-                  ? "end of line: "
-                  : '\'' + validator->front().str + "': ")
-              + validator.error();
+        error << " at ";
+        if (validator->front().which == vv::parser::token::type::newline)
+          error << "end of line: ";
+        else
+          error << '\'' << validator->front().str << "': ";
+        error << validator.error();
       }
-      write_error(error);
+      write_error(error.str());
       tokens.clear();
       std::cout << ">>> ";
     } else {
