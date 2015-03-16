@@ -3,6 +3,7 @@
 
 #include <dlfcn.h>
 
+#include <functional>
 #include <string>
 #include <stdexcept>
 
@@ -40,6 +41,21 @@ public:
   T get_sym(const std::string& symbol)
   {
     return get_sym<T>(symbol.c_str());
+  }
+
+  template <typename T>
+  std::function<T> get_fn(const char* symbol)
+  {
+    auto* sym = dlsym(m_handle, symbol);
+    if (!sym)
+      throw dylib_error{};
+    return **reinterpret_cast<T**>(&sym);
+  }
+
+  template <typename T>
+  std::function<T> get_fn(const std::string& symbol)
+  {
+    return get_fn<T>(symbol.c_str());
   }
 
   ~dynamic_library()

@@ -7,14 +7,26 @@
 
 extern "C" {
 
+namespace vv {
+
+namespace value {
+
+struct base;
+
+}
+
+}
+
+using vv_object_t = vv::value::base;
+
 #else
 
 #include <stddef.h>
 
-#endif
-
 struct vv_object;
 typedef struct vv_object vv_object_t;
+
+#endif
 
 typedef struct vv_symbol {
   const char* string;
