@@ -17,6 +17,7 @@
 #include "value/string_iterator.h"
 #include "value/symbol.h"
 
+#include <cassert>
 #include <list>
 
 using namespace vv;
@@ -167,6 +168,7 @@ void gc::set_running_vm(vm::machine& vm)
 
 vm::machine& gc::get_running_vm()
 {
+  assert(g_vm);
   return *g_vm;
 }
 

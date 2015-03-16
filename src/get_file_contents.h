@@ -3,6 +3,7 @@
 
 #include "vm/call_frame.h"
 
+#include <boost/optional/optional.hpp>
 #include <string>
 
 namespace vv {
@@ -40,7 +41,7 @@ private:
 read_file_result get_file_contents(const std::string& filename,
                                    const std::string& path = "");
 
-bool read_c_lib(const std::string& filename);
+boost::optional<std::string> read_c_lib(const std::string& filename);
 
 }
 

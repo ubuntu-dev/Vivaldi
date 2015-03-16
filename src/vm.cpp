@@ -370,21 +370,24 @@ void vm::machine::ret(bool copy)
 void vm::machine::req(const std::string& filename)
 {
   if (boost::string_ref(filename).ends_with(".dylib")) {
-    if (!read_c_lib(filename)) {
-      pstr("Unable to load C extension");
+    auto err = read_c_lib(filename);
+    if (err) {
+      pstr("Unable to load C extension: " + *err);
       exc();
     }
   }
+  else {
 
-  auto contents = get_file_contents(filename, m_req_path);
-  if (!contents.successful()) {
-    pstr(contents.error());
-    exc();
-    return;
+    auto contents = get_file_contents(filename, m_req_path);
+    if (!contents.successful()) {
+      pstr(contents.error());
+      exc();
+      return;
+    }
+    contents.result().emplace_back(instruction::ret, true);
+    pfn(function_t{0, contents.result()});
+    call(0);
   }
-  contents.result().emplace_back(instruction::ret, true);
-  pfn(function_t{0, contents.result()});
-  call(0);
 }
 
 void vm::machine::jmp(int offset)

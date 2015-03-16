@@ -2,14 +2,15 @@ cmake_minimum_required (VERSION 3.0)
 project (vivaldi)
 
 set(CMAKE_CXX_COMPILER "clang++")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversion -O3 -std=c++1y -stdlib=libc++ -lc++abi")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversion -rdynamic -flat_namespace -O3 -std=c++1y -stdlib=libc++ -lc++abi")
 
 # CMake doesn't search /usr/local/* by default, of course, because that would
 # indicate some modicum of common sense and God knows we can't have that
 include_directories("src" SYSTEM "/usr/local/include")
 link_directories("/usr/local/lib")
 
-add_library(vv_internal STATIC
+add_executable(vivaldi
+  src/main.cpp
 
   src/gc.cpp
   src/symbol.cpp
@@ -42,6 +43,7 @@ add_library(vv_internal STATIC
   src/opt.cpp
 
   src/get_file_contents.cpp
+  src/c_api.cpp
 
   src/ast/assignment.cpp
   src/ast/array.cpp
@@ -90,12 +92,4 @@ add_library(vv_internal STATIC
   src/vm/call_frame.cpp
   src/vm/instruction.cpp)
 
-add_library(vv SHARED
-  src/c_api.cpp)
-
-add_executable(vivaldi
-  src/main.cpp)
-
-target_link_libraries(vv_internal boost_system boost_filesystem)
-target_link_libraries(vivaldi vv_internal)
-target_link_libraries(vv vv_internal)
+target_link_libraries(vivaldi boost_system boost_filesystem)

@@ -84,7 +84,7 @@ read_file_result vv::get_file_contents(const std::string& filename,
   return { path.native(), move(body) };
 }
 
-bool vv::read_c_lib(const std::string& filename)
+boost::optional<std::string> vv::read_c_lib(const std::string& filename)
 {
   try {
     dynamic_library dylib{filename};
@@ -93,7 +93,7 @@ bool vv::read_c_lib(const std::string& filename)
     init();
 
   } catch (const dylib_error& err) {
-    return false;
+    return std::string{err.what()};
   }
-  return true;
+  return {};
 }
