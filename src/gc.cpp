@@ -92,6 +92,12 @@ union value_type {
 
 namespace {
 
+// Loaded dynamic libraries (i.e. C extensions); stored here to be destructed at
+// the end of runtime. XXX: This _has_ to come before g_vals, since g_vals needs
+// to be destructed first (so that no value::blob destructors try to call
+// functions in dynamic libraries).
+std::vector<dynamic_library> g_libs;
+
 // Using list, instead of vector, for two reasons:
 // - copying value_type's is both infeasible and expensive
 // - pointers to value_type's (i.e. iterators in g_vals) can never be
@@ -172,6 +178,12 @@ vm::machine& gc::get_running_vm()
 {
   assert(g_vm);
   return *g_vm;
+}
+
+dynamic_library& gc::load_dynamic_library(const std::string& filename)
+{
+  g_libs.emplace_back(filename);
+  return g_libs.back();
 }
 
 void gc::init()

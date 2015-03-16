@@ -2,6 +2,7 @@
 #define VV_GC_H
 
 #include "value.h"
+#include "utils/dynamic_library.h"
 #include "value/boolean.h"
 #include "value/integer.h"
 #include "value/nil.h"
@@ -88,6 +89,8 @@ inline value::integer* alloc<value::integer>()
 
 void set_running_vm(vm::machine& vm);
 vm::machine& get_running_vm();
+
+dynamic_library& load_dynamic_library(const std::string& filename);
 
 // Called in main at the start of the program
 void init();

@@ -23,10 +23,21 @@ public:
       throw dylib_error{};
   }
 
-  dynamic_library(const dynamic_library& other) = delete;
-  dynamic_library(dynamic_library&& other) = delete;
-  dynamic_library& operator=(const dynamic_library& other) = delete;
-  dynamic_library& operator=(dynamic_library&& other) = delete;
+  dynamic_library()
+    : m_handle {nullptr}
+  { }
+
+  dynamic_library(dynamic_library&& other)
+    : m_handle {other.m_handle}
+  {
+    other.m_handle = nullptr;
+  }
+
+  dynamic_library& operator=(dynamic_library&& other)
+  {
+    std::swap(m_handle, other.m_handle);
+    return *this;
+  }
 
   template <typename T>
   T get_sym(const char* symbol)
@@ -60,7 +71,8 @@ public:
 
   ~dynamic_library()
   {
-    dlclose(m_handle);
+    if (m_handle)
+      dlclose(m_handle);
   }
 
 private:

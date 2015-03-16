@@ -87,7 +87,7 @@ read_file_result vv::get_file_contents(const std::string& filename,
 boost::optional<std::string> vv::read_c_lib(const std::string& filename)
 {
   try {
-    dynamic_library dylib{filename};
+    auto& dylib = gc::load_dynamic_library(filename);
     auto init = dylib.get_fn<void()>("vv_init_lib");
 
     init();
