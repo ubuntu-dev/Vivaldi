@@ -380,6 +380,7 @@ void vm::machine::req(const std::string& filename)
       exc();
       return;
     }
+    pnil();
     ret(true);
   }
   else {
@@ -390,6 +391,7 @@ void vm::machine::req(const std::string& filename)
       exc();
       return;
     }
+    contents.result().emplace_back(instruction::pnil);
     contents.result().emplace_back(instruction::ret, true);
     pfn(function_t{0, contents.result()});
     call(0);
