@@ -3,6 +3,7 @@
 #include "builtins.h"
 #include "value/array.h"
 #include "value/array_iterator.h"
+#include "value/blob.h"
 #include "value/builtin_function.h"
 #include "value/boolean.h"
 #include "value/dictionary.h"
@@ -45,6 +46,7 @@ union value_type {
   value::array            array;
   value::array_iterator   array_iterator;
   value::base             base;
+  value::blob             blob;
   value::builtin_function builtin_function;
   value::dictionary       dictionary;
   value::file             file;
