@@ -52,9 +52,7 @@ vv_object_t* vv_get_mem(vv_object_t* obj, vv_symbol_t name);
 vv_object_t* vv_set_mem(vv_object_t* obj, vv_symbol_t name, vv_object_t* val);
 vv_object_t* vv_get_type(vv_object_t* obj);
 
-vv_object_t* vv_create_object(vv_object_t* type,
-                              vv_object_t** args,
-                              size_t argc);
+vv_object_t* vv_new_object(vv_object_t* type, vv_object_t** args, size_t argc);
 
 extern vv_object_t* vv_builtin_type_array;
 extern vv_object_t* vv_builtin_type_array_iterator;
@@ -71,37 +69,38 @@ extern vv_object_t* vv_builtin_type_string;
 extern vv_object_t* vv_builtin_type_string_iterator;
 extern vv_object_t* vv_builtin_type_symbol;
 
-vv_object_t* vv_create_bool(int val);
-vv_object_t* vv_create_float(double val);
-vv_object_t* vv_create_file(const char* filename);
-vv_object_t* vv_create_int(int quant);
-vv_object_t* vv_create_nil();
-vv_object_t* vv_create_regex(const char* reg);
-vv_object_t* vv_create_string(const char* str);
-vv_object_t* vv_create_symbol(vv_symbol_t sym);
+vv_object_t* vv_new_bool(int val);
+vv_object_t* vv_new_float(double val);
+vv_object_t* vv_new_file(const char* filename);
+vv_object_t* vv_new_int(int quant);
+vv_object_t* vv_new_nil();
+vv_object_t* vv_new_regex(const char* reg);
+vv_object_t* vv_new_string(const char* str);
+vv_object_t* vv_new_symbol(vv_symbol_t sym);
 
-vv_object_t* vv_create_blob(void* blob, void(*destructor)(vv_object_t*));
+vv_object_t* vv_new_blob(void* blob, void(*destructor)(vv_object_t*));
 
 vv_object_t* vv_get_parent(vv_object_t* type);
 
-vv_object_t* vv_create_type(const char* name,
-                            vv_object_t* parent,
-                            vv_object_t*(*constructor)());
+vv_object_t* vv_new_type(const char* name,
+                         vv_object_t* parent,
+                         vv_object_t*(*constructor)(),
+                         vv_object_t*(*init)(vv_object_t*),
+                         size_t init_argc);
 
 vv_object_t* vv_get_arg(size_t argnum);
-vv_object_t* vv_create_function(vv_object_t*(*func)(),
-                                size_t argc);
+vv_object_t* vv_new_function(vv_object_t*(*func)(), size_t argc);
 
-vv_object_t* vv_define_method(vv_object_t* type,
-                              const char* name,
-                              vv_object_t*(*func)(vv_object_t*),
-                              size_t argc);
-vv_object_t* vv_define_monop(vv_object_t* type,
-                             const char* name,
-                             vv_object_t*(*monop)(vv_object_t*));
-vv_object_t* vv_define_binop(vv_object_t* type,
-                             const char* name,
-                             vv_object_t*(*binop)(vv_object_t*, vv_object_t*));
+vv_object_t* vv_add_method(vv_object_t* type,
+                           const char* name,
+                           vv_object_t*(*func)(vv_object_t*),
+                           size_t argc);
+vv_object_t* vv_add_monop(vv_object_t* type,
+                          const char* name,
+                          vv_object_t*(*monop)(vv_object_t*));
+vv_object_t* vv_add_binop(vv_object_t* type,
+                          const char* name,
+                          vv_object_t*(*binop)(vv_object_t*, vv_object_t*));
 
 vv_object_t* vv_let(vv_symbol_t name, vv_object_t* obj);
 vv_object_t* vv_write(vv_symbol_t name, vv_object_t* obj);

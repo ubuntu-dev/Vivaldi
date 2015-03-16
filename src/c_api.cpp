@@ -17,8 +17,6 @@
 #include "value/string.h"
 #include "value/symbol.h"
 
-#include <cassert>
-
 using namespace vv;
 
 namespace {
@@ -124,7 +122,7 @@ vv_object_t* vv_get_type(vv_object_t* obj)
   return obj->type;
 }
 
-vv_object_t* vv_create_object(vv_object_t* type, vv_object_t** args, size_t argc)
+vv_object_t* vv_new_object(vv_object_t* type, vv_object_t** args, size_t argc)
 {
   for (auto i = argc; i--;)
     cvm().push(args[i]);
@@ -154,38 +152,38 @@ vv_object_t* vv_builtin_type_string         {&builtin::type::string};
 vv_object_t* vv_builtin_type_string_iterator{&builtin::type::string_iterator};
 vv_object_t* vv_builtin_type_symbol         {&builtin::type::symbol};
 
-vv_object_t* vv_create_bool(int val)
+vv_object_t* vv_new_bool(int val)
 {
   cvm().pbool(val);
   return cvm().top();
 }
 
-vv_object_t* vv_create_float(double val)
+vv_object_t* vv_new_float(double val)
 {
   cvm().pflt(val);
   return cvm().top();
 }
 
-vv_object_t* vv_create_file(const char* filename)
+vv_object_t* vv_new_file(const char* filename)
 {
   auto file = gc::alloc<value::file>( filename );
   cvm().push(file);
   return file;
 }
 
-vv_object_t* vv_create_int(int val)
+vv_object_t* vv_new_int(int val)
 {
   cvm().pint(val);
   return cvm().top();
 }
 
-vv_object_t* vv_create_nil()
+vv_object_t* vv_new_nil()
 {
   cvm().pnil();
   return cvm().top();
 }
 
-vv_object_t* vv_create_regex(const char* reg)
+vv_object_t* vv_new_regex(const char* reg)
 {
   try {
     cvm().pre(reg);
@@ -195,19 +193,19 @@ vv_object_t* vv_create_regex(const char* reg)
   }
 }
 
-vv_object_t* vv_create_string(const char* str)
+vv_object_t* vv_new_string(const char* str)
 {
   cvm().pstr(str);
   return cvm().top();
 }
 
-vv_object_t* vv_create_symbol(vv_symbol_t sym)
+vv_object_t* vv_new_symbol(vv_symbol_t sym)
 {
   cvm().psym({sym.string});
   return cvm().top();
 }
 
-vv_object_t* vv_create_blob(void* blob, void(*dtor)(vv_object_t*))
+vv_object_t* vv_new_blob(void* blob, void(*dtor)(vv_object_t*))
 {
   cvm().push(gc::alloc<value::blob>( blob, dtor ));
   return cvm().top();
@@ -220,19 +218,31 @@ vv_object_t* vv_get_parent(vv_object_t* type)
   return &static_cast<value::type*>(type)->parent;
 }
 
-vv_object_t* vv_create_type(const char* name,
-                           vv_object_t* parent,
-                           vv_object_t*(*ctor)())
+vv_object_t* vv_new_type(const char* name,
+                         vv_object_t* parent,
+                         vv_object_t*(*ctor)(),
+                         vv_object_t*(*init)(vv_object_t*),
+                         size_t argc)
 {
   auto& cpp_parent = parent ? static_cast<value::type&>(*parent)
                             : builtin::type::object;
 
   symbol sym_name{name};
-  auto type = gc::alloc<value::type>(
-      ctor,
-      hash_map<symbol, value::base*>{ },
-      cpp_parent,
-      sym_name );
+  hash_map<symbol, value::base*> methods{ };
+  if (init) {
+    auto cpp_fn = [init](vm::machine& vm)
+    {
+      vm.self();
+      auto* self = vm.top();
+      vm.pop(1);
+      return init(self);
+    };
+    auto fn = gc::alloc<value::builtin_function>(cpp_fn, static_cast<int>(argc));
+    methods.insert({"init"}, fn);
+    cvm().push(fn);
+  }
+
+  auto type = gc::alloc<value::type>( ctor, methods, cpp_parent, sym_name );
 
   cvm().push(type);
   cvm().let(sym_name);
@@ -247,20 +257,19 @@ vv_object_t* vv_get_arg(size_t argnum)
   return obj;
 }
 
-vv_object_t* vv_create_function(vv_object_t*(func)(), size_t argc)
+vv_object_t* vv_new_function(vv_object_t*(func)(), size_t argc)
 {
   auto cpp_func = [func](vm::machine&) { return func(); };
 
   auto fn = gc::alloc<value::builtin_function>(cpp_func, static_cast<int>(argc));
-  assert(fn->fn_body);
   cvm().push(fn);
   return cvm().top();
 }
 
-vv_object_t* vv_define_method(vv_object_t* type,
-                             const char* name,
-                             vv_object_t*(*func)(vv_object_t*),
-                             size_t argc)
+vv_object_t* vv_add_method(vv_object_t* type,
+                           const char* name,
+                           vv_object_t*(*func)(vv_object_t*),
+                           size_t argc)
 {
   auto cpp_func = [func](vm::machine& vm)
   {
@@ -275,18 +284,18 @@ vv_object_t* vv_define_method(vv_object_t* type,
   return fn;
 }
 
-vv_object_t* vv_define_monop(vv_object_t* type,
-                            const char* name,
-                            vv_object_t*(*func)(vv_object_t*))
+vv_object_t* vv_add_monop(vv_object_t* type,
+                          const char* name,
+                          vv_object_t*(*func)(vv_object_t*))
 {
   auto fn = gc::alloc<value::opt_monop>( func );
   static_cast<value::type*>(type)->methods[{name}] = fn;
   return fn;
 }
 
-vv_object_t* vv_define_binop(vv_object_t* type,
-                            const char* name,
-                            vv_object_t*(*func)(vv_object_t*, vv_object_t*))
+vv_object_t* vv_add_binop(vv_object_t* type,
+                          const char* name,
+                          vv_object_t*(*func)(vv_object_t*, vv_object_t*))
 {
   auto fn = gc::alloc<value::opt_binop>( func );
   static_cast<value::type*>(type)->methods[{name}] = fn;
