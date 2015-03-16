@@ -5,6 +5,7 @@
 #include "value.h"
 #include "vm.h"
 #include "utils/error.h"
+#include "utils/lang.h"
 #include "value/blob.h"
 #include "value/boolean.h"
 #include "value/builtin_function.h"
@@ -24,6 +25,18 @@ namespace {
 vm::machine& cvm()
 {
   return gc::get_running_vm();
+}
+
+template <typename... Args>
+std::function<vv_object_t*(Args...)> fn_with_err_check(vv_object_t*(*orig)(Args...))
+{
+  return [orig](Args&&... args...)
+  {
+    auto* res = orig(std::forward<Args>(args)...);
+    if (!res)
+      throw_exception("Error calling C extension");
+    return res;
+  };
 }
 
 }
@@ -230,12 +243,13 @@ vv_object_t* vv_new_type(const char* name,
   symbol sym_name{name};
   hash_map<symbol, value::base*> methods{ };
   if (init) {
-    auto cpp_fn = [init](vm::machine& vm)
+    auto checked_init = fn_with_err_check(init);
+    auto cpp_fn = [checked_init](vm::machine& vm)
     {
       vm.self();
       auto* self = vm.top();
       vm.pop(1);
-      return init(self);
+      return checked_init(self);
     };
     auto fn = gc::alloc<value::builtin_function>(cpp_fn, static_cast<int>(argc));
     methods.insert({"init"}, fn);
@@ -259,7 +273,8 @@ vv_object_t* vv_get_arg(size_t argnum)
 
 vv_object_t* vv_new_function(vv_object_t*(func)(), size_t argc)
 {
-  auto cpp_func = [func](vm::machine&) { return func(); };
+  auto checked_fn = fn_with_err_check(func);
+  auto cpp_func = [checked_fn](vm::machine&) { return checked_fn(); };
 
   auto fn = gc::alloc<value::builtin_function>(cpp_func, static_cast<int>(argc));
   cvm().push(fn);
@@ -271,12 +286,13 @@ vv_object_t* vv_add_method(vv_object_t* type,
                            vv_object_t*(*func)(vv_object_t*),
                            size_t argc)
 {
-  auto cpp_func = [func](vm::machine& vm)
+  auto checked_fn = fn_with_err_check(func);
+  auto cpp_func = [checked_fn](vm::machine& vm)
   {
     vm.self();
     auto* self = vm.top();
     vm.pop(1);
-    return func(self);
+    return checked_fn(self);
   };
 
   auto fn = gc::alloc<value::builtin_function>(cpp_func, static_cast<int>(argc));
@@ -288,7 +304,7 @@ vv_object_t* vv_add_monop(vv_object_t* type,
                           const char* name,
                           vv_object_t*(*func)(vv_object_t*))
 {
-  auto fn = gc::alloc<value::opt_monop>( func );
+  auto fn = gc::alloc<value::opt_monop>( fn_with_err_check(func) );
   static_cast<value::type*>(type)->methods[{name}] = fn;
   return fn;
 }
@@ -297,7 +313,7 @@ vv_object_t* vv_add_binop(vv_object_t* type,
                           const char* name,
                           vv_object_t*(*func)(vv_object_t*, vv_object_t*))
 {
-  auto fn = gc::alloc<value::opt_binop>( func );
+  auto fn = gc::alloc<value::opt_binop>( fn_with_err_check(func) );
   static_cast<value::type*>(type)->methods[{name}] = fn;
   return fn;
 }
