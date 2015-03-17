@@ -127,24 +127,23 @@ parse_res<> parse_expression(token_string tokens)
 
 // Operators {{{
 
-template <typename F1, typename F2, typename Pred, typename Transform>
+template <typename F1, typename Pred, typename Transform>
 parse_res<> parse_operator_expr(token_string tokens,
-                                const F1& pre,
-                                const F2& post,
+                                const F1& lower_pred,
                                 const Pred& test,
                                 const Transform& convert)
 {
-  auto left_res = pre(tokens);
+  auto left_res = lower_pred(tokens);
   if (!left_res)
     return left_res;
   tokens = left_res->second;
 
-  if (tokens.size() && test(tokens.front().which)) {
+  while (tokens.size() && test(tokens.front().which)) {
     auto left = move(left_res->first);
 
     symbol method{convert(tokens.front().which)};
 
-    auto right_res = post(tokens.subvec(1)); // method (i.e. binop)
+    auto right_res = lower_pred(tokens.subvec(1)); // method (i.e. binop)
     auto right = move(right_res->first);
     tokens = right_res->second;
 
@@ -152,7 +151,7 @@ parse_res<> parse_operator_expr(token_string tokens,
     arg_t arg{};
     arg.emplace_back(move(right));
 
-    return {{std::make_unique<function_call>(move(member), move(arg)), tokens}};
+    left_res = {{std::make_unique<function_call>(move(member), move(arg)), tokens}};
   }
   return left_res;
 }
@@ -164,14 +163,14 @@ parse_res<> parse_prec13(token_string tokens)
     return left_res;
   tokens = left_res->second;
 
-  if (tokens.size() && tokens.front().which == token::type::or_sign) {
+  while (tokens.size() && tokens.front().which == token::type::or_sign) {
     auto left = move(left_res->first);
 
     auto right_res = parse_prec13(tokens.subvec(1)); // '||'
     auto right = move(right_res->first);
     tokens = right_res->second;
 
-    return {{ std::make_unique<logical_or>(move(left), move(right)), tokens }};
+    left_res = {{ std::make_unique<logical_or>(move(left), move(right)), tokens }};
   }
   return left_res;
 }
@@ -183,20 +182,20 @@ parse_res<> parse_prec12(token_string tokens)
     return left_res;
   tokens = left_res->second;
 
-  if (tokens.size() && tokens.front().which == token::type::and_sign) {
+  while (tokens.size() && tokens.front().which == token::type::and_sign) {
     auto left = move(left_res->first);
     auto right_res = parse_prec12(tokens.subvec(1)); // '&&'
     auto right = move(right_res->first);
     tokens = right_res->second;
 
-    return {{ std::make_unique<logical_and>(move(left), move(right)), tokens }};
+    left_res = {{ std::make_unique<logical_and>(move(left), move(right)), tokens }};
   }
   return left_res;
 }
 
 parse_res<> parse_prec11(token_string tokens)
 {
-  return parse_operator_expr(tokens, parse_prec10, parse_prec11,
+  return parse_operator_expr(tokens, parse_prec10,
                              [](auto t)
                              {
                                return t == token::type::equals
@@ -204,13 +203,14 @@ parse_res<> parse_prec11(token_string tokens)
                              },
                              [](auto t)
                              {
-                               return (t == token::type::equals) ? "equals" : "unequal";
+                               return (t == token::type::equals) ? "equals"
+                                                                 : "unequal";
                              });
 }
 
 parse_res<> parse_prec10(token_string tokens)
 {
-  return parse_operator_expr(tokens, parse_prec9, parse_prec10,
+  return parse_operator_expr(tokens, parse_prec9,
                              [](auto t)
                              {
                                return t == token::type::greater
@@ -234,7 +234,7 @@ parse_res<> parse_prec9(token_string tokens)
     return left_res;
   tokens = left_res->second;
 
-  if (tokens.size() && tokens.front().which == token::type::to) {
+  while (tokens.size() && tokens.front().which == token::type::to) {
     auto left = move(left_res->first);
     auto right_res = parse_prec9(tokens.subvec(1)); // 'to'
     auto right = move(right_res->first);
@@ -246,35 +246,35 @@ parse_res<> parse_prec9(token_string tokens)
 
     auto range = std::make_unique<variable>( symbol{"Range"} );
 
-    return {{std::make_unique<object_creation>(move(range), move(args)), tokens}};
+    left_res = {{std::make_unique<object_creation>(move(range), move(args)), tokens}};
   }
   return left_res;
 }
 
 parse_res<> parse_prec8(token_string tokens)
 {
-  return parse_operator_expr(tokens, parse_prec7, parse_prec8,
+  return parse_operator_expr(tokens, parse_prec7,
                              [](auto t) { return t == token::type::pipe; },
                              [](auto) { return "bitor"; });
 }
 
 parse_res<> parse_prec7(token_string tokens)
 {
-  return parse_operator_expr(tokens, parse_prec6, parse_prec7,
+  return parse_operator_expr(tokens, parse_prec6,
                              [](auto t) { return t == token::type::caret; },
                              [](auto) { return "xor"; });
 }
 
 parse_res<> parse_prec6(token_string tokens)
 {
-  return parse_operator_expr(tokens, parse_prec5, parse_prec6,
+  return parse_operator_expr(tokens, parse_prec5,
                              [](auto t) { return t == token::type::ampersand; },
                              [](auto) { return "bitand"; });
 }
 
 parse_res<> parse_prec5(token_string tokens)
 {
-  return parse_operator_expr(tokens, parse_prec4, parse_prec5,
+  return parse_operator_expr(tokens, parse_prec4,
                              [](auto t)
                              {
                                return t == token::type::lshift
@@ -288,7 +288,7 @@ parse_res<> parse_prec5(token_string tokens)
 
 parse_res<> parse_prec4(token_string tokens)
 {
-  return parse_operator_expr(tokens, parse_prec3, parse_prec4,
+  return parse_operator_expr(tokens, parse_prec3,
                              [](auto t) { return t == token::type::plus
                                               || t == token::type::dash; },
                              [](auto t)
@@ -299,7 +299,7 @@ parse_res<> parse_prec4(token_string tokens)
 
 parse_res<> parse_prec3(token_string tokens)
 {
-  return parse_operator_expr(tokens, parse_prec2, parse_prec3,
+  return parse_operator_expr(tokens, parse_prec2,
                              [](auto s)
                              {
                                return s == token::type::star
@@ -316,7 +316,7 @@ parse_res<> parse_prec3(token_string tokens)
 
 parse_res<> parse_prec2(token_string tokens)
 {
-  return parse_operator_expr(tokens, parse_prec1, parse_prec2,
+  return parse_operator_expr(tokens, parse_prec1,
                              [](auto t) { return t == token::type::double_star; },
                              [](auto) { return "pow"; });
 }
