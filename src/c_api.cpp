@@ -137,7 +137,7 @@ vv_object_t* vv_get_type(vv_object_t* obj)
 
 vv_object_t* vv_new_object(vv_object_t* type, vv_object_t** args, size_t argc)
 {
-  for (auto i = argc; i--;)
+  for (size_t i{}; i != argc; ++i)
     cvm().push(args[i]);
 
   cvm().push(type);
