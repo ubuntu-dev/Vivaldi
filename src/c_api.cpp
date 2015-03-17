@@ -224,6 +224,11 @@ vv_object_t* vv_new_blob(void* blob, void(*dtor)(vv_object_t*))
   return cvm().top();
 }
 
+vv_object_t* vv_alloc_blob(void* blob, void(*dtor)(vv_object_t*))
+{
+  return gc::alloc<value::blob>( blob, dtor );
+}
+
 vv_object_t* vv_get_parent(vv_object_t* type)
 {
   if (type->type != &builtin::type::custom_type)

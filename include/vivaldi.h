@@ -73,23 +73,24 @@ vv_object_t* vv_new_bool(int val);
 vv_object_t* vv_new_float(double val);
 vv_object_t* vv_new_file(const char* filename);
 vv_object_t* vv_new_int(int quant);
-vv_object_t* vv_new_nil();
+vv_object_t* vv_new_nil(void);
 vv_object_t* vv_new_regex(const char* reg);
 vv_object_t* vv_new_string(const char* str);
 vv_object_t* vv_new_symbol(vv_symbol_t sym);
 
 vv_object_t* vv_new_blob(void* blob, void(*destructor)(vv_object_t*));
+vv_object_t* vv_alloc_blob(void* blob, void(*destructor)(vv_object_t*));
 
 vv_object_t* vv_get_parent(vv_object_t* type);
 
 vv_object_t* vv_new_type(const char* name,
                          vv_object_t* parent,
-                         vv_object_t*(*constructor)(),
+                         vv_object_t*(*constructor)(void),
                          vv_object_t*(*init)(vv_object_t*),
                          size_t init_argc);
 
 vv_object_t* vv_get_arg(size_t argnum);
-vv_object_t* vv_new_function(vv_object_t*(*func)(), size_t argc);
+vv_object_t* vv_new_function(vv_object_t*(*func)(void), size_t argc);
 
 vv_object_t* vv_add_method(vv_object_t* type,
                            const char* name,
