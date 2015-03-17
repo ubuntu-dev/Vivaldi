@@ -38,7 +38,11 @@ Backus-Naur form, see grammar.txt.
         $ cd Vivaldi
         $ mkdir build
         $ cd build
+        $ # To build locally
         $ cmake .. && make
+        $ # To install to some directory
+        $ cmake -DCMAKE_INSTALL_PREFIX=/my/install/directory
+        $ make && make install
 
 Vivaldi's been tested on 64-bit OS X 10.10.2, and 32-bit Arch Linux with Linux
 3.18, both with Clang/libc++ 3.5 and Boost 1.57.0. libc++ is required, and,
@@ -599,10 +603,136 @@ More to be added eventually.
 
 See examples folder for more.
 
+### C API ###
+
+The C API is extremely new, largely untested, and probably quite buggy and
+incomplete. That said, it should be possible to play around with it some. To
+use:
+
+#### Instructions ####
+
+* Include the header [include/vivaldi.h](include/vivaldi.h) in your C code; this
+  exposes all the functions and types defined by the C api.
+
+* Define a function `void vv_init_lib(void)`; this will be called when your
+  library is loaded by Vivaldi. Define all your custom Vivaldi types, variables,
+  and functions here.
+
+* Compile your exension as a shared library with arguments ` -undefined
+  dynamic_lookup -shared -fPIC`. The resulting `so` or `dylib` will be available
+  to Vivaldi via `require`. For instance, an exension `example.dylib` can be
+  accessed via `require "example"`.
+
+#### Tips ####
+
+* Any function beginning `vv_new_` will instantiate a new Vivaldi object with
+  the passed value. For instance, `vv_new_int(quant)` defines a new Integer with
+  the int value `quant`. On success, they'll return a pointer to the
+  instantiated Vivaldi object; on failure, they'll return `NULL`.
+
+* Like any Vivaldi functions, your C extension functions must return a value
+  (namely, a `vv_object_t*`). If your function has failed (either because of bad
+  input, or because a Vivaldi API function failed), return `NULL`, and a generic
+  exception will be thrown. At the moment, unfortunately, there's no support for
+  more fine-grained exception support.
+
+* Standalone Vivaldi functions are defined with a signature of `vv_object_t*
+  my_C_func(void)`. Vivaldi arguments are accessed via `vv_get_arg(argnum)`. To
+  expose the function to Vivaldi, call `vv_new_function(my_C_func,
+  expected_number_of_args)` in `vv_init_lib`. Argument number checking is
+  handled by Vivaldi.
+
+* Vivaldi types require several components:
+
+  * A name, passed as a `const char*`.
+
+  * A parent class, or `NULL` to inherit from object.
+
+  * A constructor, which allocates an uninitialized object out of the firmament.
+  Typically, your types will include binary blobs of data, since there's only so
+  much you can do with builtin types. To create these blobs, call
+  `vv_alloc_blob(pointer_to_my_blob, destructor)` (for destructors, see below).
+  Constructors will have the signature `vv_object_t* my_ctor(void)`. DON'T call
+  any `vv_new_` methods in your constructor, or weird side-effects could result.
+
+  * (Assuming your type is created via `vv_alloc_blob`) A destructor, which
+  frees any resources held in your binary blob. These functions have the
+  signature `void my_dtor(vv_object_t* self)`. They're not defined along with
+  the type, but rather in your constructor, where they're passed to
+  `vv_alloc_blob`.
+
+  * (optionally) an `init` function, which is a Vivaldi method. The methods are
+  passed the result of your constructor as `self`, and initialize it to a
+  reasonable state.
+
+  * An expected number of arguments for `init`. If `init` is `NULL`, this
+  value is ignored.
+
+The function call to create a type is `vv_new_type(name, parent, ctor,
+init_or_NULL, init_argc)`.
+
+* Vivaldi methods are defined in one of three ways:
+
+  * For methods taking no arguments (a monop), define a function with the
+  signature `vv_object_t* my_C_monop(vv_object_t* self)`. Register it in
+  `vv_init_lib` by calling `vv_add_monop(my_type, method_name, my_C_monop)`.
+
+  * For methods taking one argument (a binop), define a function with the
+  signature `vv_object_t* my_C_binop(vv_object_t* self, vv_object_t* arg)`.
+  Register it in `vv_init_lib` by calling `vv_add_binop(my_type, method_name,
+  my_C_binop)`.
+
+  * For methods taking two or more arguments, define a function with the
+  signature `vv_object_t* my_C_method(vv_object_t* self)`. Like with standalone
+  functions, Vivaldi arguments are accessed via `vv_get_arg`. Register it in
+  `vv_init_lib` by calling `vv_add_method(my_type, method_name, my_C_method,
+  expected_arg_count)`.
+
+Caveat: all `init` functions, even if they take zero or one arguments, can't be
+defined as monops or binops! This is because they're special, and are passed as
+arguments to `vv_new_type` instead of via `vv_add_method`, because they're
+needed to instantiate the Vivalid type.
+
+* To read or write Vivaldi variables, call `vv_let`, `vv_write`, or `vv_read` as
+  appropriate.
+
+* All builtin types are exposed in `vivaldi.h` as `vv_builtin_type_NAME`.
+
+Other operations are described in `vivaldi.h`. Improved documentation to come!
+
+#### Example ####
+
+Here's the code to a C extension defining a Vivaldi function `x_plus_5` that
+takes an argument `x` and returns, well, `x + 5`:
+
+        vv_object_t* x_plus_5(void)
+        {
+          vv_object_t* arg = vv_get_arg(0);
+          if (arg == NULL)
+            return NULL;
+
+          int x;
+          int success = vv_get_int(arg, &x);
+          if (success == -1)
+            return NULL;
+
+          return vv_new_int(x + 5);
+        }
+
+        void vv_init_lib(void)
+        {
+          vv_object_t* vivaldi_function = vv_new_function(x_plus_5, 1);
+          if (vivaldi_function) {
+            vv_symbol_t function_name = vv_make_symbol("x_plus_5");
+            vv_let(function_name, vivaldi_function);
+          }
+        }
+
 ### TODO ###
 
 * Expand the standard library
 
-* Add C API
+* Improve C API
 
-* Improve performance, especially concerning the call stack
+* Improve performance, especially concerning garbage collection and the call
+  stack
