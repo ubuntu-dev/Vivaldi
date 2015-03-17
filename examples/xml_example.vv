@@ -1,0 +1,13 @@
+require "xml"
+
+// Example XML stolen from the Nokogiri docs
+let xml = "<employees> <employee status=\"active\"> <fullname>Dean Martin</fullname> </employee> </employees>"
+let doc = new XMLDocument(xml)
+print("Document root: ")
+puts(doc.root().name())
+print("Number of employees: ")
+puts(doc.root().all('employee).size())
+print("First employee status: ")
+puts(doc.root().first('employee).attr('status))
+print("First employee name: ")
+puts(doc.root().first('employee).first('fullname).contents())
