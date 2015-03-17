@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversi
 
 # CMake doesn't search /usr/local/* by default, of course, because that would
 # indicate some modicum of common sense and God knows we can't have that
-include_directories("src" SYSTEM "/usr/local/include")
+include_directories("src" "include" SYSTEM "/usr/local/include")
 link_directories("/usr/local/lib")
 
 add_executable(vivaldi
@@ -93,3 +93,6 @@ add_executable(vivaldi
   src/vm/instruction.cpp)
 
 target_link_libraries(vivaldi boost_system boost_filesystem)
+
+install(TARGETS vivaldi DESTINATION bin)
+install(FILES include/vivaldi.h DESTINATION include)
