@@ -1,4 +1,4 @@
-require "assert.vv"
+require "assert"
 
 fn arr_size(): do
   assert([].size() == 0, "[].size() == 0")

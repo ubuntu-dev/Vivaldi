@@ -38,6 +38,10 @@ private:
   std::string m_dir;
 };
 
+std::string get_real_filename(const std::string& filename,
+                              const std::string& path = "");
+bool is_c_exension(const std::string& filename);
+
 read_file_result get_file_contents(const std::string& filename,
                                    const std::string& path = "");
 

@@ -1,4 +1,4 @@
-require "assert.vv"
+require "assert"
 
 fn ands(): do
   assert(true && true,      "true && true")

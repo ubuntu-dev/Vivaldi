@@ -54,6 +54,33 @@ std::string message_for(token_string tokens,
 
 }
 
+std::string vv::get_real_filename(const std::string& filename, const std::string& path)
+{
+  boost::string_ref ref{filename};
+  if (ref.ends_with(".vv") || ref.ends_with(".so") || ref.ends_with(".dylib"))
+    return filename;
+
+  auto check_vv = absolute(boost::filesystem::path{filename + ".vv"}, path);
+  if (exists(check_vv))
+    return check_vv.native();
+
+  auto check_so = absolute(boost::filesystem::path{filename + ".so"}, path);
+  if (exists(check_so))
+    return check_so.native();
+
+  auto check_dylib = absolute(boost::filesystem::path{filename + ".dylib"}, path);
+  if (exists(check_dylib))
+    return check_dylib.native();
+
+  return filename;
+}
+
+bool vv::is_c_exension(const std::string& filename)
+{
+  boost::string_ref ref{filename};
+  return ref.ends_with(".so") || ref.ends_with(".dylib");
+}
+
 read_file_result vv::get_file_contents(const std::string& filename,
                                        const std::string& cur_path)
 {

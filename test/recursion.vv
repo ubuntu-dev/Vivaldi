@@ -1,4 +1,4 @@
-require "assert.vv"
+require "assert"
 
 // As stupid as possible, to maximize pressure on VM
 fn factorial(x): do

@@ -1,4 +1,4 @@
-require "assert.vv"
+require "assert"
 
 class Base
   fn set_a(a): self._a = a

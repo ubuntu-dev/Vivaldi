@@ -1,3 +1,5 @@
+require "assert"
+
 fn test_filter(): do
   let filtered = filter(1 to 10, fn (x): x % 2 != 0)
   assert(filtered.size() == 5, "filtered.size() == 5")

@@ -1,4 +1,4 @@
-require "assert.vv"
+require "assert"
 
 fn unused_try_catch(): do
   let i = false

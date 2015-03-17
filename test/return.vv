@@ -1,4 +1,4 @@
-require "assert.vv"
+require "assert"
 
 fn early_return(text, flag): do
   let i = text + "!"
