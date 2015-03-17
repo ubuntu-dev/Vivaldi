@@ -218,9 +218,14 @@ vv_object_t* vv_new_symbol(vv_symbol_t sym)
   return cvm().top();
 }
 
-vv_object_t* vv_new_blob(void* blob, void(*dtor)(vv_object_t*))
+vv_object_t* vv_new_blob(void* blob,
+                         void(*dtor)(vv_object_t*),
+                         vv_object_t* type)
 {
+  if (type->type != &builtin::type::custom_type)
+    return nullptr;
   cvm().push(gc::alloc<value::blob>( blob, dtor ));
+  cvm().top()->type = static_cast<value::type*>(type);
   return cvm().top();
 }
 

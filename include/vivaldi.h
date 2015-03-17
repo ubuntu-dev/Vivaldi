@@ -78,7 +78,9 @@ vv_object_t* vv_new_regex(const char* reg);
 vv_object_t* vv_new_string(const char* str);
 vv_object_t* vv_new_symbol(vv_symbol_t sym);
 
-vv_object_t* vv_new_blob(void* blob, void(*destructor)(vv_object_t*));
+vv_object_t* vv_new_blob(void* blob,
+                         void(*destructor)(vv_object_t*),
+                         vv_object_t* type);
 vv_object_t* vv_alloc_blob(void* blob, void(*destructor)(vv_object_t*));
 
 vv_object_t* vv_get_parent(vv_object_t* type);
