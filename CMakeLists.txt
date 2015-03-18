@@ -2,7 +2,8 @@ cmake_minimum_required (VERSION 3.0)
 project (vivaldi)
 
 set(CMAKE_CXX_COMPILER "clang++")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversion -rdynamic -flat_namespace -O3 -std=c++1y -stdlib=libc++ -lc++abi")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversion -O3 -std=c++1y -stdlib=libc++")
+set(CMAKE_EXE_LINKER_FLAGS "-rdynamic -flat_namespace -lc++abi")
 
 # CMake doesn't search /usr/local/* by default, of course, because that would
 # indicate some modicum of common sense and God knows we can't have that
