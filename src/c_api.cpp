@@ -251,7 +251,7 @@ vv_object_t* vv_new_type(const char* name,
                             : builtin::type::object;
 
   symbol sym_name{name};
-  hash_map<symbol, value::object*> methods{ };
+  hash_map<symbol, value::basic_function*> methods{ };
   if (init) {
     auto checked_init = fn_with_err_check(init);
     auto cpp_fn = [checked_init](vm::machine& vm)

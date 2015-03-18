@@ -140,10 +140,10 @@ void vm::machine::ptype(const type_t& type)
   }
   auto& parent = static_cast<value::type&>(*parent_arg);
 
-  hash_map<symbol, value::object*> methods;
+  hash_map<symbol, value::basic_function*> methods;
   for (const auto& i : type.methods) {
     pfn(i.second);
-    methods.insert(i.first, top());
+    methods.insert(i.first, static_cast<value::basic_function*>(top()));
   }
   auto newtype = gc::alloc<value::type>( nullptr, methods, parent, type.name );
 

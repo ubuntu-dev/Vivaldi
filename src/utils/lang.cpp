@@ -27,9 +27,8 @@ vv::value::object* vv::throw_exception(value::object* value)
   throw vm_error{value};
 }
 
-vv::value::object* vv::find_method(value::type* t, symbol name)
+vv::value::basic_function* vv::find_method(value::type* t, symbol name)
 {
-  //decltype(std::begin(t->methods)) i{};
   auto i = std::begin(t->methods);
   while ((i = t->methods.find(name)) == std::end(t->methods) && &t->parent != t)
     t = &t->parent;

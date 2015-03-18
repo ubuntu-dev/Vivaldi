@@ -55,7 +55,7 @@ value::basic_function::basic_function(func_type type,
 
 value::type::type(
     const std::function<value::object*()>& new_constructor,
-    const hash_map<vv::symbol, value::object*>& new_methods,
+    const hash_map<vv::symbol, value::basic_function*>& new_methods,
     value::type& new_parent,
     vv::symbol new_name)
   : object      {&builtin::type::custom_type},
@@ -65,12 +65,7 @@ value::type::type(
     name        {new_name}
 {
   if (auto init = find_method(this, {"init"})) {
-    // TODO: make function and builtin_function both inherit from a
-    // basic_function class, so I can quit it with all these dynamic_casts.
-    if (auto fn = dynamic_cast<builtin_function*>(init))
-      init_shim.argc = fn->argc;
-    else
-      init_shim.argc = static_cast<function*>(init)->argc;
+    init_shim.argc = init->argc;
 
     for (auto i = 0; i != init_shim.argc; ++i) {
       init_shim.body.emplace_back(vm::instruction::arg, i);
