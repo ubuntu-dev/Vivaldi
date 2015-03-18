@@ -717,7 +717,7 @@ Other operations are described in `vivaldi.h`. Improved documentation to come!
 Here's the code to a C extension defining a Vivaldi function `x_plus_5` that
 takes an argument `x` and returns, well, `x + 5`:
 
-```c_cpp
+```c
 vv_object_t*
 x_plus_5(void)
 {
