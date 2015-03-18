@@ -369,7 +369,7 @@ void vm::machine::ret(bool copy)
 
 void vm::machine::req(const std::string& filename)
 {
-  auto name = get_real_filename(filename);
+  auto name = get_real_filename(filename, m_req_path);
   if (is_c_exension(name)) {
     m_call_stack.emplace_back(vector_ref<command>{},
                               gc::alloc<environment>( nullptr ),
