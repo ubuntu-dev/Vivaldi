@@ -44,6 +44,7 @@ add_executable(vivaldi
 
   src/get_file_contents.cpp
   src/c_api.cpp
+  src/repl.cpp
 
   src/ast/assignment.cpp
   src/ast/array.cpp
