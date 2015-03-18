@@ -237,8 +237,8 @@ A range covers [start, end):
 * `size()`&mdash; Returns `y - x`. Don't call this if subtraction won't work!
 * `at_end()`&mdash; Returns if `x == y` (well, actually, if `!(y > x)`, so a Range
   from `1.3` to `5.0` doesn't go on infinitely).
-* `increment`&mdash; Add 1 to `x`
-* `to_arr`&mdash; Creates an Array from all values from `x` to `y`.
+* `increment()`&mdash; Add 1 to `x`
+* `to_arr()`&mdash; Creates an Array from all values from `x` to `y`.
 
 #### Files ####
 
@@ -532,6 +532,11 @@ In addition to the above types, Vivaldi has a select few miscellaneous builtins:
 * `puts(x)`&mdash; as in Ruby, write the passed value plus a newline. Takes only one
   argument.
 
+  To pretty-print your custom types through `puts`, `print`, or on the REPL,
+  just define a method `str()`; whatever value that returns will be used as the
+  string representation instead of `<object>` (or whatever the class you're
+  inheriting from prints out).
+
 * `print(x)`&mdash; identical to `puts`, sans newline.
 
 * `gets()`&mdash; returns a String containing a single line of user input.
@@ -698,6 +703,13 @@ needed to instantiate the Vivalid type.
 
 * All builtin types are exposed in `vivaldi.h` as `vv_builtin_type_NAME`.
 
+* If any objects you instantiate refer to other Vivaldi objects, you have to
+  store them as Vivaldi members (via `vv_get_mem` and `vv_set_mem`). If you
+  don't, the garbage collector won't know about them, and Bad Things will almost
+  certainly happen. Garbage collection for any local VV objects you instantiate
+  is handled by the API (aside from `vv_alloc_blob`, which should only be used
+  in constructors for this reason).
+
 Other operations are described in `vivaldi.h`. Improved documentation to come!
 
 #### Example ####
@@ -705,34 +717,45 @@ Other operations are described in `vivaldi.h`. Improved documentation to come!
 Here's the code to a C extension defining a Vivaldi function `x_plus_5` that
 takes an argument `x` and returns, well, `x + 5`:
 
-        vv_object_t* x_plus_5(void)
-        {
-          vv_object_t* arg = vv_get_arg(0);
-          if (arg == NULL)
-            return NULL;
+```c_cpp
+vv_object_t*
+x_plus_5(void)
+{
+  vv_object_t* arg = vv_get_arg(0);
+  if (arg == NULL)
+    return NULL;
 
-          int x;
-          int success = vv_get_int(arg, &x);
-          if (success == -1)
-            return NULL;
+  int x;
+  int success = vv_get_int(arg, &x);
+  if (success == -1)
+    return NULL;
 
-          return vv_new_int(x + 5);
-        }
+  return vv_new_int(x + 5);
+}
 
-        void vv_init_lib(void)
-        {
-          vv_object_t* vivaldi_function = vv_new_function(x_plus_5, 1);
-          if (vivaldi_function) {
-            vv_symbol_t function_name = vv_make_symbol("x_plus_5");
-            vv_let(function_name, vivaldi_function);
-          }
-        }
+void
+vv_init_lib(void)
+{
+  vv_object_t* vivaldi_function = vv_new_function(x_plus_5, 1);
+  if (vivaldi_function) {
+    vv_symbol_t function_name = vv_make_symbol("x_plus_5");
+    vv_let(function_name, vivaldi_function);
+  }
+}
+```
 
 ### TODO ###
 
 * Expand the standard library
 
-* Improve C API
+* Improve C API, particularly as concerns error handling
 
 * Improve performance, especially concerning garbage collection and the call
   stack
+
+* Support standard require paths, so that extensions/files don't have to be
+  local (and, by extension, add a standard library)
+
+* Improve commenting
+
+Any and all contributions, questions, bug reports, and angry rants welcome!
