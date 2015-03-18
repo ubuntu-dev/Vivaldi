@@ -121,7 +121,7 @@ struct basic_function : public object {
 // C++ representation of a Vivaldi Type.
 struct type : public object {
   type(const std::function<value::object*()>& constructor,
-       const hash_map<vv::symbol, value::object*>& methods,
+       const hash_map<vv::symbol, value::basic_function*>& methods,
        value::type& parent,
        vv::symbol name);
 
@@ -130,7 +130,7 @@ struct type : public object {
   // locally, the class will search its type's methods, and that type's parent's
   // methods, and so on recursively until it's found or there are no more
   // parents left.
-  hash_map<vv::symbol, value::object*> methods;
+  hash_map<vv::symbol, value::basic_function*> methods;
 
   // Very simple constructor.
   // This constructor should just provides an allocated bit of memory of

@@ -13,7 +13,7 @@ value::object* throw_exception(const std::string& value);
 [[noreturn]]
 value::object* throw_exception(value::object* value);
 
-value::object* find_method(value::type* type, symbol name);
+value::basic_function* find_method(value::type* type, symbol name);
 
 std::string pretty_print(value::object& object, vm::machine& vm);
 
