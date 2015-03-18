@@ -302,7 +302,10 @@ xml_node_attr(vv_object_t* self, vv_object_t* name)
     return NULL;
   }
 
-  return vv_new_string((const char*)attr);
+  vv_object_t* attr_obj = vv_new_string((const char*)attr);
+  xmlFree(attr);
+
+  return attr_obj;
 }
 
 static xml_c_node_list*
