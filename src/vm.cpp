@@ -357,7 +357,6 @@ void vm::machine::ret(bool copy)
 {
   auto retval = top();
   m_stack.erase(begin(m_stack) + frame().frame_ptr - frame().argc + 1, end(m_stack));
-  //pop(frame().frame_ptr + frame().argc);
   push(retval);
 
   auto cur_env = frame().env;
@@ -369,12 +368,16 @@ void vm::machine::ret(bool copy)
 
 void vm::machine::req(const std::string& filename)
 {
+  // Add extension, if it was left off
   auto name = get_real_filename(filename, m_req_path);
   if (is_c_exension(name)) {
+    // Place in separate environment (along with environment) so as to avoid any
+    // weirdnesses with adding things to the stack or declaring new variables
     m_call_stack.emplace_back(vector_ref<command>{},
                               gc::alloc<environment>( nullptr ),
                               0,
                               m_stack.size() - 1);
+    // TODO: Support actual error handling for C extensions
     auto err = read_c_lib(name);
     if (err) {
       pstr("Unable to load C extension: " + *err);
