@@ -9,7 +9,7 @@ namespace vv {
 
 namespace value {
 
-struct file : public base {
+struct file : public object {
 public:
   file(const std::string& filename);
   file();

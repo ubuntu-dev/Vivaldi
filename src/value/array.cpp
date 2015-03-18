@@ -5,8 +5,8 @@
 
 using namespace vv;
 
-value::array::array(const std::vector<base*>& new_val)
-  : base {&builtin::type::array},
+value::array::array(const std::vector<object*>& new_val)
+  : object {&builtin::type::array},
     val {new_val}
 { }
 
@@ -24,7 +24,7 @@ std::string value::array::value() const
 
 void value::array::mark()
 {
-  base::mark();
+  object::mark();
   for (auto* i : val)
     if (!i->marked())
       gc::mark(*i);

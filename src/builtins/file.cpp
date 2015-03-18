@@ -16,7 +16,7 @@ using namespace builtin;
 
 namespace {
 
-value::base* fn_file_init(vm::machine& vm)
+value::object* fn_file_init(vm::machine& vm)
 {
   vm.arg(0);
   auto arg = vm.top();
@@ -33,7 +33,7 @@ value::base* fn_file_init(vm::machine& vm)
   return &self;
 }
 
-value::base* fn_file_contents(value::base* self)
+value::object* fn_file_contents(value::object* self)
 {
   auto& file = static_cast<value::file&>(*self);
   std::ostringstream str_stream;
@@ -43,18 +43,18 @@ value::base* fn_file_contents(value::base* self)
   return gc::alloc<value::string>( str_stream.str() );
 }
 
-value::base* fn_file_start(value::base* self)
+value::object* fn_file_start(value::object* self)
 {
   return self;
 }
 
-value::base* fn_file_get(value::base* self)
+value::object* fn_file_get(value::object* self)
 {
   const auto& file = static_cast<value::file&>(*self);
   return gc::alloc<value::string>( file.cur_line );
 }
 
-value::base* fn_file_increment(value::base* self)
+value::object* fn_file_increment(value::object* self)
 {
   auto& file = static_cast<value::file&>(*self);
   if (file.val->peek() == EOF) {
@@ -67,7 +67,7 @@ value::base* fn_file_increment(value::base* self)
   return self;
 }
 
-value::base* fn_file_at_end(value::base* self)
+value::object* fn_file_at_end(value::object* self)
 {
   auto& file = static_cast<value::file&>(*self);
   return gc::alloc<value::boolean>(file.val->peek() == EOF && !file.cur_line.size());

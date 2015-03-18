@@ -8,13 +8,13 @@ namespace vv {
 
 namespace value {
 
-struct symbol : public base {
+struct symbol : public object {
 public:
   symbol(vv::symbol val = {});
 
   std::string value() const override;
   size_t hash() const override;
-  bool equals(const base& other) const override;
+  bool equals(const object& other) const override;
 
   vv::symbol val;
 };

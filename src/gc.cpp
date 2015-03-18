@@ -45,7 +45,7 @@ namespace {
 union value_type {
   value::array            array;
   value::array_iterator   array_iterator;
-  value::base             base;
+  value::object           object;
   value::blob             blob;
   value::builtin_function builtin_function;
   value::dictionary       dictionary;
@@ -61,7 +61,7 @@ union value_type {
   value::symbol           symbol;
   value::type             type;
   vm::environment         environment;
-  // Used by default ctor, and for empty slots. We know that value::base and its
+  // Used by default ctor, and for empty slots. We know that value::object and its
   // derived classes can never be all zeroes, since it includes several
   // nonnullable pointers/references, so testing for zero works as a means of
   // testing emptiness.
@@ -69,20 +69,20 @@ union value_type {
 
   value_type() : blank{} { }
 
-  bool marked() const { return base.marked(); }
-  void unmark() { base.unmark(); }
+  bool marked() const { return object.marked(); }
+  void unmark() { object.unmark(); }
 
   bool empty() const { return blank == 0; }
   void clear()
   {
     if (!empty()) {
-      (&base)->~base();
+      (&object)->~object();
       blank = 0;
     }
   }
 
   // In a sense this union is tagged, by virtue of vtables
-  ~value_type() { if (!empty()) (&base)->~base(); }
+  ~value_type() { if (!empty()) (&object)->~object(); }
 };
 
 }
@@ -142,7 +142,7 @@ void sweep()
 // }}}
 // External functions {{{
 
-value::base* gc::internal::get_next_empty()
+value::object* gc::internal::get_next_empty()
 {
   static auto major = begin(g_vals);
   static auto minor = begin(*major);
@@ -166,7 +166,7 @@ value::base* gc::internal::get_next_empty()
   // since minor is by definition empty at this point, *don't* include it in the
   // next-empty search
   get_next(major, ++minor);
-  return &ret->base;
+  return &ret->object;
 }
 
 void gc::set_running_vm(vm::machine& vm)
@@ -193,7 +193,7 @@ void gc::init()
     i.val = value++;
 }
 
-void gc::mark(value::base& object)
+void gc::mark(value::object& object)
 {
   object.mark();
 }

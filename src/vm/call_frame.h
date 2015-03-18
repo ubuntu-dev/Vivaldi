@@ -20,18 +20,18 @@ namespace vm {
 // stored in environment::enclosing.
 //
 // Execution environments are, hackishly, actually Vivaldi objects (they
-// inherit from value::base); this is because, because of closures, manual
+// inherit from value::object); this is because, because of closures, manual
 // memory management is basically impossible, and even my simplistic garbage
 // collector is significantly faster than reference counting via shared_ptr.
-class environment : public value::base {
+class environment : public value::object {
 public:
   environment(environment* enclosing = nullptr,
-              value::base* self      = nullptr);
+              value::object* self    = nullptr);
 
   // Frame in which current function (i.e. closure) was defined.
   dumb_ptr<environment> enclosing;
   // self, if this is a method call.
-  dumb_ptr<value::base> self;
+  dumb_ptr<value::object> self;
 
   void mark() override;
 };
@@ -55,10 +55,10 @@ struct call_frame {
   dumb_ptr<environment> env;
 
   // The calling function, if there is one; stored here only for GC purposes.
-  dumb_ptr<value::base> caller;
+  dumb_ptr<value::object> caller;
 
   // The local catch function, if we're in a try...catch block.
-  dumb_ptr<value::base> catcher;
+  dumb_ptr<value::object> catcher;
 
   // Pointer to the current VM instruction we're executing.
   vector_ref<vm::command> instr_ptr;

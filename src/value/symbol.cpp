@@ -6,8 +6,8 @@
 using namespace vv;
 
 value::symbol::symbol(vv::symbol new_val)
-  : base {&builtin::type::symbol},
-    val  {new_val}
+  : object {&builtin::type::symbol},
+    val    {new_val}
 { }
 
 std::string value::symbol::value() const { return '\'' + to_string(val); }
@@ -18,7 +18,7 @@ size_t value::symbol::hash() const
   return hasher(val);
 }
 
-bool value::symbol::equals(const base& other) const
+bool value::symbol::equals(const object& other) const
 {
   if (other.type != &builtin::type::symbol)
     return false;

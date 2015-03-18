@@ -16,10 +16,10 @@ namespace gc {
 
 namespace internal {
 
-value::base* get_next_empty();
+value::object* get_next_empty();
 
 template <typename T>
-value::base* emplace(T&& item)
+value::object* emplace(T&& item)
 {
   auto slot = get_next_empty();
   new (slot) T{std::forward<T>(item)};
@@ -95,7 +95,7 @@ dynamic_library& load_dynamic_library(const std::string& filename);
 // Called in main at the start of the program
 void init();
 
-void mark(value::base& object);
+void mark(value::object& object);
 
 }
 

@@ -8,8 +8,8 @@
 using namespace vv;
 
 value::floating_point::floating_point(double value)
-  : base {&builtin::type::floating_point},
-    val  {value}
+  : object {&builtin::type::floating_point},
+    val    {value}
 { }
 
 std::string value::floating_point::value() const
@@ -23,7 +23,7 @@ size_t value::floating_point::hash() const
   return hasher(val);
 }
 
-bool value::floating_point::equals(const base& other) const
+bool value::floating_point::equals(const object& other) const
 {
   if (other.type != &builtin::type::floating_point)
     return false;

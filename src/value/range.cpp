@@ -5,14 +5,14 @@
 
 using namespace vv;
 
-value::range::range(value::base& new_start, value::base& new_end)
-  : base  {&builtin::type::range},
+value::range::range(object& new_start, object& new_end)
+  : object  {&builtin::type::range},
     start {&new_start},
     end   {&new_end}
 { }
 
 value::range::range()
-  : base  {&builtin::type::range},
+  : object  {&builtin::type::range},
     start {nullptr},
     end   {nullptr}
 { }
@@ -24,7 +24,7 @@ std::string value::range::value() const
 
 void value::range::mark()
 {
-  base::mark();
+  object::mark();
   // We need to ensure neither start not end are nullptr, since this could be
   // happening between allocation and initialization
   if (start && !start->marked())

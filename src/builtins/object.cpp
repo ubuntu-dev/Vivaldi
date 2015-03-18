@@ -9,22 +9,22 @@ using namespace builtin;
 
 namespace {
 
-value::base* fn_object_equals(value::base* self, value::base* arg)
+value::object* fn_object_equals(value::object* self, value::object* arg)
 {
   return gc::alloc<value::boolean>( self->equals(*arg) );
 }
 
-value::base* fn_object_unequal(value::base* self, value::base* arg)
+value::object* fn_object_unequal(value::object* self, value::object* arg)
 {
   return gc::alloc<value::boolean>( !self->equals(*arg) );
 }
 
-value::base* fn_object_not(value::base* self)
+value::object* fn_object_not(value::object* self)
 {
   return gc::alloc<value::boolean>( !truthy(self) );
 }
 
-value::base* fn_object_type(value::base* self)
+value::object* fn_object_type(value::object* self)
 {
   return self->type;
 }
@@ -34,7 +34,7 @@ value::opt_binop obj_unequal {fn_object_unequal};
 value::opt_monop obj_not     {fn_object_not    };
 value::opt_monop obj_type    {fn_object_type   };
 }
-value::type type::object {gc::alloc<value::base>, {
+value::type type::object {gc::alloc<value::object>, {
   { {"equals"},  &obj_equals },
   { {"unequal"}, &obj_unequal },
   { {"not"},     &obj_not },

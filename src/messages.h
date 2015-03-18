@@ -24,9 +24,9 @@ std::string no_such_variable(vv::symbol var);
 // Attempted to declare an extant variable
 std::string already_exists(vv::symbol var);
 // Attempted to read an object member that doesn't exist
-std::string has_no_member(const value::base& obj, vv::symbol mem);
+std::string has_no_member(const value::object& obj, vv::symbol mem);
 // Attempted to call something other than a function
-std::string not_callable(const value::base& callee);
+std::string not_callable(const value::object& callee);
 // Function called with the wrong number of arguments
 std::string wrong_argc(int expected, int recieved);
 // Attempt to directly construct a nonconstructible object (e.g. Integer)
@@ -63,7 +63,7 @@ std::string iterator_at_end(const value::type& self);
 std::string out_of_range(size_t lower, size_t upper, int recieved);
 
 // Error message for unhandled exception
-std::string caught_exception(const value::base& error);
+std::string caught_exception(const value::object& error);
 
 }
 

@@ -33,12 +33,12 @@ std::string message::already_exists(vv::symbol var)
   return "Variable " + to_string(var) += " already exists";
 }
 
-std::string message::has_no_member(const value::base& obj, vv::symbol mem)
+std::string message::has_no_member(const value::object& obj, vv::symbol mem)
 {
   return obj.value() += " has no member " + to_string(mem);
 }
 
-std::string message::not_callable(const value::base& callee)
+std::string message::not_callable(const value::object& callee)
 {
   return "Object " + callee.value() += " of type " + callee.type->value() +=
          " cannot be called";
@@ -120,7 +120,7 @@ std::string message::out_of_range(size_t lower, size_t upper, int recieved)
   return sstm.str();
 }
 
-std::string message::caught_exception(const value::base& err)
+std::string message::caught_exception(const value::object& err)
 {
   return "Caught execption: " + err.value();
 }

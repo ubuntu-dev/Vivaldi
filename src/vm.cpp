@@ -63,12 +63,12 @@ void vm::machine::run_cur_scope()
   }
 }
 
-value::base* vm::machine::top()
+value::object* vm::machine::top()
 {
   return m_stack.back();
 }
 
-void vm::machine::push(value::base* val)
+void vm::machine::push(value::object* val)
 {
   m_stack.push_back(val);
 }
@@ -140,7 +140,7 @@ void vm::machine::ptype(const type_t& type)
   }
   auto& parent = static_cast<value::type&>(*parent_arg);
 
-  hash_map<symbol, value::base*> methods;
+  hash_map<symbol, value::object*> methods;
   for (const auto& i : type.methods) {
     pfn(i.second);
     methods.insert(i.first, top());
@@ -164,7 +164,7 @@ void vm::machine::pre(const std::string& val)
 
 void vm::machine::parr(int size)
 {
-  std::vector<value::base*> vec{end(m_stack) - size, end(m_stack)};
+  std::vector<value::object*> vec{end(m_stack) - size, end(m_stack)};
   auto val = gc::alloc<value::array>( move(vec) );
   pop(size);
   push(val);
@@ -172,7 +172,7 @@ void vm::machine::parr(int size)
 
 void vm::machine::pdict(int size)
 {
-  std::unordered_map<value::base*, value::base*> dict;
+  std::unordered_map<value::object*, value::object*> dict;
   for (auto i = end(m_stack) - size; i != end(m_stack); i += 2)
     dict[i[0]] = i[1];
 

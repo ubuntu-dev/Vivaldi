@@ -5,9 +5,9 @@
 
 using namespace vv;
 
-value::dictionary::dictionary(const std::unordered_map<base*, base*>& mems)
-  : base {&builtin::type::dictionary},
-    val  {mems}
+value::dictionary::dictionary(const std::unordered_map<object*, object*>& mems)
+  : object {&builtin::type::dictionary},
+    val    {mems}
 { }
 
 std::string value::dictionary::value() const
@@ -22,7 +22,7 @@ std::string value::dictionary::value() const
 
 void value::dictionary::mark()
 {
-  base::mark();
+  object::mark();
   for (auto& pair : val) {
     if (!pair.first->marked())
       gc::mark(*pair.first);

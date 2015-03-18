@@ -14,22 +14,23 @@ using namespace builtin;
 
 namespace {
 
-int to_int(const value::base& val)
+int to_int(const value::object& val)
 {
   return static_cast<const value::integer&>(val).val;
 }
 
-const std::regex& to_regex(const value::base& val)
+const std::regex& to_regex(const value::object& val)
 {
   return static_cast<const value::regex&>(val).val;
 }
 
-const std::string& to_string(const value::base& val)
+const std::string& to_string(const value::object& val)
 {
   return static_cast<const value::string&>(val).val;
 }
 
-std::pair<const std::smatch&, size_t> get_match_idx(value::base* self, value::base* arg)
+std::pair<const std::smatch&, size_t> get_match_idx(value::object* self,
+                                                    value::object* arg)
 {
   if (arg->type != &type::integer) {
     auto str = gc::alloc<value::string>(message::at_type_error(type::regex_result,
@@ -50,7 +51,7 @@ std::pair<const std::smatch&, size_t> get_match_idx(value::base* self, value::ba
 
 // regex {{{
 
-value::base* fn_regex_init(vm::machine& vm)
+value::object* fn_regex_init(vm::machine& vm)
 {
   vm.self();
   auto& regex = static_cast<value::regex&>(*vm.top());
@@ -70,7 +71,7 @@ value::base* fn_regex_init(vm::machine& vm)
   return &regex;
 }
 
-value::base* fn_regex_match(value::base* self, value::base* arg)
+value::object* fn_regex_match(value::object* self, value::object* arg)
 {
   if (arg->type != &type::string)
     return throw_exception("RegExes can only be matched against Strings");
@@ -84,7 +85,7 @@ value::base* fn_regex_match(value::base* self, value::base* arg)
                                          std::move(results) );
 }
 
-value::base* fn_regex_match_index(value::base* self, value::base* arg)
+value::object* fn_regex_match_index(value::object* self, value::object* arg)
 {
   if (arg->type != &type::string)
     return throw_exception("RegExes can only be matched against Strings");
@@ -102,20 +103,20 @@ value::base* fn_regex_match_index(value::base* self, value::base* arg)
 // }}}
 // regex_result {{{
 
-value::base* fn_regex_result_at(value::base* self, value::base* arg)
+value::object* fn_regex_result_at(value::object* self, value::object* arg)
 {
 
   auto res = get_match_idx(self, arg);
   return gc::alloc<value::string>( res.first[res.second].str() );
 }
 
-value::base* fn_regex_result_index(value::base* self, value::base* arg)
+value::object* fn_regex_result_index(value::object* self, value::object* arg)
 {
   auto res = get_match_idx(self, arg);
   return gc::alloc<value::integer>( static_cast<int>(res.first.position(res.second)) );
 }
 
-value::base* fn_regex_result_size(value::base* self)
+value::object* fn_regex_result_size(value::object* self)
 {
   auto sz = static_cast<value::regex_result*>(self)->val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );

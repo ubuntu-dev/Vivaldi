@@ -20,16 +20,16 @@ public:
   void run_cur_scope();
 
   // Returns the value on top of the stack.
-  value::base* top();
+  value::object* top();
   // Pushes the provided value onto the stack.
-  void push(value::base* newtop);
+  void push(value::object* newtop);
 
   // GC interface; mark all objects immediately reachable from within the VM.
   void mark();
 
-  // VM Instructions (publicly accessible, since base::builtin_funciton needs to
-  // be able to manipulate the VM). Documentation for all the instructions is in
-  // vm/instruction.h.
+  // VM Instructions (publicly accessible, since value::builtin_funciton needs
+  // to be able to manipulate the VM). Documentation for all the instructions is
+  // in vm/instruction.h.
 
   void pbool(bool val);
   void pflt(double val);
@@ -94,9 +94,9 @@ private:
   call_frame& frame();
 
   std::vector<call_frame> m_call_stack;
-  std::vector<value::base*> m_stack;
+  std::vector<value::object*> m_stack;
 
-  value::base* m_transient_self;
+  value::object* m_transient_self;
 
   std::string m_req_path;
 };

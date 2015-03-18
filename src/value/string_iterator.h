@@ -8,7 +8,7 @@ namespace vv {
 
 namespace value {
 
-struct string_iterator : public base {
+struct string_iterator : public object {
 public:
   string_iterator(string& str);
   string_iterator();

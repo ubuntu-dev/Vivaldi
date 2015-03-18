@@ -8,15 +8,15 @@ namespace vv {
 
 namespace value {
 
-struct array : public base {
+struct array : public object {
 public:
   // Creates an Array containing a copy of the provided vector.
-  array(const std::vector<base*>& mems = {});
+  array(const std::vector<object*>& mems = {});
 
   std::string value() const override;
   void mark() override;
 
-  std::vector<base*> val;
+  std::vector<object*> val;
 };
 
 }

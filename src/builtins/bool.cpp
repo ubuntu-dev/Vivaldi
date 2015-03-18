@@ -10,7 +10,7 @@ using namespace builtin;
 
 namespace {
 
-value::base* fn_bool_init(vm::machine& vm)
+value::object* fn_bool_init(vm::machine& vm)
 {
   vm.arg(0);
   if (vm.top()->type == &type::boolean)

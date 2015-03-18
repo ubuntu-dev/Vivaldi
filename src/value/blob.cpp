@@ -3,7 +3,7 @@
 using namespace vv;
 using namespace value;
 
-blob::blob(void* val, const std::function<void(base*)>& dtor)
+blob::blob(void* val, const std::function<void(object*)>& dtor)
   : val    {val},
     c_dtor {dtor}
 { }
@@ -26,5 +26,5 @@ blob& blob::operator=(blob&& other)
 blob::~blob()
 {
   if (c_dtor)
-    c_dtor(reinterpret_cast<base*>(this));
+    c_dtor(reinterpret_cast<object*>(this));
 }

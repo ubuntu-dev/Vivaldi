@@ -6,16 +6,16 @@
 
 namespace vv {
 
-bool truthy(const value::base* value);
+bool truthy(const value::object* value);
 
 [[noreturn]]
-value::base* throw_exception(const std::string& value);
+value::object* throw_exception(const std::string& value);
 [[noreturn]]
-value::base* throw_exception(value::base* value);
+value::object* throw_exception(value::object* value);
 
-value::base* find_method(value::type* type, symbol name);
+value::object* find_method(value::type* type, symbol name);
 
-std::string pretty_print(value::base& object, vm::machine& vm);
+std::string pretty_print(value::object& object, vm::machine& vm);
 
 }
 

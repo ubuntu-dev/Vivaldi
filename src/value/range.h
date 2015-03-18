@@ -7,13 +7,13 @@ namespace vv {
 
 namespace value {
 
-struct range : public base {
-  range(value::base& start, value::base& end);
+struct range : public object {
+  range(object& start, object& end);
   range();
   std::string value() const override;
 
-  value::base* start;
-  value::base* end;
+  object* start;
+  object* end;
 
   void mark() override;
 };

@@ -8,7 +8,7 @@ using namespace builtin;
 
 namespace {
 
-value::base* fn_custom_type_parent(value::base* self)
+value::object* fn_custom_type_parent(value::object* self)
 {
   return &static_cast<value::type*>(self)->parent;
 }

@@ -9,30 +9,30 @@
 
 using namespace vv;
 
-value::base::base(struct type* new_type)
+value::object::object(struct type* new_type)
   : members  {},
     type     {new_type},
     m_marked {false}
 { }
 
-value::base::base()
+value::object::object()
   : members  {},
     type     {&builtin::type::object},
     m_marked {false}
 { }
 
-size_t value::base::hash() const
+size_t value::object::hash() const
 {
   const static std::hash<const void*> hasher{};
   return hasher(static_cast<const void*>(this));
 }
 
-bool value::base::equals(const value::base& other) const
+bool value::object::equals(const value::object& other) const
 {
   return this == &other;
 }
 
-void value::base::mark()
+void value::object::mark()
 {
   m_marked = true;
   if (type && !type->marked())
@@ -46,7 +46,7 @@ value::basic_function::basic_function(func_type type,
                                       int argc,
                                       vm::environment* enclosing,
                                       vector_ref<vm::command> body)
-  : base      {&builtin::type::function},
+  : object    {&builtin::type::function},
     type      {type},
     argc      {argc},
     enclosing {enclosing},
@@ -54,11 +54,11 @@ value::basic_function::basic_function(func_type type,
 { }
 
 value::type::type(
-    const std::function<value::base*()>& new_constructor,
-    const hash_map<vv::symbol, value::base*>& new_methods,
+    const std::function<value::object*()>& new_constructor,
+    const hash_map<vv::symbol, value::object*>& new_methods,
     value::type& new_parent,
     vv::symbol new_name)
-  : base        {&builtin::type::custom_type},
+  : object      {&builtin::type::custom_type},
     methods     {new_methods},
     constructor {new_constructor},
     parent      {new_parent},
@@ -95,7 +95,7 @@ std::string value::type::value() const { return to_string(name); }
 
 void value::type::mark()
 {
-  base::mark();
+  object::mark();
   for (const auto& i : methods)
     if (!i.second->marked())
       gc::mark(*i.second);
@@ -103,13 +103,13 @@ void value::type::mark()
     gc::mark(parent);
 }
 
-size_t std::hash<vv::value::base*>::operator()(const vv::value::base* b) const
+size_t std::hash<vv::value::object*>::operator()(const vv::value::object* b) const
 {
   return b->hash();
 }
 
-bool std::equal_to<vv::value::base*>::operator()(const vv::value::base* left,
-                                                 const vv::value::base* right) const
+bool std::equal_to<vv::value::object*>::operator()(const vv::value::object* left,
+                                                   const vv::value::object* right) const
 {
   return left->equals(*right);
 }

@@ -8,7 +8,7 @@
 using namespace vv;
 
 value::nil::nil()
-  : base {&builtin::type::nil}
+  : object {&builtin::type::nil}
 { }
 
 std::string value::nil::value() const { return "nil"; }

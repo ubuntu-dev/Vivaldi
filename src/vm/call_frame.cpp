@@ -5,14 +5,14 @@
 using namespace vv;
 
 vm::environment::environment(environment* new_enclosing,
-                             value::base* new_self)
+                             value::object* new_self)
   : enclosing {new_enclosing},
     self      {new_self || !enclosing ? new_self : enclosing->self}
 { }
 
 void vm::environment::mark()
 {
-  base::mark();
+  object::mark();
 
   if (enclosing && !enclosing->marked())
     gc::mark(*enclosing);

@@ -9,7 +9,7 @@ namespace vv {
 
 namespace value {
 
-struct regex : public base {
+struct regex : public object {
 public:
   regex(const std::regex& val = {}, const std::string& str = {});
 
@@ -20,7 +20,7 @@ public:
   std::string str;
 };
 
-struct regex_result : public base {
+struct regex_result : public object {
 public:
   regex_result(value::string& str, std::smatch&& res);
 

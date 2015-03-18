@@ -7,7 +7,7 @@ namespace vv {
 
 namespace value {
 
-struct nil : public base {
+struct nil : public object {
   nil();
   std::string value() const override;
 };

@@ -7,13 +7,13 @@ namespace vv {
 
 namespace value {
 
-struct integer : public base {
+struct integer : public object {
 public:
   integer(int val = 0);
 
   std::string value() const override;
   size_t hash() const override;
-  bool equals(const base& other) const override;
+  bool equals(const object& other) const override;
 
   int val;
 };

@@ -11,13 +11,13 @@ namespace vv {
 
 namespace value {
 
-struct base;
+struct object;
 
 }
 
 }
 
-using vv_object_t = vv::value::base;
+using vv_object_t = vv::value::object;
 
 #else
 

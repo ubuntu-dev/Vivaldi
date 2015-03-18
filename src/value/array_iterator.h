@@ -9,7 +9,7 @@ namespace vv {
 namespace value {
 
 // Vivaldi class for iterating through an Array.
-struct array_iterator : public base {
+struct array_iterator : public object {
 public:
   // Constructs an array_iterator pointing to the start of arr.
   array_iterator(array& arr);

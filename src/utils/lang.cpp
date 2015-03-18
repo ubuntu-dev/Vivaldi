@@ -6,7 +6,7 @@
 #include "value/boolean.h"
 #include "value/string.h"
 
-bool vv::truthy(const value::base* val)
+bool vv::truthy(const value::object* val)
 {
   if (val->type == &builtin::type::nil)
     return false;
@@ -16,18 +16,18 @@ bool vv::truthy(const value::base* val)
 }
 
 [[noreturn]]
-vv::value::base* vv::throw_exception(const std::string& value)
+vv::value::object* vv::throw_exception(const std::string& value)
 {
   throw vm_error{gc::alloc<value::string>( value )};
 }
 
 [[noreturn]]
-vv::value::base* vv::throw_exception(value::base* value)
+vv::value::object* vv::throw_exception(value::object* value)
 {
   throw vm_error{value};
 }
 
-vv::value::base* vv::find_method(value::type* t, symbol name)
+vv::value::object* vv::find_method(value::type* t, symbol name)
 {
   //decltype(std::begin(t->methods)) i{};
   auto i = std::begin(t->methods);
@@ -40,7 +40,7 @@ vv::value::base* vv::find_method(value::type* t, symbol name)
   return nullptr;
 }
 
-std::string vv::pretty_print(value::base& object, vm::machine& vm)
+std::string vv::pretty_print(value::object& object, vm::machine& vm)
 {
   if (object.members.contains({"str"}) || find_method(object.type, {"str"})) {
     vm.push(&object);

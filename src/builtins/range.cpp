@@ -12,7 +12,7 @@ using namespace builtin;
 
 namespace {
 
-value::base* fn_range_init(vm::machine& vm)
+value::object* fn_range_init(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -23,12 +23,12 @@ value::base* fn_range_init(vm::machine& vm)
   return &rng;
 }
 
-value::base* fn_range_start(value::base* self)
+value::object* fn_range_start(value::object* self)
 {
   return gc::alloc<value::range>(*static_cast<value::range*>(self));
 }
 
-value::base* fn_range_size(vm::machine& vm)
+value::object* fn_range_size(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -38,7 +38,7 @@ value::base* fn_range_size(vm::machine& vm)
   return vm.top();
 }
 
-value::base* fn_range_at_end(vm::machine& vm)
+value::object* fn_range_at_end(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -51,12 +51,12 @@ value::base* fn_range_at_end(vm::machine& vm)
   return vm.top();
 }
 
-value::base* fn_range_get(value::base* self)
+value::object* fn_range_get(value::object* self)
 {
   return static_cast<value::range*>(self)->start;
 }
 
-value::base* fn_range_increment(vm::machine& vm)
+value::object* fn_range_increment(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -67,7 +67,7 @@ value::base* fn_range_increment(vm::machine& vm)
   return &rng;
 }
 
-value::base* fn_range_to_arr(vm::machine& vm)
+value::object* fn_range_to_arr(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());

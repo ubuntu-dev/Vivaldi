@@ -7,14 +7,14 @@ namespace vv {
 
 namespace value {
 
-struct dictionary : public base {
+struct dictionary : public object {
 public:
-  dictionary(const std::unordered_map<base*, base*>& mems = {});
+  dictionary(const std::unordered_map<object*, object*>& mems = {});
 
   std::string value() const override;
   void mark() override;
 
-  std::unordered_map<base*, base*> val;
+  std::unordered_map<object*, object*> val;
 };
 
 }

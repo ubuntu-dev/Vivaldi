@@ -46,38 +46,38 @@ struct symbol;
 struct type;
 
 // Basic Object class from which all types are derived.
-struct base {
-  // Creates a new value::base of the provided type.
-  base(type* type);
-  // Creates a new value::base of type Object
-  base();
+struct object {
+  // Creates a new value::object of the provided type.
+  object(type* type);
+  // Creates a new value::object of type Object
+  object();
 
   // Outputs a human-readable string representing the object.
-  // The output of base::value is used in the REPL, and in 'puts' and 'print'
+  // The output of object::value is used in the REPL, and in 'puts' and 'print'
   // for non-String types; override in subclasses with something more specific.
   virtual std::string value() const { return "<object>"; }
 
-  virtual ~base() { }
+  virtual ~object() { }
 
   // Contains local, variable-specific members.
   // Only members of this specific object are stored here; methods are stored
   // inside of their owning classes.
-  hash_map<vv::symbol, value::base*> members;
+  hash_map<vv::symbol, value::object*> members;
   // Pointer to type (this should never be null. TODO: make reference)
   type* type;
 
   // Hash method used in dictionaries.
   // Overridden by classes with any useful concept of equality (as a rule of
   // thumb, if a class has an "equals" / method, it should probably override
-  // this and base::equals).
+  // this and object::equals).
   virtual size_t hash() const;
-  // Provides an equality function for use in Dictionaries (see base::hash).
-  virtual bool equals(const value::base& other) const;
+  // Provides an equality function for use in Dictionaries (see object::hash).
+  virtual bool equals(const value::object& other) const;
 
   // Garbage collection interface.
 
   // Any class that stores references to GCable / objects *must* override
-  // mark()--- but make sure you call base::mark in your overridden version!
+  // mark()--- but make sure you call object::mark in your overridden version!
   virtual void mark();
   // Whether or not this has been marked during this mark/sweep cycle.
   bool marked() const { return m_marked; }
@@ -90,7 +90,7 @@ private:
 
 // Base class for all callable types. All function types (currently function,
 // builtin_function, opt_monop, and opt_binop) are subclasses of basic_function.
-struct basic_function : public base {
+struct basic_function : public object {
   // Indicates which type of function this is.
   // Used instead of RTTI and all its convenience because of measurably
   // increased performance.
@@ -119,9 +119,9 @@ struct basic_function : public base {
 };
 
 // C++ representation of a Vivaldi Type.
-struct type : public base {
-  type(const std::function<value::base*()>& constructor,
-       const hash_map<vv::symbol, value::base*>& methods,
+struct type : public object {
+  type(const std::function<value::object*()>& constructor,
+       const hash_map<vv::symbol, value::object*>& methods,
        value::type& parent,
        vv::symbol name);
 
@@ -130,13 +130,13 @@ struct type : public base {
   // locally, the class will search its type's methods, and that type's parent's
   // methods, and so on recursively until it's found or there are no more
   // parents left.
-  hash_map<vv::symbol, value::base*> methods;
+  hash_map<vv::symbol, value::object*> methods;
 
   // Very simple constructor.
   // This constructor should just provides an allocated bit of memory of
   // the appropriate type; any actual initialization (including reading passed
   // arguments) has to happen in the class's "init" method.
-  std::function<value::base*()> constructor;
+  std::function<value::object*()> constructor;
 
   // Blob of VM code used in initialization.
   // This shim is necessary because, of course, when you create a new object you
@@ -179,12 +179,13 @@ struct type : public base {
 // Call virtual hash() and equals() methods instead of just hashing based on
 // pointers
 template <>
-struct std::hash<vv::value::base*> {
-  size_t operator()(const vv::value::base* b) const;
+struct std::hash<vv::value::object*> {
+  size_t operator()(const vv::value::object* b) const;
 };
 template <>
-struct std::equal_to<vv::value::base*> {
-  bool operator()(const vv::value::base* left, const vv::value::base* right) const;
+struct std::equal_to<vv::value::object*> {
+  bool operator()(const vv::value::object* left,
+                  const vv::value::object* right) const;
 };
 
 #endif

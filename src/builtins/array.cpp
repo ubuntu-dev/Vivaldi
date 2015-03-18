@@ -15,7 +15,7 @@ namespace {
 
 // Array {{{
 
-value::base* fn_array_init(vm::machine& vm)
+value::object* fn_array_init(vm::machine& vm)
 {
   vm.self();
   auto arr = static_cast<value::array*>(vm.top());
@@ -29,19 +29,19 @@ value::base* fn_array_init(vm::machine& vm)
   return arr;
 }
 
-value::base* fn_array_size(value::base* self)
+value::object* fn_array_size(value::object* self)
 {
   auto sz = static_cast<value::array*>(self)->val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
-value::base* fn_array_append(value::base* self, value::base* arg)
+value::object* fn_array_append(value::object* self, value::object* arg)
 {
   static_cast<value::array*>(self)->val.push_back(arg);
   return self;
 }
 
-value::base* fn_array_pop(value::base* self)
+value::object* fn_array_pop(value::object* self)
 {
   auto arr = static_cast<value::array*>(self);
   auto val = arr->val.back();
@@ -49,7 +49,7 @@ value::base* fn_array_pop(value::base* self)
   return val;
 }
 
-value::base* fn_array_at(value::base* self, value::base* arg)
+value::object* fn_array_at(value::object* self, value::object* arg)
 {
   if (arg->type != &type::integer)
     return throw_exception(message::at_type_error(type::array, type::integer));
@@ -60,7 +60,7 @@ value::base* fn_array_at(value::base* self, value::base* arg)
   return arr[static_cast<unsigned>(val)];
 }
 
-value::base* fn_array_set_at(vm::machine& vm)
+value::object* fn_array_set_at(vm::machine& vm)
 {
   vm.arg(0);
   auto arg = vm.top();
@@ -75,13 +75,13 @@ value::base* fn_array_set_at(vm::machine& vm)
   return arr[static_cast<unsigned>(val)] = vm.top();
 }
 
-value::base* fn_array_start(value::base* self)
+value::object* fn_array_start(value::object* self)
 {
   auto& arr = static_cast<value::array&>(*self);
   return gc::alloc<value::array_iterator>( arr );
 }
 
-value::base* fn_array_stop(value::base* self)
+value::object* fn_array_stop(value::object* self)
 {
   auto& arr = static_cast<value::array&>(*self);
   auto iter = gc::alloc<value::array_iterator>( arr );
@@ -89,7 +89,7 @@ value::base* fn_array_stop(value::base* self)
   return iter;
 }
 
-value::base* fn_array_add(value::base* self, value::base* arg)
+value::object* fn_array_add(value::object* self, value::object* arg)
 {
   auto arr = static_cast<value::array*>(self);
   if (arg->type != &type::array)
@@ -99,7 +99,7 @@ value::base* fn_array_add(value::base* self, value::base* arg)
   return arr;
 }
 
-value::base* fn_array_equals(vm::machine& vm)
+value::object* fn_array_equals(vm::machine& vm)
 {
   vm.self();
   auto* self = vm.top();
@@ -131,7 +131,7 @@ value::base* fn_array_equals(vm::machine& vm)
   return gc::alloc<value::boolean>( eq );
 }
 
-value::base* fn_array_unequal(vm::machine& vm)
+value::object* fn_array_unequal(vm::machine& vm)
 {
   return gc::alloc<value::boolean>( !truthy(fn_array_equals(vm)) );
 }
@@ -139,19 +139,19 @@ value::base* fn_array_unequal(vm::machine& vm)
 // }}}
 // Iterator {{{
 
-value::base* fn_array_iterator_at_start(value::base* self)
+value::object* fn_array_iterator_at_start(value::object* self)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   return gc::alloc<value::boolean>( iter->idx == 0 );
 }
 
-value::base* fn_array_iterator_at_end(value::base* self)
+value::object* fn_array_iterator_at_end(value::object* self)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   return gc::alloc<value::boolean>( iter->idx == iter->arr.val.size() );
 }
 
-value::base* fn_array_iterator_get(value::base* self)
+value::object* fn_array_iterator_get(value::object* self)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   if (iter->idx == iter->arr.val.size())
@@ -159,7 +159,7 @@ value::base* fn_array_iterator_get(value::base* self)
   return iter->arr.val[iter->idx];
 }
 
-value::base* fn_array_iterator_increment(value::base* self)
+value::object* fn_array_iterator_increment(value::object* self)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   if (iter->idx == iter->arr.val.size())
@@ -168,7 +168,7 @@ value::base* fn_array_iterator_increment(value::base* self)
   return iter;
 }
 
-value::base* fn_array_iterator_decrement(value::base* self)
+value::object* fn_array_iterator_decrement(value::object* self)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   if (iter->idx == 0)
@@ -177,7 +177,7 @@ value::base* fn_array_iterator_decrement(value::base* self)
   return iter;
 }
 
-value::base* fn_array_iterator_add(value::base* self, value::base* arg)
+value::object* fn_array_iterator_add(value::object* self, value::object* arg)
 {
   auto iter = static_cast<value::array_iterator*>(self);
 
@@ -195,7 +195,7 @@ value::base* fn_array_iterator_add(value::base* self, value::base* arg)
   return other;
 }
 
-value::base* fn_array_iterator_subtract(value::base* self, value::base* arg)
+value::object* fn_array_iterator_subtract(value::object* self, value::object* arg)
 {
   auto iter = static_cast<value::array_iterator*>(self);
 
@@ -215,7 +215,7 @@ value::base* fn_array_iterator_subtract(value::base* self, value::base* arg)
   return other;
 }
 
-value::base* fn_array_iterator_equals(value::base* self, value::base* arg)
+value::object* fn_array_iterator_equals(value::object* self, value::object* arg)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   auto other = static_cast<value::array_iterator*>(arg);
@@ -223,7 +223,7 @@ value::base* fn_array_iterator_equals(value::base* self, value::base* arg)
                                   && iter->idx == other->idx );
 }
 
-value::base* fn_array_iterator_unequal(value::base* self, value::base* arg)
+value::object* fn_array_iterator_unequal(value::object* self, value::object* arg)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   auto other = static_cast<value::array_iterator*>(arg);
@@ -231,7 +231,7 @@ value::base* fn_array_iterator_unequal(value::base* self, value::base* arg)
                                   || iter->idx != other->idx );
 }
 
-value::base* fn_array_iterator_greater(value::base* self, value::base* arg)
+value::object* fn_array_iterator_greater(value::object* self, value::object* arg)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   auto other = static_cast<value::array_iterator*>(arg);
@@ -240,7 +240,7 @@ value::base* fn_array_iterator_greater(value::base* self, value::base* arg)
   return gc::alloc<value::boolean>(iter->idx > other->idx );
 }
 
-value::base* fn_array_iterator_less(value::base* self, value::base* arg)
+value::object* fn_array_iterator_less(value::object* self, value::object* arg)
 {
   auto iter = static_cast<value::array_iterator*>(self);
   auto other = static_cast<value::array_iterator*>(arg);

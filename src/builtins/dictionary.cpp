@@ -14,7 +14,7 @@ namespace {
 
 // dictionary {{{
 
-value::base* fn_dictionary_init(vm::machine& vm)
+value::object* fn_dictionary_init(vm::machine& vm)
 {
   vm.self();
   auto dict = static_cast<value::dictionary*>(vm.top());
@@ -28,13 +28,13 @@ value::base* fn_dictionary_init(vm::machine& vm)
   return dict;
 }
 
-value::base* fn_dictionary_size(value::base* self)
+value::object* fn_dictionary_size(value::object* self)
 {
   auto sz = static_cast<value::dictionary*>(self)->val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
-value::base* fn_dictionary_at(value::base* self, value::base* arg)
+value::object* fn_dictionary_at(value::object* self, value::object* arg)
 {
   auto& dict = static_cast<value::dictionary&>(*self);
   if (!dict.val.count(arg))
@@ -42,7 +42,7 @@ value::base* fn_dictionary_at(value::base* self, value::base* arg)
   return dict.val[arg];
 }
 
-value::base* fn_dictionary_set_at(vm::machine& vm)
+value::object* fn_dictionary_set_at(vm::machine& vm)
 {
   vm.self();
   auto& dict = static_cast<value::dictionary&>(*vm.top());

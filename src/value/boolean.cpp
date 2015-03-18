@@ -8,8 +8,8 @@
 using namespace vv;
 
 value::boolean::boolean(bool new_val)
-  : base {&builtin::type::boolean},
-    val  {new_val}
+  : object {&builtin::type::boolean},
+    val    {new_val}
 { }
 
 std::string value::boolean::value() const { return val ? "true" : "false"; }
@@ -23,7 +23,7 @@ size_t value::boolean::hash() const
   return hasher(val);
 }
 
-bool value::boolean::equals(const base& other) const
+bool value::boolean::equals(const object& other) const
 {
   if (other.type != &builtin::type::boolean)
     return false;

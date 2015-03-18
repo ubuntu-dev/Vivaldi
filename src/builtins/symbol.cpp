@@ -13,17 +13,17 @@ using namespace builtin;
 
 namespace {
 
-const std::string& to_string(dumb_ptr<value::base> boxed)
+const std::string& to_string(dumb_ptr<value::object> boxed)
 {
   return static_cast<const value::string&>(*boxed).val;
 }
 
-vv::symbol to_symbol(dumb_ptr<value::base> boxed)
+vv::symbol to_symbol(dumb_ptr<value::object> boxed)
 {
   return static_cast<const value::symbol&>(*boxed).val;
 }
 
-value::base* fn_symbol_init(vm::machine& vm)
+value::object* fn_symbol_init(vm::machine& vm)
 {
   vm.self();
   auto& sym = static_cast<value::symbol&>(*vm.top());
@@ -38,14 +38,14 @@ value::base* fn_symbol_init(vm::machine& vm)
   return &sym;
 }
 
-value::base* fn_symbol_equals(value::base* self, value::base* arg)
+value::object* fn_symbol_equals(value::object* self, value::object* arg)
 {
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>(to_symbol(self) == to_symbol(arg));
 }
 
-value::base* fn_symbol_unequal(value::base* self, value::base* arg)
+value::object* fn_symbol_unequal(value::object* self, value::object* arg)
 {
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( true );

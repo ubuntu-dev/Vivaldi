@@ -7,15 +7,15 @@ namespace vv {
 
 namespace value {
 
-struct blob : public base {
+struct blob : public object {
 public:
-  blob(void* val, const std::function<void(base*)>& dtor);
+  blob(void* val, const std::function<void(object*)>& dtor);
 
   blob(blob&& other);
   blob& operator=(blob&& other);
 
   void* val;
-  std::function<void(base*)> c_dtor;
+  std::function<void(object*)> c_dtor;
 
 
   ~blob();

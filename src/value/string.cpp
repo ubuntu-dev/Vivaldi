@@ -6,8 +6,8 @@
 using namespace vv;
 
 value::string::string(const std::string& val)
-  : base {&builtin::type::string},
-    val  {val}
+  : object {&builtin::type::string},
+    val    {val}
 { }
 
 std::string value::string::value() const { return '"' + val += '"'; }
@@ -18,7 +18,7 @@ size_t value::string::hash() const
   return hasher(val);
 }
 
-bool value::string::equals(const base& other) const
+bool value::string::equals(const object& other) const
 {
   if (other.type != &builtin::type::string)
     return false;
