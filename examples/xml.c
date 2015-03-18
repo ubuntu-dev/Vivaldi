@@ -63,6 +63,7 @@ static vv_object_t* xml_node_first(vv_object_t* self, vv_object_t* name);
 static vv_object_t* xml_node_attr(vv_object_t* self, vv_object_t* name);
 static vv_object_t* xml_node_name(vv_object_t* self);
 static vv_object_t* xml_node_contents(vv_object_t* self);
+static vv_object_t* xml_node_str(vv_object_t* self);
 
 typedef struct xml_c_node_list {
   xmlNode** nodes;
@@ -248,6 +249,7 @@ xml_node_contents(vv_object_t* self)
   xmlFree(string);
   return str;
 }
+static vv_object_t* xml_node_str(vv_object_t* self);
 static vv_object_t*
 xml_node_all(vv_object_t* self, vv_object_t* name)
 {
@@ -306,6 +308,26 @@ xml_node_attr(vv_object_t* self, vv_object_t* name)
   xmlFree(attr);
 
   return attr_obj;
+}
+
+static vv_object_t*
+xml_node_str(vv_object_t* self)
+{
+  xmlNode* node;
+  int success = vv_get_blob(self, (void**)&node);
+  if (success == -1) {
+    return NULL;
+  }
+
+  size_t len = xmlStrlen(node->name);
+  char* str = malloc(xmlStrlen(node->name) + 3);
+  str[0] = '<';
+  str[len + 1] = '>';
+  str[len + 2] = '\0';
+  memcpy(str + 1, node->name, len);
+  vv_object_t* str_obj = vv_new_string(str);
+  free(str);
+  return str_obj;
 }
 
 static xml_c_node_list*
@@ -627,6 +649,7 @@ vv_init_lib(void)
     vv_add_binop(xml_type_node, "attr", xml_node_attr);
     vv_add_monop(xml_type_node, "name", xml_node_name);
     vv_add_monop(xml_type_node, "contents", xml_node_contents);
+    vv_add_monop(xml_type_node, "str", xml_node_str);
   }
 
   xml_type_node_list = vv_new_type("XMLNodeList",

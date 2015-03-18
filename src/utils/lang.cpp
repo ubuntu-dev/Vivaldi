@@ -39,3 +39,18 @@ vv::value::base* vv::find_method(value::type* t, symbol name)
 
   return nullptr;
 }
+
+std::string vv::pretty_print(value::base& object, vm::machine& vm)
+{
+  if (object.members.contains({"str"}) || find_method(object.type, {"str"})) {
+    vm.push(&object);
+    vm.readm({"str"});
+    vm.call(0);
+    vm.run_cur_scope();
+    auto str = vm.top();
+    vm.pop(1);
+    return str->value();
+  }
+
+  return object.value();
+}

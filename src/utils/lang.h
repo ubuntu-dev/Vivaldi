@@ -15,6 +15,8 @@ value::base* throw_exception(value::base* value);
 
 value::base* find_method(value::type* type, symbol name);
 
+std::string pretty_print(value::base& object, vm::machine& vm);
+
 }
 
 #endif

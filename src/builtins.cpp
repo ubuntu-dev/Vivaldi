@@ -111,7 +111,7 @@ value::base* fn_print(vm::machine& vm)
   if (arg->type == &type::string)
     std::cout << static_cast<value::string*>(arg)->val;
   else
-    std::cout << arg->value();
+    std::cout << pretty_print(*arg, vm);
   return gc::alloc<value::nil>( );
 }
 

@@ -5,9 +5,8 @@
 #include "parser.h"
 #include "vm.h"
 #include "utils/error.h"
+#include "utils/lang.h"
 #include "value/array.h"
-#include "value/builtin_function.h"
-#include "value/nil.h"
 #include "value/string.h"
 
 #include <iostream>
@@ -72,7 +71,7 @@ void run_repl()
       vv::vm::machine machine{std::move(frame)};
       try {
         machine.run();
-        std::cout << "=> " << machine.top()->value() << '\n';
+        std::cout << "=> " << vv::pretty_print(*machine.top(), machine) << '\n';
       } catch (const vv::vm_error& err) {
         write_error(vv::message::caught_exception(*err.error()));
       }
