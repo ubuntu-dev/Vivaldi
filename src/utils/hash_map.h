@@ -213,12 +213,8 @@ private:
   void rehash()
   {
     std::forward_list<std::pair<K, V>> members;
-    for (auto& i : m_buckets) {
-      if (members.empty())
-        members = std::move(i);
-      else
-        members.splice_after(std::begin(members), std::move(i));
-    }
+    for (auto& i : m_buckets)
+      members.splice_after(members.before_begin(), std::move(i));
     m_buckets.resize(m_buckets.size() + 6);
 
     for (auto& i : members) {
