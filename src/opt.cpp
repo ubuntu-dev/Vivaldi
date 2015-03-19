@@ -230,7 +230,8 @@ bool optimize_cond_jumps(std::vector<vm::command>& code)
       }
       if (i->instr == vm::instruction::jf) {
         i->instr = truthiness ? vm::instruction::noop : vm::instruction::jmp;
-      } else {
+      }
+      else {
         i->instr = truthiness ? vm::instruction::jmp : vm::instruction::noop;
       }
     }

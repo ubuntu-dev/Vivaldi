@@ -135,7 +135,8 @@ public:
         bucket.emplace_front(std::move(item), std::move(val));
         return;
       }
-    } else {
+    }
+    else {
       ++m_sz;
     }
 
@@ -164,7 +165,8 @@ public:
         bucket.emplace_front(item, V{});
         return bucket.front().second;
       }
-    } else {
+    }
+    else {
       ++m_sz;
     }
 
@@ -212,11 +214,10 @@ private:
   {
     std::forward_list<std::pair<K, V>> members;
     for (auto& i : m_buckets) {
-      if (members.empty()) {
+      if (members.empty())
         members = std::move(i);
-      } else {
+      else
         members.splice_after(std::begin(members), std::move(i));
-      }
     }
     m_buckets.resize(m_buckets.size() + 6);
 

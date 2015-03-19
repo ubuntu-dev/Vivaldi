@@ -147,8 +147,8 @@ val_res val_accessor(vector_ref<token> tokens)
       if (!args)
         return {tokens.subvec(1), "expected argument list"};
       tokens = *args;
-    } else {
-
+    }
+    else {
       val_res res;
       if (tokens.front().which == token::type::open_bracket) {
          res = val_bracketed_subexpr(tokens,
@@ -159,7 +159,8 @@ val_res val_accessor(vector_ref<token> tokens)
           return res;
         if (!res)
           return {tokens.subvec(1), "expected index expression"}; // '['
-      } else { // dot
+      }
+      else { // dot
         res = val_variable(tokens.subvec(1)); // '.'
         if (res.invalid())
           return res;

@@ -24,10 +24,11 @@
 using namespace vv;
 
 vm::machine::machine(call_frame&& frame)
-  : m_call_stack        {frame},
-    m_transient_self    {nullptr},
-    m_req_path          {""}
+  : m_call_stack     {frame},
+    m_transient_self {nullptr},
+    m_req_path       {""}
 {
+  // TODO: Merge VM and GC so they don't have to interact so weirdly
   gc::set_running_vm(*this);
 }
 
@@ -42,6 +43,8 @@ void vm::machine::run()
   }
 }
 
+// Run VM until it attempts (via exception or via 'ret') to pop the current
+// frame off the call stack
 void vm::machine::run_cur_scope()
 {
   auto exit_sz = m_call_stack.size();
@@ -55,9 +58,11 @@ void vm::machine::run_cur_scope()
     if (command.instr == vm::instruction::ret && m_call_stack.size() == exit_sz) {
       ret(command.arg.as_bool());
       return;
-    } else if (command.instr == vm::instruction::exc) {
+    }
+    else if (command.instr == vm::instruction::exc) {
       except_until(exit_sz);
-    } else {
+    }
+    else {
       run_single_command(command);
     }
   }
@@ -212,7 +217,8 @@ void vm::machine::let(symbol sym)
   if (frame().env->members.contains(sym)) {
     pstr(message::already_exists(sym));
     exc();
-  } else {
+  }
+  else {
     frame().env->members.insert(sym, top());
   }
 }
@@ -221,7 +227,8 @@ void vm::machine::self()
 {
   if (frame().env->self) {
     push(frame().env->self.get());
-  } else {
+  }
+  else {
     pstr(message::invalid_self_access);
     exc();
   }
@@ -237,12 +244,15 @@ void vm::machine::readm(symbol sym)
   m_transient_self = top();
   pop(1);
 
+  // First check local members, then methods
   auto iter = m_transient_self->members.find(sym);
   if (iter != std::end(m_transient_self->members)) {
     push(iter->second);
-  } else if (auto method = find_method(m_transient_self->type, sym)) {
+  }
+  else if (auto method = find_method(m_transient_self->type, sym)) {
     push(method);
-  } else {
+  }
+  else {
     pstr(message::has_no_member(*m_transient_self, sym));
     exc();
   }
@@ -282,19 +292,22 @@ void vm::machine::call(int argc)
       auto ret = monop->fn_body(m_transient_self);
       push(ret);
 
-    } else if (func->type == value::basic_function::func_type::opt2) {
+    }
+    else if (func->type == value::basic_function::func_type::opt2) {
       auto binop = static_cast<value::opt_binop*>(func);
       auto ret = binop->fn_body(m_transient_self, top());
       //pop(1);
       push(ret);
 
-    } else if (func->type == value::basic_function::func_type::builtin) {
+    }
+    else if (func->type == value::basic_function::func_type::builtin) {
       auto builtin = static_cast<value::builtin_function*>(func);
       if (m_transient_self)
         frame().env = gc::alloc<environment>( nullptr, m_transient_self );
       push(builtin->fn_body(*this));
 
-    } else {
+    }
+    else {
       frame().env = gc::alloc<environment>(func->enclosing.get(), m_transient_self);
     }
   } catch (const vm_error& err) {
@@ -603,7 +616,8 @@ void vm::machine::except_until(size_t stack_pos)
     push(frame().catcher.get());
     popc();
     call(1);
-  } else {
+  }
+  else {
     throw vm_error{except_val};
   }
 }

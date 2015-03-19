@@ -361,8 +361,8 @@ parse_res<> parse_prec0(token_string tokens)
       tokens = list_res->second;
 
       expr = std::make_unique<function_call>(move(expr), move(list));
-
-    } else if (tokens.front().which == token::type::open_bracket) {
+    }
+    else if (tokens.front().which == token::type::open_bracket) {
       auto idx_res = parse_bracketed_subexpr(tokens,
                                              parse_expression,
                                              token::type::open_bracket,
@@ -388,8 +388,8 @@ parse_res<> parse_prec0(token_string tokens)
       arg_t arg{};
       arg.emplace_back(move(idx));
       expr = std::make_unique<function_call>(move(member), move(arg));
-
-    } else {
+    }
+    else {
       tokens = tokens.subvec(1); // '.'
       symbol name{tokens.front().str};
       tokens = tokens.subvec(1); // name

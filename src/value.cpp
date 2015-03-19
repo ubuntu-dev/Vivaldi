@@ -76,8 +76,8 @@ value::type::type(
     init_shim.body.emplace_back( vm::instruction::call, init_shim.argc );
     init_shim.body.emplace_back( vm::instruction::self );
     init_shim.body.emplace_back( vm::instruction::ret, false );
-
-  } else {
+  }
+  else {
     init_shim.argc = 0;
     init_shim.body = {
       { vm::instruction::self },
