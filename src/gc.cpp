@@ -20,6 +20,7 @@
 
 #include <cassert>
 #include <list>
+#include <stack>
 
 using namespace vv;
 using namespace gc;
@@ -98,6 +99,8 @@ namespace {
 // functions in dynamic libraries).
 std::vector<dynamic_library> g_libs;
 
+std::stack<value_type*> g_free;
+
 // Using list, instead of vector, for two reasons:
 // - copying value_type's is both infeasible and expensive
 // - pointers to value_type's (i.e. iterators in g_vals) can never be
@@ -108,31 +111,20 @@ std::list<gc_chunk> g_vals( 4 );
 // Stored here for GC marking
 vm::machine* g_vm;
 
-void get_next(std::list<gc_chunk>::iterator& major, value_type*& minor)
-{
-  while (major != end(g_vals)) {
-    minor = std::find_if(minor, end(*major), [](const auto& i) { return i.empty(); });
-    if (minor != end(*major))
-      break;
-    ++major;
-    minor = begin(*major);
-  }
-}
-
 void mark()
 {
   if (g_vm)
     g_vm->mark();
 }
 
-void sweep()
+void copy_free()
 {
-  for (auto& i : g_vals) {
-    for (auto& j : i) {
-      if (j.marked())
-        j.unmark();
+  for (auto& block : g_vals) {
+    for (auto& i : block) {
+      if (i.marked())
+        i.unmark();
       else
-        j.clear();
+        g_free.push(&i);
     }
   }
 }
@@ -144,29 +136,22 @@ void sweep()
 
 value::object* gc::internal::get_next_empty()
 {
-  static auto major = begin(g_vals);
-  static auto minor = begin(*major);
-
-  if (major == end(g_vals)) {
+  if (!g_free.size()) {
     ::mark();
-    sweep();
-    major = begin(g_vals);
-    minor = begin(*major);
-
-    get_next(major, minor);
-    if (major == end(g_vals)) {
-      --major;
-      g_vals.resize(g_vals.size() * 2);
-      ++major;
-      minor = begin(*major);
-    }
+    copy_free();
   }
 
-  auto ret = minor;
-  // since minor is by definition empty at this point, *don't* include it in the
-  // next-empty search
-  get_next(major, ++minor);
-  return &ret->object;
+  if (!g_free.size()) {
+    auto i = --end(g_vals);
+    g_vals.resize(g_vals.size() * 2);
+    for_each(++i, end(g_vals),
+             [&](auto& block) { for (auto& i : block) g_free.push(&i); });
+  }
+
+  auto* val = g_free.top();
+  g_free.pop();
+  val->clear();
+  return &val->object;
 }
 
 void gc::set_running_vm(vm::machine& vm)
@@ -191,6 +176,9 @@ void gc::init()
   int value = 0;
   for (auto& i : internal::g_ints)
     i.val = value++;
+  for (auto& block : g_vals)
+    for (auto& i : block)
+      g_free.push(&i);
 }
 
 void gc::mark(value::object& object)
