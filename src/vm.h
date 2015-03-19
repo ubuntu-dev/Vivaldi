@@ -12,6 +12,11 @@ class machine {
 public:
   machine(call_frame&& frame);
 
+  machine(machine&& other) = delete;
+  machine(const machine& other) = delete;
+  machine& operator=(machine&& other) = delete;
+  machine& operator=(const machine& other) = delete;
+
   // Run the current code until completion.
   void run();
   // Run the current code until we attempt to exit (or except out of) the call

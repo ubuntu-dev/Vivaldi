@@ -87,7 +87,7 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
 template <typename F>
 call_result transformed_range(vm::machine& vm, const F& inner)
 {
-  return fake_for_loop(vm, [&](auto vm, auto* transform, auto* orig)
+  return fake_for_loop(vm, [&](auto& vm, auto* transform, auto* orig)
   {
     vm.push(orig);
 
