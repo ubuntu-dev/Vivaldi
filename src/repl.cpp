@@ -14,6 +14,8 @@ using namespace vv;
 
 namespace {
 
+// Colorize error message. TODO: detect terminal properties and adjust
+// accordingly
 void write_error(const std::string& error)
 {
   std::cerr << "\033[1;31m" << error << "\033[22;39m\n";
@@ -21,6 +23,8 @@ void write_error(const std::string& error)
 
 }
 
+// Get valid input, ignoring blank lines, concatenating incomplete lines, and
+// rejecting invalid lines
 std::vector<std::unique_ptr<ast::expression>> vv::get_valid_line()
 {
   std::cout << ">>> ";
@@ -31,15 +35,24 @@ std::vector<std::unique_ptr<ast::expression>> vv::get_valid_line()
   while (!std::cin.eof()) {
     std::string line;
     getline(std::cin, line);
-    std::istringstream linestream{line};
 
+    // Tokenizer takes an istream, so make one out of the current line (we can't
+    // just feed it std::cin, because of prompts and stuff).
+    std::istringstream linestream{line};
+    // Tokenize and validate
     auto new_tokens = parser::tokenize(linestream);
     copy(begin(new_tokens), end(new_tokens), back_inserter(tokens));
     validator = parser::is_valid(tokens);
+    // If there were no validation errors, we've grabbed a complete expression.
     if (validator.valid())
       break;
 
+    // Slightly hacky--- if the iterator reached an invalid state at the last
+    // token, it's not really 'invalid' (just incomplete), so instead of
+    // printing an error, keep the current tokens and just grab some more until
+    // we've got a complete expression (or a genuinely invalid one).
     if (validator.invalid() && validator->size()) {
+      // Genuine error--- print and clear invalid tokens
       std::ostringstream error;
       error << "Invalid syntax";
       if (validator.invalid()) {
@@ -52,8 +65,12 @@ std::vector<std::unique_ptr<ast::expression>> vv::get_valid_line()
       }
       write_error(error.str());
       tokens.clear();
+      // caller is expecting a valid expression, so keep prompting until we get
+      // one
       std::cout << ">>> ";
-    } else {
+    }
+    else {
+      // Incomplete expression--- prompt for more
       std::cout << "... ";
     }
   }
