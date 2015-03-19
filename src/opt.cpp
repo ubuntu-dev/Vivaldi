@@ -39,9 +39,26 @@ bool is_prim_push(const vm::command& com)
   case vm::instruction::pnil:
   case vm::instruction::pint:
   case vm::instruction::pflt:
+  case vm::instruction::pfn:
   case vm::instruction::pbool:
   case vm::instruction::pstr:
   case vm::instruction::psym: return true;
+  default: return false;
+  }
+}
+
+bool is_side_effect_free(const vm::command& com)
+{
+  switch (com.instr) {
+  case vm::instruction::pnil:
+  case vm::instruction::pint:
+  case vm::instruction::pflt:
+  case vm::instruction::pfn:
+  case vm::instruction::pbool:
+  case vm::instruction::pstr:
+  case vm::instruction::psym:
+  case vm::instruction::arg:
+  case vm::instruction::dup: return true;
   default: return false;
   }
 }
@@ -96,6 +113,8 @@ std::vector<size_t> jump_targets(const std::vector<vm::command>& code)
 // }}}
 // Optimization functions {{{
 
+// Remove unnecessary 'eblk'/'lblk' pairs in which nothing is defined (since
+// creating a new environment is potentially expensive)
 bool optimize_blocks(std::vector<vm::command>& code)
 {
   auto changed = false;
@@ -124,6 +143,7 @@ bool optimize_blocks(std::vector<vm::command>& code)
   return changed;
 }
 
+// Replace calls to 'add', 'subtract', etc. with optimized instructions
 bool optimize_instructions(std::vector<vm::command>& code)
 {
   auto changed = false;
@@ -148,14 +168,15 @@ bool optimize_instructions(std::vector<vm::command>& code)
   return changed;
 }
 
+// Remove 'push literal' / 'pop literal'
 bool optimize_noops(std::vector<vm::command>& code)
 {
   auto immut = jump_targets(code);
 
   auto changed = false;
 
-  auto i = find_if(begin(code), end(code), is_prim_push);
-  for (; i != end(code); i = find_if(i, end(code), is_prim_push)) {
+  auto i = find_if(begin(code), end(code), is_side_effect_free);
+  for (; i != end(code); i = find_if(i, end(code), is_side_effect_free)) {
     auto next = i + 1;
     if (next != end(code) &&
         !binary_search(begin(immut), end(immut), i    - begin(code)) &&
@@ -174,6 +195,7 @@ bool optimize_noops(std::vector<vm::command>& code)
   return changed;
 }
 
+// Expression folding--- e.g. convert '1 + 2 * 3 - 5' to just '2'
 bool optimize_constants(std::vector<vm::command>& code)
 {
   auto changed = false;
@@ -208,6 +230,8 @@ bool optimize_constants(std::vector<vm::command>& code)
   return changed;
 }
 
+// Replace conditional jumps (jf, jt) with absolute jump (jmp) if the condition
+// is a literal and so known at compile time
 bool optimize_cond_jumps(std::vector<vm::command>& code)
 {
   auto changed = false;
@@ -240,6 +264,8 @@ bool optimize_cond_jumps(std::vector<vm::command>& code)
   return changed;
 }
 
+// remove code that's never reached because it's always jumped over (most useful
+// in conjunction with optimize_cond_jumps)
 bool optimize_abs_jumps(std::vector<vm::command>& code)
 {
   if (any_of(begin(code), end(code), is_cjmp))
@@ -259,6 +285,8 @@ bool optimize_abs_jumps(std::vector<vm::command>& code)
   return true;
 }
 
+// Remove noop instructions created during optimization, unless they're needed
+// to ensure that jump indices are correct
 bool optimize_noop_instrs(std::vector<vm::command>& code)
 {
   if (any_of(begin(code), end(code), is_jump))
