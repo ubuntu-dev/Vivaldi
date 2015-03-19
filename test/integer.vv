@@ -58,6 +58,12 @@ end
 
 fn negative_num(): assert(0 - 1 == -1, "0 - 1 == -1")
 
+fn bases(): do
+  assert(18 == 0b10010, "18 == 0b10010")
+  assert(55 == 0x37, "55 == 0x37")
+  assert(123 == 0173, "123 == 0173")
+end
+
 section("Integers")
 
 test(basic, "basic")
@@ -68,3 +74,4 @@ test(comparison, "comparison")
 test(multiplication, "multiplication")
 test(bitwise, "bitwise")
 test(negative_num, "negative")
+test(bases, "literals in different bases")
