@@ -22,24 +22,21 @@ tok_res zero_token(boost::string_ref line)
     if (line[1] == '.') {
       auto post_dot = std::find_if_not(begin(line) + 2, end(line), isdigit);
       if (post_dot != begin(line) + 2) {
-
         std::string num{begin(line), post_dot};
         return { {token::type::floating_point, num},
                  line.substr(post_dot - begin(line)) };
       }
-
-    } else if (line[1] == 'x') {
-      last = std::find_if(begin(line) + 2, end(line),
-                         [](auto c) { return !isdigit(c) || c < 'a' || c > 'f'; });
-
-    } else if (line[1] == 'b') {
+    }
+    else if (line[1] == 'x') {
+      last = std::find_if_not(begin(line) + 2, end(line), isxdigit);
+    }
+    else if (line[1] == 'b') {
       last = std::find_if(begin(line) + 2, end(line),
                           [](auto c) { return c != '0' && c != '1'; });
-
-    } else if (isdigit(line[1])) {
+    }
+    else if (isdigit(line[1])) {
       last = std::find_if(begin(line) + 2, end(line),
-                          [](auto c)
-                            { return !isdigit(c) || c == '8' || c == '9'; });
+                          [](auto c) { return !isdigit(c) || c > '7'; });
     }
   }
   std::string num{begin(line), last};
@@ -194,7 +191,8 @@ tok_res string_token(boost::string_ref line)
       char chr;
       tie(chr, line) = escaped(line);
       token += chr;
-    } else {
+    }
+    else {
       token += line.front();
       line.remove_prefix(1);
     }
@@ -234,7 +232,8 @@ tok_res regex_token(boost::string_ref line)
       char chr;
       tie(chr, line) = escaped_regex(line);
       token += chr;
-    } else {
+    }
+    else {
       token += line.front();
       line.remove_prefix(1);
     }
