@@ -1,6 +1,6 @@
 #include "builtins.h"
 
-#include "gc.h"
+#include "gc/alloc.h"
 #include "utils/lang.h"
 #include "value/array.h"
 #include "value/builtin_function.h"
@@ -12,7 +12,7 @@ using namespace builtin;
 
 namespace {
 
-value::object* fn_range_init(vm::machine& vm)
+value::object_ptr fn_range_init(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -23,12 +23,12 @@ value::object* fn_range_init(vm::machine& vm)
   return &rng;
 }
 
-value::object* fn_range_start(value::object* self)
+value::object_ptr fn_range_start(value::object_ptr self)
 {
-  return gc::alloc<value::range>(*static_cast<value::range*>(self));
+  return gc::alloc<value::range>(static_cast<value::range&>(*self));
 }
 
-value::object* fn_range_size(vm::machine& vm)
+value::object_ptr fn_range_size(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -38,7 +38,7 @@ value::object* fn_range_size(vm::machine& vm)
   return vm.top();
 }
 
-value::object* fn_range_at_end(vm::machine& vm)
+value::object_ptr fn_range_at_end(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -51,12 +51,12 @@ value::object* fn_range_at_end(vm::machine& vm)
   return vm.top();
 }
 
-value::object* fn_range_get(value::object* self)
+value::object_ptr fn_range_get(value::object_ptr self)
 {
-  return static_cast<value::range*>(self)->start;
+  return static_cast<value::range&>(*self).start;
 }
 
-value::object* fn_range_increment(vm::machine& vm)
+value::object_ptr fn_range_increment(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -67,7 +67,7 @@ value::object* fn_range_increment(vm::machine& vm)
   return &rng;
 }
 
-value::object* fn_range_to_arr(vm::machine& vm)
+value::object_ptr fn_range_to_arr(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -113,5 +113,4 @@ value::type type::range {gc::alloc<value::range>, {
   { {"get"},       &range_get },
   { {"increment"}, &range_increment },
   { {"to_arr"},    &range_to_arr },
-}, builtin::type::object, {"Range"}};
-
+}, &builtin::type::object, {"Range"}};

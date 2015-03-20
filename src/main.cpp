@@ -4,6 +4,7 @@
 #include "messages.h"
 #include "repl.h"
 #include "vm.h"
+#include "gc/alloc.h"
 #include "utils/error.h"
 #include "value/array.h"
 #include "value/string.h"
@@ -45,8 +46,8 @@ int main(int argc, char** argv)
 
     // Fill 'argv' with command-line arguments, chopping off 'vivaldi' and the
     // filename
-    auto cast_argv = static_cast<vv::value::array*>( arg_array );
-    transform(argv + 2, argv + argc, back_inserter(cast_argv->val),
+    auto& cast_argv = static_cast<vv::value::array&>(*arg_array);
+    transform(argv + 2, argv + argc, back_inserter(cast_argv.val),
               vv::gc::alloc<vv::value::string, std::string>);
 
     // Actuall run the VM; if an uncaught Vivaldi exception is thrown, print the

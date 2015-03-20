@@ -1,11 +1,12 @@
 #include "builtins.h"
 
-#include "gc.h"
+#include "gc/alloc.h"
 #include "messages.h"
 #include "utils/lang.h"
+#include "value/boolean.h"
 #include "value/builtin_function.h"
-#include "value/integer.h"
 #include "value/floating_point.h"
+#include "value/integer.h"
 #include "value/opt_functions.h"
 #include "value/string.h"
 
@@ -17,12 +18,12 @@ using value::opt_binop;
 
 namespace {
 
-int to_int(dumb_ptr<value::object> boxed)
+int to_int(value::object_ptr boxed)
 {
   return static_cast<value::integer&>(*boxed).val;
 }
 
-double to_float(dumb_ptr<value::object> boxed)
+double to_float(value::object_ptr boxed)
 {
   return static_cast<value::floating_point&>(*boxed).val;
 }
@@ -32,7 +33,7 @@ double to_float(dumb_ptr<value::object> boxed)
 template <typename F>
 auto fn_int_or_flt_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg) -> value::object*
+  return [=](value::object_ptr self, value::object_ptr arg) -> value::object_ptr
   {
     auto left = to_int(self);
     if (arg->type == &type::floating_point)
@@ -47,7 +48,7 @@ auto fn_int_or_flt_op(const F& op)
 template <typename F>
 auto fn_integer_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg) -> value::object*
+  return [=](value::object_ptr self, value::object_ptr arg) -> value::object_ptr
   {
     auto left = to_int(self);
     if (arg->type != &type::integer)
@@ -61,7 +62,7 @@ auto fn_integer_op(const F& op)
 template <typename F>
 auto fn_integer_monop(const F& op)
 {
-  return [=](value::object* self)
+  return [=](value::object_ptr self)
   {
     return gc::alloc<value::integer, int>( op(to_int(self)) );
   };
@@ -70,7 +71,7 @@ auto fn_integer_monop(const F& op)
 template <typename F>
 auto fn_int_to_flt_monop(const F& op)
 {
-  return [=](value::object* self)
+  return [=](value::object_ptr self)
   {
     return gc::alloc<value::floating_point>( op(to_int(self)) );
   };
@@ -79,7 +80,7 @@ auto fn_int_to_flt_monop(const F& op)
 template <typename F>
 auto fn_int_bool_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg) -> value::object*
+  return [=](value::object_ptr self, value::object_ptr arg) -> value::object_ptr
   {
     if (arg->type == &type::floating_point) {
       auto left = to_int(self);
@@ -95,7 +96,7 @@ auto fn_int_bool_op(const F& op)
   };
 }
 
-value::object* fn_integer_divides(value::object* self, value::object* arg)
+value::object_ptr fn_integer_divides(value::object_ptr self, value::object_ptr arg)
 {
   auto left = to_int(self);
   if (arg->type == &type::floating_point) {
@@ -111,7 +112,7 @@ value::object* fn_integer_divides(value::object* self, value::object* arg)
   return gc::alloc<value::integer>( left / to_int(arg));
 }
 
-bool boxed_integer_equal(value::object* self, value::object* arg)
+bool boxed_integer_equal(value::object_ptr self, value::object_ptr arg)
 {
   if (arg->type == &type::floating_point) {
     auto left = to_int(self);
@@ -126,17 +127,17 @@ bool boxed_integer_equal(value::object* self, value::object* arg)
   return left == right;
 }
 
-value::object* fn_integer_equals(value::object* left, value::object* right)
+value::object_ptr fn_integer_equals(value::object_ptr left, value::object_ptr right)
 {
   return gc::alloc<value::boolean>( boxed_integer_equal(left, right) );
 }
 
-value::object* fn_integer_unequal(value::object* left, value::object* right)
+value::object_ptr fn_integer_unequal(value::object_ptr left, value::object_ptr right)
 {
   return gc::alloc<value::boolean>( !boxed_integer_equal(left, right) );
 }
 
-value::object* fn_integer_pow(value::object* self, value::object* arg)
+value::object_ptr fn_integer_pow(value::object_ptr self, value::object_ptr arg)
 {
   if (arg->type == &type::floating_point) {
     auto left = to_int(self);
@@ -154,7 +155,7 @@ value::object* fn_integer_pow(value::object* self, value::object* arg)
   return gc::alloc<value::integer>( static_cast<int>(pow(left, right)) );
 }
 
-value::object* fn_integer_chr(value::object* self)
+value::object_ptr fn_integer_chr(value::object_ptr self)
 {
   auto ord = to_int(self);
   if (ord < 0 || ord > 255)
@@ -214,4 +215,4 @@ value::type type::integer{[]{ return nullptr; }, {
   { {"cos"},            &int_cos      },
   { {"tan"},            &int_tan      },
   { {"chr"},            &int_chr      }
-}, builtin::type::object, {"Integer"}};
+}, &builtin::type::object, {"Integer"}};

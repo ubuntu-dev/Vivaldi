@@ -10,13 +10,13 @@ namespace value {
 
 struct string_iterator : public object {
 public:
-  string_iterator(string& str);
+  string_iterator(gc::managed_ptr<string> str);
   string_iterator();
 
   std::string value() const override;
   void mark() override;
 
-  string& str;
+  gc::managed_ptr<string> str;
   size_t idx;
 };
 

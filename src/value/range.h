@@ -8,12 +8,12 @@ namespace vv {
 namespace value {
 
 struct range : public object {
-  range(object& start, object& end);
+  range(object_ptr start, object_ptr end);
   range();
   std::string value() const override;
 
-  object* start;
-  object* end;
+  object_ptr start;
+  object_ptr end;
 
   void mark() override;
 };

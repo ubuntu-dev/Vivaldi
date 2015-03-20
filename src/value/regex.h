@@ -22,7 +22,7 @@ public:
 
 struct regex_result : public object {
 public:
-  regex_result(value::string& str, std::smatch&& res);
+  regex_result(gc::managed_ptr<value::string> str, std::smatch&& res);
 
   std::string value() const override;
 
@@ -30,7 +30,7 @@ public:
 
   std::smatch val;
 
-  value::string& owning_str;
+  gc::managed_ptr<value::string> owning_str;
 private:
 };
 

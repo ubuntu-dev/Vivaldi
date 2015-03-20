@@ -1,11 +1,12 @@
 #include "builtins.h"
 
-#include "gc.h"
+#include "gc/alloc.h"
 #include "messages.h"
 #include "utils/lang.h"
-#include "value/opt_functions.h"
+#include "value/boolean.h"
 #include "value/floating_point.h"
 #include "value/integer.h"
+#include "value/opt_functions.h"
 
 using namespace vv;
 using namespace builtin;
@@ -14,12 +15,12 @@ using value::opt_binop;
 
 namespace {
 
-bool is_float(dumb_ptr<value::object> boxed) noexcept
+bool is_float(value::object_ptr boxed) noexcept
 {
   return boxed->type == &type::floating_point || boxed->type == &type::integer;
 }
 
-double to_float(dumb_ptr<value::object> boxed) noexcept
+double to_float(value::object_ptr boxed) noexcept
 {
   if (boxed->type == &type::floating_point)
     return static_cast<const value::floating_point&>(*boxed).val;
@@ -29,37 +30,37 @@ double to_float(dumb_ptr<value::object> boxed) noexcept
 template <typename F>
 auto fn_floating_point_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg)
+  return [=](value::object_ptr self, value::object_ptr arg)
   {
     if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::floating_point>(op(to_float(self), to_float(arg)));
-    return static_cast<value::object*>(res);
+    return static_cast<value::object_ptr>(res);
   };
 }
 
 template <typename F>
 auto fn_float_bool_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg)
+  return [=](value::object_ptr self, value::object_ptr arg)
   {
     if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::boolean>( op(to_float(self), to_float(arg)) );
-    return static_cast<value::object*>(res);
+    return static_cast<value::object_ptr>(res);
   };
 }
 
 template <typename F>
 auto fn_floating_point_monop(const F& op)
 {
-  return [=](value::object* self)
+  return [=](value::object_ptr self)
   {
     return gc::alloc<value::floating_point>( op(to_float(self)) );
   };
 }
 
-value::object* fn_floating_point_divides(value::object* self, value::object* arg)
+value::object_ptr fn_floating_point_divides(value::object_ptr self, value::object_ptr arg)
 {
   if (!is_float(arg))
     return throw_exception("Right-hand argument is not a Float");
@@ -102,4 +103,4 @@ value::type type::floating_point{[]{ return nullptr; }, {
   { {"sin"},            &flt_sin      },
   { {"cos"},            &flt_cos      },
   { {"tan"},            &flt_tan      }
-}, builtin::type::object, {"Float"}};
+}, &builtin::type::object, {"Float"}};

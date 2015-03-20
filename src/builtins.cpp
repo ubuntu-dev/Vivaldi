@@ -1,11 +1,12 @@
 #include "builtins.h"
 
-#include "gc.h"
+#include "gc/alloc.h"
 #include "utils/lang.h"
 #include "value/array.h"
+#include "value/boolean.h"
 #include "value/builtin_function.h"
 #include "value/function.h"
-#include "value/array.h"
+#include "value/nil.h"
 #include "value/string.h"
 
 #include <iostream>
@@ -40,10 +41,12 @@ namespace {
 
 struct call_result {
   bool completed;
-  value::object* value;
+  gc::managed_ptr<value::object> value;
 };
 
-call_result call_method(vm::machine& vm, value::object* self, symbol method)
+call_result call_method(vm::machine& vm,
+                        gc::managed_ptr<value::object> self,
+                        symbol method)
 {
   vm.push(self);
   vm.readm(method);
@@ -87,7 +90,7 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
 template <typename F>
 call_result transformed_range(vm::machine& vm, const F& inner)
 {
-  return fake_for_loop(vm, [&](auto& vm, auto* transform, auto* orig)
+  return fake_for_loop(vm, [&](auto& vm, auto transform, auto orig)
   {
     vm.push(orig);
 
@@ -103,26 +106,26 @@ call_result transformed_range(vm::machine& vm, const F& inner)
 // }}}
 // I/O {{{
 
-value::object* fn_print(vm::machine& vm)
+gc::managed_ptr<value::object> fn_print(vm::machine& vm)
 {
   vm.arg(0);
   auto arg = vm.top();
 
   if (arg->type == &type::string)
-    std::cout << static_cast<value::string*>(arg)->val;
+    std::cout << static_cast<value::string&>(*arg).val;
   else
-    std::cout << pretty_print(*arg, vm);
+    std::cout << pretty_print(arg, vm);
   return gc::alloc<value::nil>( );
 }
 
-value::object* fn_puts(vm::machine& vm)
+gc::managed_ptr<value::object> fn_puts(vm::machine& vm)
 {
   auto ret = fn_print(vm);
   std::cout << '\n';
   return ret;
 }
 
-value::object* fn_gets(vm::machine&)
+gc::managed_ptr<value::object> fn_gets(vm::machine&)
 {
   std::string str;
   getline(std::cin, str);
@@ -133,12 +136,12 @@ value::object* fn_gets(vm::machine&)
 // }}}
 // Functional stuff {{{
 
-value::object* fn_filter(vm::machine& vm)
+gc::managed_ptr<value::object> fn_filter(vm::machine& vm)
 {
   vm.parr(0);
-  auto array = static_cast<value::array*>(vm.top());
+  auto array = static_cast<gc::managed_ptr<value::array>>(vm.top());
 
-  transformed_range(vm, [array](auto* item, auto* pred)
+  transformed_range(vm, [array](auto item, auto pred)
   {
     if (truthy(pred))
       array->val.push_back(item);
@@ -148,44 +151,44 @@ value::object* fn_filter(vm::machine& vm)
   return array;
 }
 
-value::object* fn_map(vm::machine& vm)
+gc::managed_ptr<value::object> fn_map(vm::machine& vm)
 {
   // Get pointer to empty Array
   vm.parr(0);
-  auto mapped = static_cast<value::array*>(vm.top());
+  auto mapped = static_cast<gc::managed_ptr<value::array>>(vm.top());
 
-  transformed_range(vm, [mapped](auto*, auto* val)
+  transformed_range(vm, [mapped](auto, auto val)
                                 { mapped->val.push_back(val); return false; });
 
   vm.pop(1); // filtered
   return mapped;
 }
 
-value::object* fn_count(vm::machine& vm)
+gc::managed_ptr<value::object> fn_count(vm::machine& vm)
 {
   int count{};
-  transformed_range(vm, [&](auto*, auto* pred)
+  transformed_range(vm, [&](auto, auto pred)
                            { if (truthy(pred)) ++count; return false; });
   return gc::alloc<value::integer>( count );
 }
 
-value::object* fn_all(vm::machine& vm)
+gc::managed_ptr<value::object> fn_all(vm::machine& vm)
 {
   auto all = true;
-  transformed_range(vm, [&](auto*, auto* pred)
+  transformed_range(vm, [&](auto, auto pred)
                            { if (!truthy(pred)) all = false; return !all; });
   return gc::alloc<value::boolean>( all );
 }
 
-value::object* fn_any(vm::machine& vm)
+gc::managed_ptr<value::object> fn_any(vm::machine& vm)
 {
   auto found = false;
-  transformed_range(vm, [&](auto*, auto* pred)
+  transformed_range(vm, [&](auto, auto pred)
                            { if (truthy(pred)) found = true; return found; });
   return gc::alloc<value::boolean>( found );
 }
 
-value::object* fn_reduce(vm::machine& vm)
+gc::managed_ptr<value::object> fn_reduce(vm::machine& vm)
 {
   // Get iterator from range
   vm.arg(0);
@@ -221,7 +224,7 @@ value::object* fn_reduce(vm::machine& vm)
   }
 }
 
-value::object* fn_sort(vm::machine& vm)
+gc::managed_ptr<value::object> fn_sort(vm::machine& vm)
 {
   vm.parr(0);
   auto& array = static_cast<value::array&>(*vm.top());
@@ -243,7 +246,7 @@ value::object* fn_sort(vm::machine& vm)
     call_method(vm, iter, sym::increment);
   }
 
-  std::sort(begin(array.val), end(array.val), [&](auto* left, auto* right)
+  std::sort(begin(array.val), end(array.val), [&](auto left, auto right)
   {
     vm.push(right);
     vm.push(left);
@@ -261,12 +264,12 @@ value::object* fn_sort(vm::machine& vm)
 // }}}
 // Other {{{
 
-value::object* fn_quit(vm::machine&)
+gc::managed_ptr<value::object> fn_quit(vm::machine&)
 {
   exit(0);
 }
 
-value::object* fn_reverse(vm::machine& vm)
+gc::managed_ptr<value::object> fn_reverse(vm::machine& vm)
 {
   // Get iterator from range
   vm.arg(0);
@@ -274,7 +277,7 @@ value::object* fn_reverse(vm::machine& vm)
   auto iter = call_method(vm, range, sym::start).value;
 
   vm.parr(0);
-  auto* arr = static_cast<value::array*>(vm.top());
+  auto arr = static_cast<gc::managed_ptr<value::array>>(vm.top());
 
   for (;;) {
     auto at_end = call_method(vm, iter, sym::at_end).value;
@@ -314,7 +317,7 @@ value::builtin_function function::reverse{fn_reverse, 1};
 // Types {{{
 
 value::type type::function {[]{ return nullptr; }, {
-}, builtin::type::object, {"Function"}};
+}, &builtin::type::object, {"Function"}};
 
 // }}}
 

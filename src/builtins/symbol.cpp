@@ -1,8 +1,9 @@
 #include "builtins.h"
 
-#include "gc.h"
+#include "gc/alloc.h"
 #include "messages.h"
 #include "utils/lang.h"
+#include "value/boolean.h"
 #include "value/builtin_function.h"
 #include "value/opt_functions.h"
 #include "value/symbol.h"
@@ -13,39 +14,39 @@ using namespace builtin;
 
 namespace {
 
-const std::string& to_string(dumb_ptr<value::object> boxed)
+const std::string& to_string(value::object_ptr boxed)
 {
   return static_cast<const value::string&>(*boxed).val;
 }
 
-vv::symbol to_symbol(dumb_ptr<value::object> boxed)
+vv::symbol to_symbol(value::object_ptr boxed)
 {
   return static_cast<const value::symbol&>(*boxed).val;
 }
 
-value::object* fn_symbol_init(vm::machine& vm)
+value::object_ptr fn_symbol_init(vm::machine& vm)
 {
   vm.self();
-  auto& sym = static_cast<value::symbol&>(*vm.top());
+  auto sym = static_cast<gc::managed_ptr<value::symbol>>(vm.top());
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type == &type::symbol)
-    sym.val = to_symbol(arg);
+    sym->val = to_symbol(arg);
   else if (arg->type == &type::string)
-    sym.val = vv::symbol{to_string(arg)};
+    sym->val = vv::symbol{to_string(arg)};
   else
     return throw_exception(message::init_multi_type_error(type::symbol, *arg->type));
-  return &sym;
+  return sym;
 }
 
-value::object* fn_symbol_equals(value::object* self, value::object* arg)
+value::object_ptr fn_symbol_equals(value::object_ptr self, value::object_ptr arg)
 {
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>(to_symbol(self) == to_symbol(arg));
 }
 
-value::object* fn_symbol_unequal(value::object* self, value::object* arg)
+value::object_ptr fn_symbol_unequal(value::object_ptr self, value::object_ptr arg)
 {
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( true );
@@ -62,4 +63,4 @@ value::type type::symbol {gc::alloc<value::symbol>, {
   { {"init"},    &symbol_init    },
   { {"equals"},  &symbol_equals  },
   { {"unequal"}, &symbol_unequal },
-}, builtin::type::object, {"Symbol"}};
+}, &builtin::type::object, {"Symbol"}};

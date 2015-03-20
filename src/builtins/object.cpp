@@ -1,7 +1,8 @@
 #include "builtins.h"
 
-#include "gc.h"
+#include "gc/alloc.h"
 #include "utils/lang.h"
+#include "value/boolean.h"
 #include "value/opt_functions.h"
 
 using namespace vv;
@@ -9,22 +10,22 @@ using namespace builtin;
 
 namespace {
 
-value::object* fn_object_equals(value::object* self, value::object* arg)
+value::object_ptr fn_object_equals(value::object_ptr self, value::object_ptr arg)
 {
   return gc::alloc<value::boolean>( self->equals(*arg) );
 }
 
-value::object* fn_object_unequal(value::object* self, value::object* arg)
+value::object_ptr fn_object_unequal(value::object_ptr self, value::object_ptr arg)
 {
   return gc::alloc<value::boolean>( !self->equals(*arg) );
 }
 
-value::object* fn_object_not(value::object* self)
+value::object_ptr fn_object_not(value::object_ptr self)
 {
   return gc::alloc<value::boolean>( !truthy(self) );
 }
 
-value::object* fn_object_type(value::object* self)
+value::object_ptr fn_object_type(value::object_ptr self)
 {
   return self->type;
 }
@@ -39,5 +40,5 @@ value::type type::object {gc::alloc<value::object>, {
   { {"unequal"}, &obj_unequal },
   { {"not"},     &obj_not },
   { {"type"},    &obj_type }
-}, builtin::type::object, {"Object"}};
+}, &builtin::type::object, {"Object"}};
 

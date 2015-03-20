@@ -1,10 +1,12 @@
 #include "builtins.h"
 
-#include "gc.h"
+#include "gc/alloc.h"
 #include "messages.h"
 #include "utils/lang.h"
 #include "utils/error.h"
+#include "value/boolean.h"
 #include "value/builtin_function.h"
+#include "value/nil.h"
 #include "value/opt_functions.h"
 #include "value/regex.h"
 #include "value/string.h"
@@ -29,8 +31,8 @@ const std::string& to_string(const value::object& val)
   return static_cast<const value::string&>(val).val;
 }
 
-std::pair<const std::smatch&, size_t> get_match_idx(value::object* self,
-                                                    value::object* arg)
+std::pair<const std::smatch&, size_t> get_match_idx(value::object_ptr self,
+                                                    value::object_ptr arg)
 {
   if (arg->type != &type::integer) {
     auto str = gc::alloc<value::string>(message::at_type_error(type::regex_result,
@@ -51,27 +53,27 @@ std::pair<const std::smatch&, size_t> get_match_idx(value::object* self,
 
 // regex {{{
 
-value::object* fn_regex_init(vm::machine& vm)
+value::object_ptr fn_regex_init(vm::machine& vm)
 {
   vm.self();
-  auto& regex = static_cast<value::regex&>(*vm.top());
+  auto regex = static_cast<gc::managed_ptr<value::regex>>(vm.top());
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type == &type::regex) {
-    regex.val = to_regex(*arg);
-    regex.str = static_cast<value::regex*>(arg)->str;
+    regex->val = to_regex(*arg);
+    regex->str = static_cast<value::regex&>(*arg).str;
   }
   else if (arg->type == &type::string) {
     vm.pre(to_string(*arg));
-    regex = *static_cast<value::regex*>(vm.top());
+    *regex = static_cast<value::regex&>(*vm.top());
   }
   else {
     return throw_exception("RegExes can only be constructed from Strings or other RegExes");
   }
-  return &regex;
+  return regex;
 }
 
-value::object* fn_regex_match(value::object* self, value::object* arg)
+value::object_ptr fn_regex_match(value::object_ptr self, value::object_ptr arg)
 {
   if (arg->type != &type::string)
     return throw_exception("RegExes can only be matched against Strings");
@@ -81,11 +83,12 @@ value::object* fn_regex_match(value::object* self, value::object* arg)
 
   std::smatch results;
   regex_search(str, results, regex);
-  return gc::alloc<value::regex_result>( static_cast<value::string&>(*arg),
-                                         std::move(results) );
+
+  auto str_ref = static_cast<gc::managed_ptr<value::string>>(arg);
+  return gc::alloc<value::regex_result>( str_ref, std::move(results) );
 }
 
-value::object* fn_regex_match_index(value::object* self, value::object* arg)
+value::object_ptr fn_regex_match_index(value::object_ptr self, value::object_ptr arg)
 {
   if (arg->type != &type::string)
     return throw_exception("RegExes can only be matched against Strings");
@@ -103,22 +106,22 @@ value::object* fn_regex_match_index(value::object* self, value::object* arg)
 // }}}
 // regex_result {{{
 
-value::object* fn_regex_result_at(value::object* self, value::object* arg)
+value::object_ptr fn_regex_result_at(value::object_ptr self, value::object_ptr arg)
 {
 
   auto res = get_match_idx(self, arg);
   return gc::alloc<value::string>( res.first[res.second].str() );
 }
 
-value::object* fn_regex_result_index(value::object* self, value::object* arg)
+value::object_ptr fn_regex_result_index(value::object_ptr self, value::object_ptr arg)
 {
   auto res = get_match_idx(self, arg);
   return gc::alloc<value::integer>( static_cast<int>(res.first.position(res.second)) );
 }
 
-value::object* fn_regex_result_size(value::object* self)
+value::object_ptr fn_regex_result_size(value::object_ptr self)
 {
-  auto sz = static_cast<value::regex_result*>(self)->val.size();
+  auto sz = static_cast<value::regex_result&>(*self).val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
@@ -138,10 +141,10 @@ value::type type::regex {gc::alloc<value::regex>, {
   { {"init"},        &regex_init       },
   { {"match"},       &regex_match      },
   { {"match_index"}, &regex_match_index}
-}, builtin::type::object, {"RegEx"}};
+}, &builtin::type::object, {"RegEx"}};
 
 value::type type::regex_result {[]{ return nullptr; }, {
   { {"at"},    &regex_result_at    },
   { {"index"}, &regex_result_index },
   { {"size"},  &regex_result_size  }
-}, builtin::type::object, {"RegExResult"}};
+}, &builtin::type::object, {"RegExResult"}};

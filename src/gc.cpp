@@ -1,5 +1,8 @@
 #include "gc.h"
 
+#include "gc/alloc.h"
+#include "gc/managed_ptr.h"
+
 #include "builtins.h"
 #include "value/array.h"
 #include "value/array_iterator.h"
@@ -89,6 +92,14 @@ union value_type {
 }
 
 // }}}
+// block {{{
+
+struct internal::block {
+  std::bitset<512> mark_bits;
+  std::array<value_type, 512> values;
+};
+
+// }}}
 // Internals {{{
 
 namespace {
@@ -99,14 +110,13 @@ namespace {
 // functions in dynamic libraries).
 std::vector<dynamic_library> g_libs;
 
-std::stack<value_type*> g_free;
+std::stack<managed_ptr<value_type>> g_free;
 
 // Using list, instead of vector, for two reasons:
 // - copying value_type's is both infeasible and expensive
 // - pointers to value_type's (i.e. iterators in g_vals) can never be
 //   invalidated, lest everything blow up
-using gc_chunk = std::array<value_type, 512>;
-std::list<gc_chunk> g_vals( 4 );
+std::list<internal::block> g_vals( 4 );
 
 // Stored here for GC marking
 vm::machine* g_vm;
@@ -120,11 +130,11 @@ void mark()
 void copy_free()
 {
   for (auto& block : g_vals) {
-    for (auto& i : block) {
+    for (auto& i : block.values) {
       if (i.marked())
         i.unmark();
       else
-        g_free.push(&i);
+        g_free.emplace(&i, block);
     }
   }
 }
@@ -134,7 +144,7 @@ void copy_free()
 // }}}
 // External functions {{{
 
-value::object* gc::internal::get_next_empty()
+managed_ptr<value::object> internal::get_next_empty()
 {
   if (!g_free.size()) {
     ::mark();
@@ -145,13 +155,13 @@ value::object* gc::internal::get_next_empty()
     auto i = --end(g_vals);
     g_vals.resize(g_vals.size() * 2);
     for_each(++i, end(g_vals),
-             [&](auto& block) { for (auto& i : block) g_free.push(&i); });
+             [&](auto& block) { for (auto& i : block.values) g_free.push(&i); });
   }
 
-  auto* val = g_free.top();
+  auto val = g_free.top();
   g_free.pop();
   val->clear();
-  return &val->object;
+  return {&val->object, val.block()};
 }
 
 void gc::set_running_vm(vm::machine& vm)
@@ -177,7 +187,7 @@ void gc::init()
   for (auto& i : internal::g_ints)
     i.val = value++;
   for (auto& block : g_vals)
-    for (auto& i : block)
+    for (auto& i : block.values)
       g_free.push(&i);
 }
 

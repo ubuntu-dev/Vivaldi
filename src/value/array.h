@@ -11,12 +11,12 @@ namespace value {
 struct array : public object {
 public:
   // Creates an Array containing a copy of the provided vector.
-  array(const std::vector<object*>& mems = {});
+  array(const std::vector<gc::managed_ptr<object>>& mems = {});
 
   std::string value() const override;
   void mark() override;
 
-  std::vector<object*> val;
+  std::vector<gc::managed_ptr<object>> val;
 };
 
 }

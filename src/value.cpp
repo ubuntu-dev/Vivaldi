@@ -9,7 +9,7 @@
 
 using namespace vv;
 
-value::object::object(struct type* new_type)
+value::object::object(gc::managed_ptr<struct type> new_type)
   : members  {},
     type     {new_type},
     m_marked {false}
@@ -44,7 +44,7 @@ void value::object::mark()
 
 value::basic_function::basic_function(func_type type,
                                       int argc,
-                                      vm::environment* enclosing,
+                                      gc::managed_ptr<vm::environment> enclosing,
                                       vector_ref<vm::command> body)
   : object    {&builtin::type::function},
     type      {type},
@@ -53,16 +53,15 @@ value::basic_function::basic_function(func_type type,
     body      {body}
 { }
 
-value::type::type(
-    const std::function<value::object*()>& new_constructor,
-    const hash_map<vv::symbol, value::basic_function*>& new_methods,
-    value::type& new_parent,
-    vv::symbol new_name)
+value::type::type(const std::function<gc::managed_ptr<object>()>& constructor,
+                  const hash_map<vv::symbol, gc::managed_ptr<basic_function>>& methods,
+                  gc::managed_ptr<type> parent,
+                  vv::symbol name)
   : object      {&builtin::type::custom_type},
-    methods     {new_methods},
-    constructor {new_constructor},
-    parent      {new_parent},
-    name        {new_name}
+    methods     {methods},
+    constructor {constructor},
+    parent      {parent},
+    name        {name}
 {
   if (auto init = find_method(this, {"init"})) {
     init_shim.argc = init->argc;
@@ -94,17 +93,19 @@ void value::type::mark()
   for (const auto& i : methods)
     if (!i.second->marked())
       gc::mark(*i.second);
-  if (!parent.marked())
-    gc::mark(parent);
+  if (!parent->marked())
+    gc::mark(*parent);
 }
 
-size_t std::hash<vv::value::object*>::operator()(const vv::value::object* b) const
+size_t std::hash<vv::gc::managed_ptr<vv::value::object>>::operator()(
+    const vv::gc::managed_ptr<vv::value::object> b) const
 {
   return b->hash();
 }
 
-bool std::equal_to<vv::value::object*>::operator()(const vv::value::object* left,
-                                                   const vv::value::object* right) const
+bool std::equal_to<vv::gc::managed_ptr<vv::value::object>>::operator()(
+    const vv::gc::managed_ptr<vv::value::object> left,
+    const vv::gc::managed_ptr<vv::value::object> right) const
 {
   return left->equals(*right);
 }

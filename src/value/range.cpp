@@ -5,16 +5,16 @@
 
 using namespace vv;
 
-value::range::range(object& new_start, object& new_end)
-  : object  {&builtin::type::range},
-    start {&new_start},
-    end   {&new_end}
+value::range::range(object_ptr new_start, object_ptr new_end)
+  : object {&builtin::type::range},
+    start  {new_start},
+    end    {new_end}
 { }
 
 value::range::range()
-  : object  {&builtin::type::range},
-    start {nullptr},
-    end   {nullptr}
+  : object {&builtin::type::range},
+    start  {nullptr},
+    end    {nullptr}
 { }
 
 std::string value::range::value() const

@@ -6,6 +6,7 @@
 #include "messages.h"
 #include "parser.h"
 #include "value.h"
+#include "gc/alloc.h"
 #include "utils/error.h"
 #include "utils/lang.h"
 #include "value/array.h"
@@ -68,19 +69,19 @@ void vm::machine::run_cur_scope()
   }
 }
 
-value::object* vm::machine::top()
+value::object_ptr vm::machine::top()
 {
   return m_stack.back();
 }
 
-void vm::machine::push(value::object* val)
+void vm::machine::push(value::object_ptr val)
 {
   m_stack.push_back(val);
 }
 
 void vm::machine::mark()
 {
-  for (auto* i : m_stack)
+  for (auto i : m_stack)
     if (!i->marked())
       gc::mark(*i);
 
@@ -143,12 +144,13 @@ void vm::machine::ptype(const type_t& type)
     exc();
     return;
   }
-  auto& parent = static_cast<value::type&>(*parent_arg);
+  auto parent = static_cast<gc::managed_ptr<value::type>>(parent_arg);
 
-  hash_map<symbol, value::basic_function*> methods;
+  hash_map<symbol, gc::managed_ptr<value::basic_function>> methods;
   for (const auto& i : type.methods) {
     pfn(i.second);
-    methods.insert(i.first, static_cast<value::basic_function*>(top()));
+    auto fn = static_cast<gc::managed_ptr<value::basic_function>>(top());
+    methods.insert(i.first, fn);
   }
   auto newtype = gc::alloc<value::type>( nullptr, methods, parent, type.name );
 
@@ -169,7 +171,7 @@ void vm::machine::pre(const std::string& val)
 
 void vm::machine::parr(int size)
 {
-  std::vector<value::object*> vec{end(m_stack) - size, end(m_stack)};
+  std::vector<value::object_ptr> vec{end(m_stack) - size, end(m_stack)};
   auto val = gc::alloc<value::array>( move(vec) );
   pop(size);
   push(val);
@@ -177,7 +179,7 @@ void vm::machine::parr(int size)
 
 void vm::machine::pdict(int size)
 {
-  std::unordered_map<value::object*, value::object*> dict;
+  std::unordered_map<value::object_ptr, value::object_ptr> dict;
   for (auto i = end(m_stack) - size; i != end(m_stack); i += 2)
     dict[i[0]] = i[1];
 
@@ -273,7 +275,7 @@ void vm::machine::call(int argc)
     return;
   }
 
-  auto func = static_cast<value::basic_function*>(top());
+  auto func = static_cast<gc::managed_ptr<value::basic_function>>(top());
   pop(1);
   if (func->argc != argc) {
     pstr(message::wrong_argc(func->argc, argc));
@@ -288,20 +290,20 @@ void vm::machine::call(int argc)
 
   try {
     if (func->type == value::basic_function::func_type::opt1) {
-      auto monop = static_cast<value::opt_monop*>(func);
+      auto monop = static_cast<gc::managed_ptr<value::opt_monop>>(func);
       auto ret = monop->fn_body(m_transient_self);
       push(ret);
 
     }
     else if (func->type == value::basic_function::func_type::opt2) {
-      auto binop = static_cast<value::opt_binop*>(func);
+      auto binop = static_cast<gc::managed_ptr<value::opt_binop>>(func);
       auto ret = binop->fn_body(m_transient_self, top());
       //pop(1);
       push(ret);
 
     }
     else if (func->type == value::basic_function::func_type::builtin) {
-      auto builtin = static_cast<value::builtin_function*>(func);
+      auto builtin = static_cast<gc::managed_ptr<value::builtin_function>>(func);
       if (m_transient_self)
         frame().env = gc::alloc<environment>( nullptr, m_transient_self );
       push(builtin->fn_body(*this));
@@ -324,11 +326,11 @@ void vm::machine::pobj(int argc)
     return;
   }
 
-  auto type = static_cast<value::type*>(top());
+  auto type = static_cast<gc::managed_ptr<value::type>>(top());
 
   auto ctor_type = type;
   while (!ctor_type->constructor)
-    ctor_type = &ctor_type->parent;
+    ctor_type = ctor_type->parent;
   pop(1);
   push(ctor_type->constructor());
   // Hack--- nonconstructible types (e.g. Integer) have constructors that return
@@ -470,8 +472,8 @@ void int_optimization(vm::machine& vm, const F& fn, vv::symbol sym)
   if (first->type == &builtin::type::integer && !first->members.contains(sym)) {
     if (second->type == &builtin::type::integer) {
       vm.pop(1);
-      auto left = static_cast<value::integer*>(first)->val;
-      auto right = static_cast<value::integer*>(second)->val;
+      auto left = static_cast<value::integer&>(*first).val;
+      auto right = static_cast<value::integer&>(*second).val;
       vm.pint(fn(left, right));
       return;
     }

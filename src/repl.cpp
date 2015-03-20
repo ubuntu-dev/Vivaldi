@@ -4,6 +4,7 @@
 #include "gc.h"
 #include "messages.h"
 #include "parser.h"
+#include "gc/alloc.h"
 #include "utils/error.h"
 #include "utils/lang.h"
 
@@ -92,7 +93,7 @@ void vv::run_repl()
       vm::machine machine{std::move(frame)};
       try {
         machine.run();
-        std::cout << "=> " << pretty_print(*machine.top(), machine) << '\n';
+        std::cout << "=> " << pretty_print(machine.top(), machine) << '\n';
       } catch (const vm_error& err) {
         write_error(message::caught_exception(*err.error()));
       }
