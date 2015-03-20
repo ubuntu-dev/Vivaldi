@@ -138,19 +138,13 @@ value::object* fn_filter(vm::machine& vm)
   vm.parr(0);
   auto array = static_cast<value::array*>(vm.top());
 
-  fake_for_loop(vm, [array](auto& vm, auto* pred_fn, auto* item)
+  transformed_range(vm, [array](auto* item, auto* pred)
   {
-    vm.push(item);
-    vm.push(pred_fn);
-    vm.call(1);
-    vm.run_cur_scope();
-    if (truthy(vm.top()))
+    if (truthy(pred))
       array->val.push_back(item);
-    vm.pop(1);
-    return call_result{ false, nullptr };
+    return false;
   });
 
-  vm.pop(1); // array
   return array;
 }
 
