@@ -27,12 +27,12 @@ value::object_ptr fn_file_init(vm::machine& vm)
                                                     *arg->type));
   }
   vm.self();
-  auto& self = static_cast<value::file&>(*vm.top());
+  auto self = static_cast<gc::managed_ptr<value::file>>(vm.top());
   const auto& filename = static_cast<value::string&>(*arg).val;
-  self.val = std::make_unique<std::fstream>(filename);
-  self.name = filename;
-  std::getline(*self.val, self.cur_line);
-  return &self;
+  self->val = std::make_unique<std::fstream>(filename);
+  self->name = filename;
+  std::getline(*self->val, self->cur_line);
+  return self;
 }
 
 value::object_ptr fn_file_contents(value::object_ptr self)

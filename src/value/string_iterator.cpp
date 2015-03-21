@@ -20,6 +20,5 @@ std::string value::string_iterator::value() const
 void value::string_iterator::mark()
 {
   object::mark();
-  if (!str->marked())
-    gc::mark(*str);
+  gc::mark(str);
 }

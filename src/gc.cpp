@@ -21,7 +21,6 @@
 #include "value/string_iterator.h"
 #include "value/symbol.h"
 
-#include <cassert>
 #include <list>
 #include <stack>
 
@@ -73,9 +72,6 @@ union value_type {
 
   value_type() : blank{} { }
 
-  bool marked() const { return object.marked(); }
-  void unmark() { object.unmark(); }
-
   bool empty() const { return blank == 0; }
   void clear()
   {
@@ -95,8 +91,8 @@ union value_type {
 // block {{{
 
 struct internal::block {
-  std::bitset<512> mark_bits;
   std::array<value_type, 512> values;
+  std::bitset<512> mark_bits;
 };
 
 // }}}
@@ -130,12 +126,16 @@ void mark()
 void copy_free()
 {
   for (auto& block : g_vals) {
-    for (auto& i : block.values) {
-      if (i.marked())
-        i.unmark();
-      else
-        g_free.emplace(&i, block);
+    if (block.mark_bits.none()) {
+      for (auto i = block.values.size(); i--;)
+        g_free.emplace(block.values.data() + i, block);
     }
+    else if (!block.mark_bits.all()) {
+      for (auto i = block.values.size(); i--;)
+        if (!block.mark_bits[i])
+          g_free.emplace(block.values.data() + i, block);
+    }
+    block.mark_bits.reset();
   }
 }
 
@@ -154,8 +154,10 @@ managed_ptr<value::object> internal::get_next_empty()
   if (!g_free.size()) {
     auto i = --end(g_vals);
     g_vals.resize(g_vals.size() * 2);
-    for_each(++i, end(g_vals),
-             [&](auto& block) { for (auto& i : block.values) g_free.push(&i); });
+    for_each(++i, end(g_vals), [&](auto& block)
+    {
+      for (auto& i : block.values) g_free.emplace(&i, block);
+    });
   }
 
   auto val = g_free.top();
@@ -171,7 +173,6 @@ void gc::set_running_vm(vm::machine& vm)
 
 vm::machine& gc::get_running_vm()
 {
-  assert(g_vm);
   return *g_vm;
 }
 
@@ -188,12 +189,25 @@ void gc::init()
     i.val = value++;
   for (auto& block : g_vals)
     for (auto& i : block.values)
-      g_free.push(&i);
+      g_free.emplace(&i, block);
 }
 
-void gc::mark(value::object& object)
+void gc::mark(value::object_ptr object)
 {
-  object.mark();
+  static std::unordered_set<value::object*> static_objects;
+  if (object.has_block()) {
+    auto* slot = reinterpret_cast<value_type*>(object.get());
+    auto index = std::distance(object.block().values.data(), slot);
+
+    if (!object.block().mark_bits[index]) {
+      object.block().mark_bits.set(index);
+      object->mark();
+    }
+  }
+  else if (!static_objects.count(object.get())) {
+    static_objects.insert(object.get());
+    object->mark();
+  }
 }
 
 // }}}

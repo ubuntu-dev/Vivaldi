@@ -227,7 +227,7 @@ gc::managed_ptr<value::object> fn_reduce(vm::machine& vm)
 gc::managed_ptr<value::object> fn_sort(vm::machine& vm)
 {
   vm.parr(0);
-  auto& array = static_cast<value::array&>(*vm.top());
+  auto array = static_cast<gc::managed_ptr<value::array>>(vm.top());
 
   vm.arg(0);
   auto range = vm.top();
@@ -241,12 +241,12 @@ gc::managed_ptr<value::object> fn_sort(vm::machine& vm)
       break;
 
     auto next_item = call_method(vm, iter, sym::get).value;
-    array.val.push_back(next_item);
+    array->val.push_back(next_item);
 
     call_method(vm, iter, sym::increment);
   }
 
-  std::sort(begin(array.val), end(array.val), [&](auto left, auto right)
+  std::sort(begin(array->val), end(array->val), [&](auto left, auto right)
   {
     vm.push(right);
     vm.push(left);
@@ -258,7 +258,7 @@ gc::managed_ptr<value::object> fn_sort(vm::machine& vm)
     return truthy(res);
   });
 
-  return &array;
+  return array;
 }
 
 // }}}

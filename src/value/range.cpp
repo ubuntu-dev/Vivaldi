@@ -27,8 +27,8 @@ void value::range::mark()
   object::mark();
   // We need to ensure neither start not end are nullptr, since this could be
   // happening between allocation and initialization
-  if (start && !start->marked())
-    gc::mark(*start);
-  if (end && !end->marked())
-    gc::mark(*end);
+  if (start)
+    gc::mark(start);
+  if (end)
+    gc::mark(end);
 }

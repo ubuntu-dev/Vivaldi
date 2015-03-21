@@ -2,23 +2,18 @@
 
 #include "builtins.h"
 #include "gc.h"
-#include "ast/function_definition.h"
 #include "utils/lang.h"
-#include "value/builtin_function.h"
-#include "value/function.h"
 
 using namespace vv;
 
 value::object::object(gc::managed_ptr<struct type> new_type)
   : members  {},
-    type     {new_type},
-    m_marked {false}
+    type     {new_type}
 { }
 
 value::object::object()
   : members  {},
-    type     {&builtin::type::object},
-    m_marked {false}
+    type     {&builtin::type::object}
 { }
 
 size_t value::object::hash() const
@@ -34,12 +29,10 @@ bool value::object::equals(const value::object& other) const
 
 void value::object::mark()
 {
-  m_marked = true;
-  if (type && !type->marked())
-    gc::mark(*type);
+  if (type)
+    gc::mark(type);
   for (auto& i : members)
-    if (!i.second->marked())
-      gc::mark(*i.second);
+    gc::mark(i.second);
 }
 
 value::basic_function::basic_function(func_type type,
@@ -52,6 +45,13 @@ value::basic_function::basic_function(func_type type,
     enclosing {enclosing},
     body      {body}
 { }
+
+void value::basic_function::mark()
+{
+  object::mark();
+  if (enclosing)
+    gc::mark(enclosing);
+}
 
 value::type::type(const std::function<gc::managed_ptr<object>()>& constructor,
                   const hash_map<vv::symbol, gc::managed_ptr<basic_function>>& methods,
@@ -91,10 +91,8 @@ void value::type::mark()
 {
   object::mark();
   for (const auto& i : methods)
-    if (!i.second->marked())
-      gc::mark(*i.second);
-  if (!parent->marked())
-    gc::mark(*parent);
+    gc::mark(i.second);
+  gc::mark(parent);
 }
 
 size_t std::hash<vv::gc::managed_ptr<vv::value::object>>::operator()(

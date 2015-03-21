@@ -17,6 +17,5 @@ std::string value::array_iterator::value() const { return "<array iterator>"; }
 void value::array_iterator::mark()
 {
   object::mark();
-  if (!arr->marked())
-    gc::mark(*arr);
+  gc::mark(arr);
 }

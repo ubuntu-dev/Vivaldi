@@ -37,16 +37,16 @@ vv::symbol to_symbol(value::object_ptr boxed)
 value::object_ptr fn_string_init(vm::machine& vm)
 {
   vm.self();
-  auto& str = static_cast<value::string&>(*vm.top());
+  auto str = static_cast<gc::managed_ptr<value::string>>(vm.top());
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type == &type::string)
-    str.val = to_string(arg);
+    str->val = to_string(arg);
   else if (arg->type == &type::symbol)
-    str.val = to_string(to_symbol(arg));
+    str->val = to_string(to_symbol(arg));
   else
-     str.val = arg->value();
-  return &str;
+     str->val = arg->value();
+  return str;
 }
 
 value::object_ptr fn_string_size(value::object_ptr self)

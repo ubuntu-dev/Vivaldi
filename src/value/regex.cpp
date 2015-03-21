@@ -25,5 +25,5 @@ std::string value::regex_result::value() const { return "<regex result>"; }
 void value::regex_result::mark()
 {
   object::mark();
-  gc::mark(*owning_str);
+  gc::mark(owning_str);
 }

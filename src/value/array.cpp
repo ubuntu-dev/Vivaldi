@@ -26,6 +26,5 @@ void value::array::mark()
 {
   object::mark();
   for (auto i : val)
-    if (!i->marked())
-      gc::mark(*i);
+    gc::mark(i);
 }

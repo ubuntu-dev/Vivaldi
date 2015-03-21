@@ -4,8 +4,6 @@
 #include "gc.h"
 #include "get_file_contents.h"
 #include "messages.h"
-#include "parser.h"
-#include "value.h"
 #include "gc/alloc.h"
 #include "utils/error.h"
 #include "utils/lang.h"
@@ -21,6 +19,8 @@
 #include "value/regex.h"
 #include "value/string.h"
 #include "value/symbol.h"
+
+#include <iostream>
 
 using namespace vv;
 
@@ -82,19 +82,18 @@ void vm::machine::push(value::object_ptr val)
 void vm::machine::mark()
 {
   for (auto i : m_stack)
-    if (!i->marked())
-      gc::mark(*i);
+    gc::mark(i);
 
-  if (m_transient_self && !m_transient_self->marked())
-    gc::mark(*m_transient_self);
+  if (m_transient_self)
+    gc::mark(m_transient_self);
 
   for (auto& i : m_call_stack) {
-    if (i.caller && !i.caller->marked())
-      gc::mark(*i.caller);
-    if (i.catcher && !i.catcher->marked())
-      gc::mark(*i.catcher);
-    if (i.env && !i.env->marked())
-      gc::mark(*i.env);
+    if (i.caller)
+      gc::mark(i.caller);
+    if (i.catcher)
+      gc::mark(i.catcher);
+    if (i.env)
+      gc::mark(i.env);
   }
 }
 
@@ -112,7 +111,7 @@ void vm::machine::pflt(double val)
 
 void vm::machine::pfn(const function_t& val)
 {
-  push(gc::alloc<value::function>(val.argc, val.body, frame().env.get()));
+  push(gc::alloc<value::function>(val.argc, val.body, frame().env));
 }
 
 void vm::machine::pint(int val)
@@ -228,7 +227,7 @@ void vm::machine::let(symbol sym)
 void vm::machine::self()
 {
   if (frame().env->self) {
-    push(frame().env->self.get());
+    push(frame().env->self);
   }
   else {
     pstr(message::invalid_self_access);
@@ -298,7 +297,6 @@ void vm::machine::call(int argc)
     else if (func->type == value::basic_function::func_type::opt2) {
       auto binop = static_cast<gc::managed_ptr<value::opt_binop>>(func);
       auto ret = binop->fn_body(m_transient_self, top());
-      //pop(1);
       push(ret);
 
     }
@@ -310,7 +308,7 @@ void vm::machine::call(int argc)
 
     }
     else {
-      frame().env = gc::alloc<environment>(func->enclosing.get(), m_transient_self);
+      frame().env = gc::alloc<environment>(func->enclosing, m_transient_self);
     }
   } catch (const vm_error& err) {
     push(err.error());
@@ -360,7 +358,7 @@ void vm::machine::pop(int quant)
 
 void vm::machine::eblk()
 {
-  frame().env = gc::alloc<environment>( frame().env.get() );
+  frame().env = gc::alloc<environment>( frame().env );
 }
 
 void vm::machine::lblk()
@@ -615,7 +613,7 @@ void vm::machine::except_until(size_t stack_pos)
 
 
   if (frame().catcher) {
-    push(frame().catcher.get());
+    push(frame().catcher);
     popc();
     call(1);
   }

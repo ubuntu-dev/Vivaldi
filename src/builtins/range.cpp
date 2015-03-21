@@ -15,12 +15,12 @@ namespace {
 value::object_ptr fn_range_init(vm::machine& vm)
 {
   vm.self();
-  auto& rng = static_cast<value::range&>(*vm.top());
+  auto rng = static_cast<gc::managed_ptr<value::range>>(vm.top());
   vm.arg(1);
-  rng.end = vm.top();
+  rng->end = vm.top();
   vm.arg(0);
-  rng.start = vm.top();
-  return &rng;
+  rng->start = vm.top();
+  return rng;
 }
 
 value::object_ptr fn_range_start(value::object_ptr self)
@@ -59,12 +59,12 @@ value::object_ptr fn_range_get(value::object_ptr self)
 value::object_ptr fn_range_increment(vm::machine& vm)
 {
   vm.self();
-  auto& rng = static_cast<value::range&>(*vm.top());
+  auto rng = static_cast<gc::managed_ptr<value::range>>(vm.top());
   vm.pint(1);
-  vm.push(rng.start);
+  vm.push(rng->start);
   vm.opt_add();
-  rng.start = vm.top();
-  return &rng;
+  rng->start = vm.top();
+  return rng;
 }
 
 value::object_ptr fn_range_to_arr(vm::machine& vm)

@@ -14,11 +14,11 @@ void vm::environment::mark()
 {
   object::mark();
 
-  if (enclosing && !enclosing->marked())
-    gc::mark(*enclosing);
+  if (enclosing)
+    gc::mark(enclosing);
 
-  if (self && !self->marked())
-    gc::mark(*self);
+  if (self)
+    gc::mark(self);
 }
 
 vm::call_frame::call_frame(vector_ref<vm::command> instr_ptr,

@@ -83,13 +83,6 @@ struct object {
   // Any class that stores references to GCable / objects *must* override
   // mark()--- but make sure you call object::mark in your overridden version!
   virtual void mark();
-  // Whether or not this has been marked during this mark/sweep cycle.
-  bool marked() const { return m_marked; }
-  // Sets marked to false.
-  void unmark() { m_marked = false; }
-
-private:
-  bool m_marked;
 };
 
 // Base class for all callable types. All function types (currently function,
@@ -120,6 +113,8 @@ struct basic_function : public object {
   // opt_monop, opt_binop, and builtin_function), just provide a stub with a
   // single 'ret false' command.
   vector_ref<vm::command> body;
+
+  void mark() override;
 };
 
 // C++ representation of a Vivaldi Type.

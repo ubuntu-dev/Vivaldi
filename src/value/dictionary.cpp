@@ -24,9 +24,7 @@ void value::dictionary::mark()
 {
   object::mark();
   for (auto& pair : val) {
-    if (!pair.first->marked())
-      gc::mark(*pair.first);
-    if (!pair.second->marked())
-      gc::mark(*pair.second);
+    gc::mark(pair.first);
+    gc::mark(pair.second);
   }
 }
