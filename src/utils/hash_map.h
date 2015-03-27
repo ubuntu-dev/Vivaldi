@@ -79,7 +79,7 @@ public:
   {
     if (!m_buckets.size())
       return false;
-    const auto& bucket = m_buckets[m_hash(item) % m_buckets.size()];
+    const auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
     return any_of(std::begin(bucket), std::end(bucket),
                   [&item](const auto& i) { return i.first == item; });
   }
@@ -90,7 +90,7 @@ public:
   {
     if (!m_buckets.size())
       return end();
-    auto bucket = std::begin(m_buckets) + m_hash(item) % m_buckets.size();
+    auto bucket = std::begin(m_buckets) + s_hash(item) % m_buckets.size();
     auto iter = std::find_if(std::begin(*bucket), std::end(*bucket),
                              [&item](const auto& i) { return i.first == item; });
     return iter == std::end(*bucket) ? end() : iterator{bucket, iter, std::end(m_buckets)};
@@ -120,7 +120,7 @@ public:
   void insert(K&& item, V&& val)
   {
     if (m_buckets.size()) {
-      auto& bucket = m_buckets[m_hash(item) % m_buckets.size()];
+      auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
       size_t slot_sz{};
       auto slot = find_if(std::begin(bucket), std::end(bucket),
                           [&](const auto& i) { ++slot_sz; return i.first == item; });
@@ -141,7 +141,7 @@ public:
     }
 
     rehash();
-    auto& nbucket = m_buckets[m_hash(item) % m_buckets.size()];
+    auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
     nbucket.emplace_front(std::move(item), std::move(val));
   }
 
@@ -151,7 +151,7 @@ public:
   V& operator[](const K& item)
   {
     if (m_buckets.size()) {
-      auto& bucket = m_buckets[m_hash(item) % m_buckets.size()];
+      auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
 
       size_t slot_sz{};
       auto slot = find_if(std::begin(bucket), std::end(bucket),
@@ -171,7 +171,7 @@ public:
     }
 
     rehash();
-    auto& nbucket = m_buckets[m_hash(item) % m_buckets.size()];
+    auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
     nbucket.emplace_front(item, V{});
     return nbucket.front().second;
   }
@@ -181,7 +181,7 @@ public:
   const V& at(const K& item) const
   {
     if (m_buckets.size()) {
-      const auto& bucket = m_buckets[m_hash(item) % m_buckets.size()];
+      const auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
       auto slot = find_if(std::begin(bucket), std::end(bucket),
                           [&item](const auto& i) { return i.first == item; });
       if (slot != std::end(bucket))
@@ -208,7 +208,7 @@ public:
 private:
   std::vector<std::forward_list<std::pair<K, V>>> m_buckets;
   size_t m_sz;
-  std::hash<K> m_hash{};
+  const static std::hash<K> s_hash;
 
   void rehash()
   {
@@ -218,11 +218,14 @@ private:
     m_buckets.resize(m_buckets.size() + 6);
 
     for (auto& i : members) {
-      auto& bucket = m_buckets[m_hash(i.first) % m_buckets.size()];
+      auto& bucket = m_buckets[s_hash(i.first) % m_buckets.size()];
       bucket.emplace_front(std::move(i));
     }
   }
 };
+
+template <typename K, typename V>
+const std::hash<K> hash_map<K, V>::s_hash{};
 
 }
 
