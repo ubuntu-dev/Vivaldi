@@ -98,6 +98,8 @@ public:
   free_block_list::value_type erase_destruct(value_type ptr);
   free_block_list::value_type erase_destruct(value::object* iter);
 
+  void clear() { m_data.clear(); }
+
   iterator begin()              { return m_data.begin(); }
   const_iterator begin() const  { return cbegin(); }
   const_iterator cbegin() const { return m_data.cbegin(); }

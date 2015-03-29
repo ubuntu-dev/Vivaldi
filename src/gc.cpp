@@ -61,7 +61,6 @@ void copy_live()
   std::swap(g_marked, g_unmarked);
   while (g_marked.size()) {
     g_free.insert(g_marked.erase_destruct(std::begin(g_marked)));
-
   }
 }
 
@@ -87,16 +86,14 @@ value::object* gc::internal::get_next_empty(tag type)
 
   iter = find_if(iter, std::end(g_free), search);
   if (iter == std::end(g_free)) {
-    auto tmp = find_if(std::begin(g_free), iter, search);
-    iter = tmp;
+    iter = find_if(std::begin(g_free), iter, search);
     if (iter == std::end(g_free)) {
       copy_live();
       iter = find_if(std::begin(g_free), std::end(g_free), search);
 
       if (iter == std::end(g_free)) {
-        --iter;
         expand();
-        iter = find_if(iter, std::end(g_free), search);
+        iter = find_if(std::begin(g_free), std::end(g_free), search);
       }
     }
   }
@@ -108,7 +105,7 @@ value::object* gc::internal::get_next_empty(tag type)
     auto block_sz = iter->second;
     iter = g_free.erase(iter);
     if (block_sz > sz)
-      g_free.insert({ptr + sz, block_sz - sz});
+      iter = g_free.insert({ptr + sz, block_sz - sz});
   }
 
   auto obj = reinterpret_cast<value::object*>(ptr);
