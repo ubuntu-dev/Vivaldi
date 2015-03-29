@@ -22,7 +22,7 @@ public:
 
 struct regex_result : public object {
 public:
-  regex_result(gc::managed_ptr<value::string> str, std::smatch&& res);
+  regex_result(value::string& str, std::smatch&& res);
 
   std::string value() const override;
 
@@ -30,7 +30,10 @@ public:
 
   std::smatch val;
 
-  gc::managed_ptr<value::string> owning_str;
+  // We're holding on to the owning string, since regex results are stored as
+  // pointers into the original string and it'd be a shame if it was deleted
+  // before those pointers
+  value::string& owning_str;
 private:
 };
 

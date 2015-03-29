@@ -19,7 +19,7 @@ public:
 
   std::string name;
   std::string cur_line;
-  std::unique_ptr<std::fstream> val;
+  std::fstream val;
 };
 
 }

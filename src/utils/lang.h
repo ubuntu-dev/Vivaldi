@@ -6,17 +6,16 @@
 
 namespace vv {
 
-bool truthy(gc::managed_ptr<const value::object> value);
+bool truthy(const value::object& value);
 
 [[noreturn]]
-value::object_ptr throw_exception(const std::string& value);
+value::object* throw_exception(const std::string& value);
 [[noreturn]]
-value::object_ptr throw_exception(value::object_ptr value);
+value::object* throw_exception(value::object* value);
 
-gc::managed_ptr<value::basic_function> find_method(gc::managed_ptr<value::type> type,
-                                                   symbol name);
+value::basic_function* find_method(value::type& type, symbol name);
 
-std::string pretty_print(value::object_ptr object, vm::machine& vm);
+std::string pretty_print(value::object* object, vm::machine& vm);
 
 }
 

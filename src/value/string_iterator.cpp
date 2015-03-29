@@ -6,7 +6,7 @@
 
 using namespace vv;
 
-value::string_iterator::string_iterator(gc::managed_ptr<string> new_str)
+value::string_iterator::string_iterator(string& new_str)
   : object {&builtin::type::string_iterator},
     str    {new_str},
     idx    {0}
@@ -20,5 +20,5 @@ std::string value::string_iterator::value() const
 void value::string_iterator::mark()
 {
   object::mark();
-  gc::mark(str);
+  gc::mark(&str);
 }

@@ -10,22 +10,22 @@ using namespace builtin;
 
 namespace {
 
-value::object_ptr fn_object_equals(value::object_ptr self, value::object_ptr arg)
+value::object* fn_object_equals(value::object* self, value::object* arg)
 {
   return gc::alloc<value::boolean>( self->equals(*arg) );
 }
 
-value::object_ptr fn_object_unequal(value::object_ptr self, value::object_ptr arg)
+value::object* fn_object_unequal(value::object* self, value::object* arg)
 {
   return gc::alloc<value::boolean>( !self->equals(*arg) );
 }
 
-value::object_ptr fn_object_not(value::object_ptr self)
+value::object* fn_object_not(value::object* self)
 {
-  return gc::alloc<value::boolean>( !truthy(self) );
+  return gc::alloc<value::boolean>( !truthy(*self) );
 }
 
-value::object_ptr fn_object_type(value::object_ptr self)
+value::object* fn_object_type(value::object* self)
 {
   return self->type;
 }
@@ -40,5 +40,4 @@ value::type type::object {gc::alloc<value::object>, {
   { {"unequal"}, &obj_unequal },
   { {"not"},     &obj_not },
   { {"type"},    &obj_type }
-}, &builtin::type::object, {"Object"}};
-
+}, builtin::type::object, {"Object"}};

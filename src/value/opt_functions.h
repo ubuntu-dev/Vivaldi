@@ -10,20 +10,20 @@ namespace value {
 
 struct opt_monop : public basic_function {
 public:
-  opt_monop(const std::function<object_ptr(object_ptr)>& body);
+  opt_monop(const std::function<object*(object*)>& body);
 
   std::string value() const override;
 
-  std::function<object_ptr(object_ptr)> fn_body;
+  std::function<object*(object*)> fn_body;
 };
 
 struct opt_binop : public basic_function {
 public:
-  opt_binop(const std::function<object_ptr(object_ptr, object_ptr)>& body);
+  opt_binop(const std::function<object*(object*, object*)>& body);
 
   std::string value() const override;
 
-  std::function<object_ptr(object_ptr, object_ptr)> fn_body;
+  std::function<object*(object*, object*)> fn_body;
 };
 
 }

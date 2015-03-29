@@ -16,10 +16,10 @@ namespace {
 
 // Array {{{
 
-value::object_ptr fn_array_init(vm::machine& vm)
+value::object* fn_array_init(vm::machine& vm)
 {
   vm.self();
-  auto arr = static_cast<gc::managed_ptr<value::array>>(vm.top());
+  auto arr = static_cast<value::array*>(vm.top());
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type != &type::array)
@@ -30,19 +30,19 @@ value::object_ptr fn_array_init(vm::machine& vm)
   return arr;
 }
 
-value::object_ptr fn_array_size(value::object_ptr self)
+value::object* fn_array_size(value::object* self)
 {
   auto sz = static_cast<value::array&>(*self).val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
-value::object_ptr fn_array_append(value::object_ptr self, value::object_ptr arg)
+value::object* fn_array_append(value::object* self, value::object* arg)
 {
   static_cast<value::array&>(*self).val.push_back(arg);
   return self;
 }
 
-value::object_ptr fn_array_pop(value::object_ptr self)
+value::object* fn_array_pop(value::object* self)
 {
   auto& arr = static_cast<value::array&>(*self);
   auto val = arr.val.back();
@@ -50,7 +50,7 @@ value::object_ptr fn_array_pop(value::object_ptr self)
   return val;
 }
 
-value::object_ptr fn_array_at(value::object_ptr self, value::object_ptr arg)
+value::object* fn_array_at(value::object* self, value::object* arg)
 {
   if (arg->type != &type::integer)
     return throw_exception(message::at_type_error(type::array, type::integer));
@@ -61,13 +61,13 @@ value::object_ptr fn_array_at(value::object_ptr self, value::object_ptr arg)
   return arr[static_cast<unsigned>(val)];
 }
 
-value::object_ptr fn_array_set_at(vm::machine& vm)
+value::object* fn_array_set_at(vm::machine& vm)
 {
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type != &type::integer)
     return throw_exception(message::at_type_error(type::array, type::integer));
-  auto val = static_cast<gc::managed_ptr<value::integer>>(arg)->val;
+  auto val = static_cast<value::integer*>(arg)->val;
   vm.self();
   auto& arr = static_cast<value::array&>(*vm.top()).val;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
@@ -76,31 +76,31 @@ value::object_ptr fn_array_set_at(vm::machine& vm)
   return arr[static_cast<unsigned>(val)] = vm.top();
 }
 
-value::object_ptr fn_array_start(value::object_ptr self)
+value::object* fn_array_start(value::object* self)
 {
-  auto arr = static_cast<gc::managed_ptr<value::array>>(self);
-  return gc::alloc<value::array_iterator>( arr );
+  auto arr = static_cast<value::array*>(self);
+  return gc::alloc<value::array_iterator>( *arr );
 }
 
-value::object_ptr fn_array_stop(value::object_ptr self)
+value::object* fn_array_stop(value::object* self)
 {
-  auto arr = static_cast<gc::managed_ptr<value::array>>(self);
-  auto iter = gc::alloc<value::array_iterator>( arr );
+  auto arr = static_cast<value::array*>(self);
+  auto iter = gc::alloc<value::array_iterator>( *arr );
   iter->idx = arr->val.size();
   return iter;
 }
 
-value::object_ptr fn_array_add(value::object_ptr self, value::object_ptr arg)
+value::object* fn_array_add(value::object* self, value::object* arg)
 {
-  auto arr = static_cast<gc::managed_ptr<value::array>>(self);
+  auto arr = static_cast<value::array*>(self);
   if (arg->type != &type::array)
     return throw_exception(message::add_type_error(type::array, type::array));
-  auto other = static_cast<gc::managed_ptr<value::array>>(arg);
+  auto other = static_cast<value::array*>(arg);
   copy(begin(other->val), end(other->val), back_inserter(arr->val));
   return arr;
 }
 
-value::object_ptr fn_array_equals(vm::machine& vm)
+value::object* fn_array_equals(vm::machine& vm)
 {
   vm.self();
   auto self = vm.top();
@@ -126,59 +126,59 @@ value::object_ptr fn_array_equals(vm::machine& vm)
     vm.run_cur_scope();
     auto res = vm.top();
     vm.pop(1);
-    return truthy(res);
+    return truthy(*res);
   });
 
   return gc::alloc<value::boolean>( eq );
 }
 
-value::object_ptr fn_array_unequal(vm::machine& vm)
+value::object* fn_array_unequal(vm::machine& vm)
 {
-  return gc::alloc<value::boolean>( !truthy(fn_array_equals(vm)) );
+  return gc::alloc<value::boolean>( !truthy(*fn_array_equals(vm)) );
 }
 
 // }}}
 // Iterator {{{
 
-value::object_ptr fn_array_iterator_at_start(value::object_ptr self)
+value::object* fn_array_iterator_at_start(value::object* self)
 {
   auto& iter = static_cast<value::array_iterator&>(*self);
   return gc::alloc<value::boolean>( iter.idx == 0 );
 }
 
-value::object_ptr fn_array_iterator_at_end(value::object_ptr self)
+value::object* fn_array_iterator_at_end(value::object* self)
 {
   auto& iter = static_cast<value::array_iterator&>(*self);
-  return gc::alloc<value::boolean>( iter.idx == iter.arr->val.size() );
+  return gc::alloc<value::boolean>( iter.idx == iter.arr.val.size() );
 }
 
-value::object_ptr fn_array_iterator_get(value::object_ptr self)
+value::object* fn_array_iterator_get(value::object* self)
 {
   auto& iter = static_cast<value::array_iterator&>(*self);
-  if (iter.idx == iter.arr->val.size())
+  if (iter.idx == iter.arr.val.size())
     return throw_exception(message::iterator_at_end(type::array_iterator));
-  return iter.arr->val[iter.idx];
+  return iter.arr.val[iter.idx];
 }
 
-value::object_ptr fn_array_iterator_increment(value::object_ptr self)
+value::object* fn_array_iterator_increment(value::object* self)
 {
-  auto iter = static_cast<gc::managed_ptr<value::array_iterator>>(self);
-  if (iter->idx == iter->arr->val.size())
+  auto iter = static_cast<value::array_iterator*>(self);
+  if (iter->idx == iter->arr.val.size())
     return throw_exception(message::iterator_past_end(type::array_iterator));
   iter->idx += 1;
   return iter;
 }
 
-value::object_ptr fn_array_iterator_decrement(value::object_ptr self)
+value::object* fn_array_iterator_decrement(value::object* self)
 {
-  auto iter = static_cast<gc::managed_ptr<value::array_iterator>>(self);
+  auto iter = static_cast<value::array_iterator*>(self);
   if (iter->idx == 0)
     return throw_exception(message::iterator_past_start(type::array_iterator));
   iter->idx -= 1;
   return iter;
 }
 
-value::object_ptr fn_array_iterator_add(value::object_ptr self, value::object_ptr arg)
+value::object* fn_array_iterator_add(value::object* self, value::object* arg)
 {
   auto& iter = static_cast<value::array_iterator&>(*self);
 
@@ -188,7 +188,7 @@ value::object_ptr fn_array_iterator_add(value::object_ptr self, value::object_pt
 
   if (static_cast<int>(iter.idx) + offset < 0)
     return throw_exception(message::iterator_past_start(type::array_iterator));
-  if (iter.idx + offset > iter.arr->val.size())
+  if (iter.idx + offset > iter.arr.val.size())
     return throw_exception(message::iterator_past_end(type::array_iterator));
 
   auto other = gc::alloc<value::array_iterator>( iter );
@@ -196,7 +196,7 @@ value::object_ptr fn_array_iterator_add(value::object_ptr self, value::object_pt
   return other;
 }
 
-value::object_ptr fn_array_iterator_subtract(value::object_ptr self, value::object_ptr arg)
+value::object* fn_array_iterator_subtract(value::object* self, value::object* arg)
 {
   auto& iter = static_cast<value::array_iterator&>(*self);
 
@@ -208,7 +208,7 @@ value::object_ptr fn_array_iterator_subtract(value::object_ptr self, value::obje
 
   if (static_cast<int>(iter.idx) - offset < 0)
     return throw_exception(message::iterator_past_start(type::array_iterator));
-  if (iter.idx - offset > iter.arr->val.size())
+  if (iter.idx - offset > iter.arr.val.size())
     return throw_exception(message::iterator_past_end(type::array_iterator));
 
   auto other = gc::alloc<value::array_iterator>( iter );
@@ -216,35 +216,34 @@ value::object_ptr fn_array_iterator_subtract(value::object_ptr self, value::obje
   return other;
 }
 
-value::object_ptr fn_array_iterator_equals(value::object_ptr self, value::object_ptr arg)
+value::object* fn_array_iterator_equals(value::object* self, value::object* arg)
 {
   auto& iter = static_cast<value::array_iterator&>(*self);
   auto& other = static_cast<value::array_iterator&>(*arg);
-  return gc::alloc<value::boolean>(iter.arr == other.arr && iter.idx == other.idx);
+  return gc::alloc<value::boolean>(&iter.arr == &other.arr && iter.idx == other.idx);
 }
 
-value::object_ptr fn_array_iterator_unequal(value::object_ptr self, value::object_ptr arg)
+value::object* fn_array_iterator_unequal(value::object* self, value::object* arg)
 {
   auto& iter = static_cast<value::array_iterator&>(*self);
   auto& other = static_cast<value::array_iterator&>(*arg);
-  return gc::alloc<value::boolean>( iter.arr != other.arr
-                                  || iter.idx != other.idx );
+  return gc::alloc<value::boolean>(&iter.arr != &other.arr || iter.idx != other.idx);
 }
 
-value::object_ptr fn_array_iterator_greater(value::object_ptr self, value::object_ptr arg)
+value::object* fn_array_iterator_greater(value::object* self, value::object* arg)
 {
   auto& iter = static_cast<value::array_iterator&>(*self);
   auto& other = static_cast<value::array_iterator&>(*arg);
-  if (iter.arr != other.arr)
+  if (&iter.arr != &other.arr)
     return throw_exception(message::iterator_owner_error(type::array));
   return gc::alloc<value::boolean>(iter.idx > other.idx );
 }
 
-value::object_ptr fn_array_iterator_less(value::object_ptr self, value::object_ptr arg)
+value::object* fn_array_iterator_less(value::object* self, value::object* arg)
 {
   auto& iter = static_cast<value::array_iterator&>(*self);
   auto& other = static_cast<value::array_iterator&>(*arg);
-  if (iter.arr != other.arr)
+  if (&iter.arr != &other.arr)
     return throw_exception(message::iterator_owner_error(type::array));
   return gc::alloc<value::boolean>(iter.idx < other.idx );
 }
@@ -289,7 +288,7 @@ value::type type::array {gc::alloc<value::array>, {
   { {"add"},     &array_add },
   { {"equals"},  &array_equals },
   { {"unequal"}, &array_unequal },
-}, &type::object, {"Array"}};
+}, type::object, {"Array"}};
 
 value::type type::array_iterator {[]{ return nullptr; }, {
   { {"at_start"},  &array_iterator_at_start },
@@ -303,4 +302,4 @@ value::type type::array_iterator {[]{ return nullptr; }, {
   { {"decrement"}, &array_iterator_decrement },
   { {"add"},       &array_iterator_add },
   { {"subtract"},  &array_iterator_subtract },
-}, &type::object, {"ArrayIterator"}};
+}, type::object, {"ArrayIterator"}};

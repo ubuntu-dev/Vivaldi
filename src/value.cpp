@@ -6,7 +6,7 @@
 
 using namespace vv;
 
-value::object::object(gc::managed_ptr<struct type> new_type)
+value::object::object(struct type* new_type)
   : members  {},
     type     {new_type}
 { }
@@ -37,7 +37,7 @@ void value::object::mark()
 
 value::basic_function::basic_function(func_type type,
                                       int argc,
-                                      gc::managed_ptr<vm::environment> enclosing,
+                                      vm::environment* enclosing,
                                       vector_ref<vm::command> body)
   : object    {&builtin::type::function},
     type      {type},
@@ -53,9 +53,9 @@ void value::basic_function::mark()
     gc::mark(enclosing);
 }
 
-value::type::type(const std::function<gc::managed_ptr<object>()>& constructor,
-                  const hash_map<vv::symbol, gc::managed_ptr<basic_function>>& methods,
-                  gc::managed_ptr<type> parent,
+value::type::type(const std::function<object*()>& constructor,
+                  const hash_map<vv::symbol, basic_function*>& methods,
+                  type& parent,
                   vv::symbol name)
   : object      {&builtin::type::custom_type},
     methods     {methods},
@@ -63,7 +63,7 @@ value::type::type(const std::function<gc::managed_ptr<object>()>& constructor,
     parent      {parent},
     name        {name}
 {
-  if (auto init = find_method(this, {"init"})) {
+  if (auto init = find_method(*this, {"init"})) {
     init_shim.argc = init->argc;
 
     for (auto i = 0; i != init_shim.argc; ++i) {
@@ -92,18 +92,5 @@ void value::type::mark()
   object::mark();
   for (const auto& i : methods)
     gc::mark(i.second);
-  gc::mark(parent);
-}
-
-size_t std::hash<vv::gc::managed_ptr<vv::value::object>>::operator()(
-    const vv::gc::managed_ptr<vv::value::object> b) const
-{
-  return b->hash();
-}
-
-bool std::equal_to<vv::gc::managed_ptr<vv::value::object>>::operator()(
-    const vv::gc::managed_ptr<vv::value::object> left,
-    const vv::gc::managed_ptr<vv::value::object> right) const
-{
-  return left->equals(*right);
+  gc::mark(&parent);
 }

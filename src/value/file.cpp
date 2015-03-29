@@ -8,9 +8,9 @@ using namespace vv;
 value::file::file(const std::string& filename)
   : object {&builtin::type::file},
     name   {filename},
-    val    {new std::fstream{filename}}
+    val    {filename}
 {
-  std::getline(*val, cur_line);
+  std::getline(val, cur_line);
 }
 
 value::file::file()
@@ -22,8 +22,6 @@ value::file::file(file&& other)
   : object {&builtin::type::file},
     name   {move(other.name)},
     val    {std::move(other.val)}
-{
-  other.val = nullptr;
-}
+{ }
 
 std::string value::file::value() const { return "File: " + name; }

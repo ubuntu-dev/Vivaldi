@@ -5,7 +5,7 @@
 
 using namespace vv;
 
-value::array::array(const std::vector<object_ptr>& new_val)
+value::array::array(const std::vector<object*>& new_val)
   : object {&builtin::type::array},
     val {new_val}
 { }

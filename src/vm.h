@@ -25,9 +25,9 @@ public:
   void run_cur_scope();
 
   // Returns the value on top of the stack.
-  value::object_ptr top();
+  value::object* top();
   // Pushes the provided value onto the stack.
-  void push(value::object_ptr newtop);
+  void push(value::object* newtop);
 
   // GC interface; mark all objects immediately reachable from within the VM.
   void mark();
@@ -99,9 +99,9 @@ private:
   call_frame& frame();
 
   std::vector<call_frame> m_call_stack;
-  std::vector<value::object_ptr> m_stack;
+  std::vector<value::object*> m_stack;
 
-  value::object_ptr m_transient_self;
+  value::object* m_transient_self;
 
   std::string m_req_path;
 };

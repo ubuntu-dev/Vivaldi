@@ -14,20 +14,20 @@ using namespace builtin;
 
 namespace {
 
-const std::string& to_string(value::object_ptr boxed)
+const std::string& to_string(value::object* boxed)
 {
   return static_cast<const value::string&>(*boxed).val;
 }
 
-vv::symbol to_symbol(value::object_ptr boxed)
+vv::symbol to_symbol(value::object* boxed)
 {
   return static_cast<const value::symbol&>(*boxed).val;
 }
 
-value::object_ptr fn_symbol_init(vm::machine& vm)
+value::object* fn_symbol_init(vm::machine& vm)
 {
   vm.self();
-  auto sym = static_cast<gc::managed_ptr<value::symbol>>(vm.top());
+  auto sym = static_cast<value::symbol*>(vm.top());
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type == &type::symbol)
@@ -39,14 +39,14 @@ value::object_ptr fn_symbol_init(vm::machine& vm)
   return sym;
 }
 
-value::object_ptr fn_symbol_equals(value::object_ptr self, value::object_ptr arg)
+value::object* fn_symbol_equals(value::object* self, value::object* arg)
 {
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>(to_symbol(self) == to_symbol(arg));
 }
 
-value::object_ptr fn_symbol_unequal(value::object_ptr self, value::object_ptr arg)
+value::object* fn_symbol_unequal(value::object* self, value::object* arg)
 {
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( true );
@@ -63,4 +63,4 @@ value::type type::symbol {gc::alloc<value::symbol>, {
   { {"init"},    &symbol_init    },
   { {"equals"},  &symbol_equals  },
   { {"unequal"}, &symbol_unequal },
-}, &builtin::type::object, {"Symbol"}};
+}, builtin::type::object, {"Symbol"}};

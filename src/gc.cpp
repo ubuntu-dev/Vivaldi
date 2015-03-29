@@ -22,7 +22,7 @@
 #include "value/symbol.h"
 
 #include <list>
-#include <stack>
+#include <iostream>
 
 using namespace vv;
 using namespace gc;
@@ -37,65 +37,6 @@ std::array<value::integer, 1024> gc::internal::g_ints;
 
 // }}}
 
-// value_type {{{
-
-namespace {
-
-// Think of this as just a chunk of memory with ~256 bytes; it's done as a union
-// to ensure that we get the proper maximum size and don't inadvertently slice
-// anything.  Every builtin type (except nil and bool, since they're handled
-// separately) should be included.
-union value_type {
-  value::array            array;
-  value::array_iterator   array_iterator;
-  value::object           object;
-  value::blob             blob;
-  value::builtin_function builtin_function;
-  value::dictionary       dictionary;
-  value::file             file;
-  value::floating_point   floating_point;
-  value::function         function;
-  value::integer          integer;
-  value::opt_monop        monop;
-  value::opt_binop        binop;
-  value::range            range;
-  value::string           string;
-  value::string_iterator  string_iterator;
-  value::symbol           symbol;
-  value::type             type;
-  vm::environment         environment;
-  // Used by default ctor, and for empty slots. We know that value::object and its
-  // derived classes can never be all zeroes, since it includes several
-  // nonnullable pointers/references, so testing for zero works as a means of
-  // testing emptiness.
-  size_t blank;
-
-  value_type() : blank{} { }
-
-  bool empty() const { return blank == 0; }
-  void clear()
-  {
-    if (!empty()) {
-      (&object)->~object();
-      blank = 0;
-    }
-  }
-
-  // In a sense this union is tagged, by virtue of vtables
-  ~value_type() { if (!empty()) (&object)->~object(); }
-};
-
-}
-
-// }}}
-// block {{{
-
-struct internal::block {
-  std::array<value_type, 512> values;
-  std::bitset<512> mark_bits;
-};
-
-// }}}
 // Internals {{{
 
 namespace {
@@ -106,36 +47,29 @@ namespace {
 // functions in dynamic libraries).
 std::vector<dynamic_library> g_libs;
 
-std::stack<managed_ptr<value_type>> g_free;
-
-// Using list, instead of vector, for two reasons:
-// - copying value_type's is both infeasible and expensive
-// - pointers to value_type's (i.e. iterators in g_vals) can never be
-//   invalidated, lest everything blow up
-std::list<internal::block> g_vals( 4 );
-
-// Stored here for GC marking
 vm::machine* g_vm;
 
-void mark()
+std::list<std::array<char, 65'536>> g_blocks( 4 );
+
+vv::free_block_list g_free;
+gc::allocated_block_list g_marked;
+gc::allocated_block_list g_unmarked;
+
+void copy_live()
 {
-  if (g_vm)
-    g_vm->mark();
+  g_vm->mark();
+  std::swap(g_marked, g_unmarked);
+  while (g_marked.size()) {
+    g_free.insert(g_marked.erase_destruct(std::begin(g_marked)));
+
+  }
 }
 
-void copy_free()
+void expand()
 {
-  for (auto& block : g_vals) {
-    if (block.mark_bits.none()) {
-      for (auto i = block.values.size(); i--;)
-        g_free.emplace(block.values.data() + i, block);
-    }
-    else if (!block.mark_bits.all()) {
-      for (auto i = block.values.size(); i--;)
-        if (!block.mark_bits[i])
-          g_free.emplace(block.values.data() + i, block);
-    }
-    block.mark_bits.reset();
+  for (auto i = g_blocks.size(); i--;) {
+    g_blocks.emplace_back();
+    g_free.insert({g_blocks.back().data(), g_blocks.back().size()});
   }
 }
 
@@ -144,26 +78,36 @@ void copy_free()
 // }}}
 // External functions {{{
 
-managed_ptr<value::object> internal::get_next_empty()
+value::object* gc::internal::get_next_empty(tag type)
 {
-  if (!g_free.size()) {
-    ::mark();
-    copy_free();
+  auto sz = size_for(type); // Why the *** ****** *** **** is this not inlined?
+  auto search = [sz](auto block) { return block.second >= sz; };
+
+  auto iter = find_if(std::begin(g_free), std::end(g_free), search);
+  if (iter == std::end(g_free)) {
+    copy_live();
+    iter = find_if(std::begin(g_free), std::end(g_free), search);
+
+    if (iter == std::end(g_free)) {
+      --iter;
+      expand();
+      iter = find_if(iter, std::end(g_free), search);
+    }
   }
 
-  if (!g_free.size()) {
-    auto i = --end(g_vals);
-    g_vals.resize(g_vals.size() * 2);
-    for_each(++i, end(g_vals), [&](auto& block)
-    {
-      for (auto& i : block.values) g_free.emplace(&i, block);
-    });
+  auto ptr = iter->first;
+
+  // add remaining space to free list
+  {
+    auto block_sz = iter->second;
+    g_free.erase(iter);
+    if (block_sz > sz)
+      g_free.insert({ptr + sz, block_sz - sz});
   }
 
-  auto val = g_free.top();
-  g_free.pop();
-  val->clear();
-  return {&val->object, val.block()};
+  auto obj = reinterpret_cast<value::object*>(ptr);
+  g_unmarked.insert({obj, type});
+  return obj;
 }
 
 void gc::set_running_vm(vm::machine& vm)
@@ -187,26 +131,17 @@ void gc::init()
   int value = 0;
   for (auto& i : internal::g_ints)
     i.val = value++;
-  for (auto& block : g_vals)
-    for (auto& i : block.values)
-      g_free.emplace(&i, block);
+
+  for (auto& i : g_blocks)
+    g_free.insert({i.data(), i.size()});
 }
 
-void gc::mark(value::object_ptr object)
+void gc::mark(value::object* object)
 {
-  static std::unordered_set<value::object*> static_objects;
-  if (object.has_block()) {
-    auto* slot = reinterpret_cast<value_type*>(object.get());
-    auto index = std::distance(object.block().values.data(), slot);
-
-    if (!object.block().mark_bits[index]) {
-      object.block().mark_bits.set(index);
-      object->mark();
-    }
-  }
-  else if (!static_objects.count(object.get())) {
-    static_objects.insert(object.get());
-    object->mark();
+  if (g_unmarked.count(object)) {
+    auto val = g_unmarked.erase(object);
+    g_marked.insert(val);
+    val.ptr->mark();
   }
 }
 

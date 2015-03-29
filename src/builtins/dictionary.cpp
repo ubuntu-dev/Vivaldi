@@ -15,10 +15,10 @@ namespace {
 
 // dictionary {{{
 
-value::object_ptr fn_dictionary_init(vm::machine& vm)
+value::object* fn_dictionary_init(vm::machine& vm)
 {
   vm.self();
-  auto dict = static_cast<gc::managed_ptr<value::dictionary>>(vm.top());
+  auto dict = static_cast<value::dictionary*>(vm.top());
   vm.arg(0);
   auto arg = vm.top();
   if (arg->type != &type::dictionary) {
@@ -30,13 +30,13 @@ value::object_ptr fn_dictionary_init(vm::machine& vm)
   return dict;
 }
 
-value::object_ptr fn_dictionary_size(value::object_ptr self)
+value::object* fn_dictionary_size(value::object* self)
 {
   auto sz = static_cast<value::dictionary&>(*self).val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
-value::object_ptr fn_dictionary_at(value::object_ptr self, value::object_ptr arg)
+value::object* fn_dictionary_at(value::object* self, value::object* arg)
 {
   auto& dict = static_cast<value::dictionary&>(*self);
   if (!dict.val.count(arg))
@@ -44,7 +44,7 @@ value::object_ptr fn_dictionary_at(value::object_ptr self, value::object_ptr arg
   return dict.val[arg];
 }
 
-value::object_ptr fn_dictionary_set_at(vm::machine& vm)
+value::object* fn_dictionary_set_at(vm::machine& vm)
 {
   vm.self();
   auto& dict = static_cast<value::dictionary&>(*vm.top());
@@ -68,4 +68,4 @@ value::type type::dictionary {gc::alloc<value::dictionary>, {
   { {"size"},   &dictionary_size },
   { {"at"},     &dictionary_at },
   { {"set_at"}, &dictionary_set_at },
-}, &builtin::type::object, {"Dictionary"}};
+}, builtin::type::object, {"Dictionary"}};

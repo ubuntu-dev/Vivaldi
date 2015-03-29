@@ -2,7 +2,6 @@
 #define VV_VALUE_H
 
 #include "symbol.h"
-#include "gc/managed_ptr.h"
 #include "utils/dumb_ptr.h"
 #include "utils/hash_map.h"
 #include "utils/vector_ref.h"
@@ -47,12 +46,10 @@ struct string_iterator;
 struct symbol;
 struct type;
 
-using object_ptr = gc::managed_ptr<object>;
-
 // Basic Object class from which all types are derived.
 struct object {
   // Creates a new value::object of the provided type.
-  object(gc::managed_ptr<type> type);
+  object(type* type);
   // Creates a new value::object of type Object
   object();
 
@@ -66,9 +63,9 @@ struct object {
   // Contains local, variable-specific members.
   // Only members of this specific object are stored here; methods are stored
   // inside of their owning classes.
-  hash_map<vv::symbol, object_ptr> members;
+  hash_map<vv::symbol, object*> members;
   // Pointer to type (this should never be null. TODO: make reference)
-  gc::managed_ptr<type> type;
+  type* type;
 
   // Hash method used in dictionaries.
   // Overridden by classes with any useful concept of equality (as a rule of
@@ -100,7 +97,7 @@ struct basic_function : public object {
 
   basic_function(func_type type,
                  int argc,
-                 gc::managed_ptr<vm::environment> enclosing,
+                 vm::environment* enclosing,
                  vector_ref<vm::command> body);
 
   // The type of function, as enumerated above.
@@ -108,7 +105,7 @@ struct basic_function : public object {
   // Expected number of arguments.
   const int argc;
   // Enclosing environment, or nullptr if none exists.
-  const gc::managed_ptr<vm::environment> enclosing;
+  vm::environment* const enclosing;
   // The VM code to run in the new call frame (if this is a C++ function (as in
   // opt_monop, opt_binop, and builtin_function), just provide a stub with a
   // single 'ret false' command.
@@ -119,9 +116,9 @@ struct basic_function : public object {
 
 // C++ representation of a Vivaldi Type.
 struct type : public object {
-  type(const std::function<object_ptr()>& constructor,
-       const hash_map<vv::symbol, gc::managed_ptr<basic_function>>& methods,
-       gc::managed_ptr<type> parent,
+  type(const std::function<object*()>& constructor,
+       const hash_map<vv::symbol, basic_function*>& methods,
+       type& parent,
        vv::symbol name);
 
   // Class methods.
@@ -129,13 +126,13 @@ struct type : public object {
   // locally, the class will search its type's methods, and that type's parent's
   // methods, and so on recursively until it's found or there are no more
   // parents left.
-  hash_map<vv::symbol, gc::managed_ptr<basic_function>> methods;
+  hash_map<vv::symbol, basic_function*> methods;
 
   // Very simple constructor.
   // This constructor should just provides an allocated bit of memory of
   // the appropriate type; any actual initialization (including reading passed
   // arguments) has to happen in the class's "init" method.
-  std::function<object_ptr()> constructor;
+  std::function<object*()> constructor;
 
   // Blob of VM code used in initialization.
   // This shim is necessary because, of course, when you create a new object you
@@ -159,7 +156,7 @@ struct type : public object {
 
   // Parent class. Parent classes are stored as references, since they're
   // unchangeable and can't ever be null (Object's just points to itself).
-  gc::managed_ptr<type> parent;
+  type& parent;
 
   // Name of class. Stored in class so value() can be prettier than just
   // "<type>".
@@ -174,17 +171,5 @@ struct type : public object {
 }
 
 }
-
-// Call virtual hash() and equals() methods instead of just hashing based on
-// pointers
-template <>
-struct std::hash<vv::value::object_ptr> {
-  size_t operator()(vv::value::object_ptr b) const;
-};
-template <>
-struct std::equal_to<vv::value::object_ptr> {
-  bool operator()(const vv::value::object_ptr left,
-                  const vv::value::object_ptr right) const;
-};
 
 #endif

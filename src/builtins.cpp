@@ -41,11 +41,11 @@ namespace {
 
 struct call_result {
   bool completed;
-  gc::managed_ptr<value::object> value;
+  value::object* value;
 };
 
 call_result call_method(vm::machine& vm,
-                        gc::managed_ptr<value::object> self,
+                        value::object* self,
                         symbol method)
 {
   vm.push(self);
@@ -70,7 +70,7 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
 
   for (;;) {
     auto at_end = call_method(vm, iter, sym::at_end).value;
-    if (truthy(at_end)) {
+    if (truthy(*at_end)) {
       vm.pop(1); // iter
       return { true, at_end };
     }
@@ -106,7 +106,7 @@ call_result transformed_range(vm::machine& vm, const F& inner)
 // }}}
 // I/O {{{
 
-gc::managed_ptr<value::object> fn_print(vm::machine& vm)
+value::object* fn_print(vm::machine& vm)
 {
   vm.arg(0);
   auto arg = vm.top();
@@ -118,14 +118,14 @@ gc::managed_ptr<value::object> fn_print(vm::machine& vm)
   return gc::alloc<value::nil>( );
 }
 
-gc::managed_ptr<value::object> fn_puts(vm::machine& vm)
+value::object* fn_puts(vm::machine& vm)
 {
   auto ret = fn_print(vm);
   std::cout << '\n';
   return ret;
 }
 
-gc::managed_ptr<value::object> fn_gets(vm::machine&)
+value::object* fn_gets(vm::machine&)
 {
   std::string str;
   getline(std::cin, str);
@@ -136,14 +136,14 @@ gc::managed_ptr<value::object> fn_gets(vm::machine&)
 // }}}
 // Functional stuff {{{
 
-gc::managed_ptr<value::object> fn_filter(vm::machine& vm)
+value::object* fn_filter(vm::machine& vm)
 {
   vm.parr(0);
-  auto array = static_cast<gc::managed_ptr<value::array>>(vm.top());
+  auto array = static_cast<value::array*>(vm.top());
 
   transformed_range(vm, [array](auto item, auto pred)
   {
-    if (truthy(pred))
+    if (truthy(*pred))
       array->val.push_back(item);
     return false;
   });
@@ -151,11 +151,11 @@ gc::managed_ptr<value::object> fn_filter(vm::machine& vm)
   return array;
 }
 
-gc::managed_ptr<value::object> fn_map(vm::machine& vm)
+value::object* fn_map(vm::machine& vm)
 {
   // Get pointer to empty Array
   vm.parr(0);
-  auto mapped = static_cast<gc::managed_ptr<value::array>>(vm.top());
+  auto mapped = static_cast<value::array*>(vm.top());
 
   transformed_range(vm, [mapped](auto, auto val)
                                 { mapped->val.push_back(val); return false; });
@@ -164,31 +164,31 @@ gc::managed_ptr<value::object> fn_map(vm::machine& vm)
   return mapped;
 }
 
-gc::managed_ptr<value::object> fn_count(vm::machine& vm)
+value::object* fn_count(vm::machine& vm)
 {
   int count{};
   transformed_range(vm, [&](auto, auto pred)
-                           { if (truthy(pred)) ++count; return false; });
+                           { if (truthy(*pred)) ++count; return false; });
   return gc::alloc<value::integer>( count );
 }
 
-gc::managed_ptr<value::object> fn_all(vm::machine& vm)
+value::object* fn_all(vm::machine& vm)
 {
   auto all = true;
   transformed_range(vm, [&](auto, auto pred)
-                           { if (!truthy(pred)) all = false; return !all; });
+                           { if (!truthy(*pred)) all = false; return !all; });
   return gc::alloc<value::boolean>( all );
 }
 
-gc::managed_ptr<value::object> fn_any(vm::machine& vm)
+value::object* fn_any(vm::machine& vm)
 {
   auto found = false;
   transformed_range(vm, [&](auto, auto pred)
-                           { if (truthy(pred)) found = true; return found; });
+                           { if (truthy(*pred)) found = true; return found; });
   return gc::alloc<value::boolean>( found );
 }
 
-gc::managed_ptr<value::object> fn_reduce(vm::machine& vm)
+value::object* fn_reduce(vm::machine& vm)
 {
   // Get iterator from range
   vm.arg(0);
@@ -202,7 +202,7 @@ gc::managed_ptr<value::object> fn_reduce(vm::machine& vm)
 
   for (;;) {
     auto at_end = call_method(vm, iter, sym::at_end).value;
-    if (truthy(at_end)) {
+    if (truthy(*at_end)) {
       return vm.top();
     }
 
@@ -224,10 +224,10 @@ gc::managed_ptr<value::object> fn_reduce(vm::machine& vm)
   }
 }
 
-gc::managed_ptr<value::object> fn_sort(vm::machine& vm)
+value::object* fn_sort(vm::machine& vm)
 {
   vm.parr(0);
-  auto array = static_cast<gc::managed_ptr<value::array>>(vm.top());
+  auto array = static_cast<value::array*>(vm.top());
 
   vm.arg(0);
   auto range = vm.top();
@@ -237,7 +237,7 @@ gc::managed_ptr<value::object> fn_sort(vm::machine& vm)
 
   for (;;) {
     auto at_end = call_method(vm, iter, sym::at_end).value;
-    if (truthy(at_end))
+    if (truthy(*at_end))
       break;
 
     auto next_item = call_method(vm, iter, sym::get).value;
@@ -255,7 +255,7 @@ gc::managed_ptr<value::object> fn_sort(vm::machine& vm)
     vm.run_cur_scope();
     auto res = vm.top();
     vm.pop(1);
-    return truthy(res);
+    return truthy(*res);
   });
 
   return array;
@@ -264,12 +264,12 @@ gc::managed_ptr<value::object> fn_sort(vm::machine& vm)
 // }}}
 // Other {{{
 
-gc::managed_ptr<value::object> fn_quit(vm::machine&)
+value::object* fn_quit(vm::machine&)
 {
   exit(0);
 }
 
-gc::managed_ptr<value::object> fn_reverse(vm::machine& vm)
+value::object* fn_reverse(vm::machine& vm)
 {
   // Get iterator from range
   vm.arg(0);
@@ -277,11 +277,11 @@ gc::managed_ptr<value::object> fn_reverse(vm::machine& vm)
   auto iter = call_method(vm, range, sym::start).value;
 
   vm.parr(0);
-  auto arr = static_cast<gc::managed_ptr<value::array>>(vm.top());
+  auto arr = static_cast<value::array*>(vm.top());
 
   for (;;) {
     auto at_end = call_method(vm, iter, sym::at_end).value;
-    if (truthy(at_end)) {
+    if (truthy(*at_end)) {
       vm.pop(1); // iter
       reverse(begin(arr->val), end(arr->val));
       return arr;
@@ -317,7 +317,7 @@ value::builtin_function function::reverse{fn_reverse, 1};
 // Types {{{
 
 value::type type::function {[]{ return nullptr; }, {
-}, &builtin::type::object, {"Function"}};
+}, builtin::type::object, {"Function"}};
 
 // }}}
 

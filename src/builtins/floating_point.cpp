@@ -15,12 +15,12 @@ using value::opt_binop;
 
 namespace {
 
-bool is_float(value::object_ptr boxed) noexcept
+bool is_float(value::object* boxed) noexcept
 {
   return boxed->type == &type::floating_point || boxed->type == &type::integer;
 }
 
-double to_float(value::object_ptr boxed) noexcept
+double to_float(value::object* boxed) noexcept
 {
   if (boxed->type == &type::floating_point)
     return static_cast<const value::floating_point&>(*boxed).val;
@@ -30,37 +30,37 @@ double to_float(value::object_ptr boxed) noexcept
 template <typename F>
 auto fn_floating_point_op(const F& op)
 {
-  return [=](value::object_ptr self, value::object_ptr arg)
+  return [=](value::object* self, value::object* arg)
   {
     if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::floating_point>(op(to_float(self), to_float(arg)));
-    return static_cast<value::object_ptr>(res);
+    return static_cast<value::object*>(res);
   };
 }
 
 template <typename F>
 auto fn_float_bool_op(const F& op)
 {
-  return [=](value::object_ptr self, value::object_ptr arg)
+  return [=](value::object* self, value::object* arg)
   {
     if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::boolean>( op(to_float(self), to_float(arg)) );
-    return static_cast<value::object_ptr>(res);
+    return static_cast<value::object*>(res);
   };
 }
 
 template <typename F>
 auto fn_floating_point_monop(const F& op)
 {
-  return [=](value::object_ptr self)
+  return [=](value::object* self)
   {
     return gc::alloc<value::floating_point>( op(to_float(self)) );
   };
 }
 
-value::object_ptr fn_floating_point_divides(value::object_ptr self, value::object_ptr arg)
+value::object* fn_floating_point_divides(value::object* self, value::object* arg)
 {
   if (!is_float(arg))
     return throw_exception("Right-hand argument is not a Float");
@@ -103,4 +103,4 @@ value::type type::floating_point{[]{ return nullptr; }, {
   { {"sin"},            &flt_sin      },
   { {"cos"},            &flt_cos      },
   { {"tan"},            &flt_tan      }
-}, &builtin::type::object, {"Float"}};
+}, builtin::type::object, {"Float"}};

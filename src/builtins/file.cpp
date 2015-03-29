@@ -17,7 +17,7 @@ using namespace builtin;
 
 namespace {
 
-value::object_ptr fn_file_init(vm::machine& vm)
+value::object* fn_file_init(vm::machine& vm)
 {
   vm.arg(0);
   auto arg = vm.top();
@@ -27,52 +27,52 @@ value::object_ptr fn_file_init(vm::machine& vm)
                                                     *arg->type));
   }
   vm.self();
-  auto self = static_cast<gc::managed_ptr<value::file>>(vm.top());
+  auto self = static_cast<value::file*>(vm.top());
   const auto& filename = static_cast<value::string&>(*arg).val;
-  self->val = std::make_unique<std::fstream>(filename);
+  self->val = std::fstream{filename};
   self->name = filename;
-  std::getline(*self->val, self->cur_line);
+  std::getline(self->val, self->cur_line);
   return self;
 }
 
-value::object_ptr fn_file_contents(value::object_ptr self)
+value::object* fn_file_contents(value::object* self)
 {
   auto& file = static_cast<value::file&>(*self);
   std::ostringstream str_stream;
   str_stream << file.cur_line;
-  str_stream << file.val->rdbuf();
+  str_stream << file.val.rdbuf();
   file.cur_line.clear();
   return gc::alloc<value::string>( str_stream.str() );
 }
 
-value::object_ptr fn_file_start(value::object_ptr self)
+value::object* fn_file_start(value::object* self)
 {
   return self;
 }
 
-value::object_ptr fn_file_get(value::object_ptr self)
+value::object* fn_file_get(value::object* self)
 {
   const auto& file = static_cast<value::file&>(*self);
   return gc::alloc<value::string>( file.cur_line );
 }
 
-value::object_ptr fn_file_increment(value::object_ptr self)
+value::object* fn_file_increment(value::object* self)
 {
   auto& file = static_cast<value::file&>(*self);
-  if (file.val->peek() == EOF) {
+  if (file.val.peek() == EOF) {
     if (!file.cur_line.size())
       return throw_exception(message::iterator_at_end(type::file));
     file.cur_line.clear();
     return self;
   }
-  std::getline(*file.val, file.cur_line);
+  std::getline(file.val, file.cur_line);
   return self;
 }
 
-value::object_ptr fn_file_at_end(value::object_ptr self)
+value::object* fn_file_at_end(value::object* self)
 {
   auto& file = static_cast<value::file&>(*self);
-  return gc::alloc<value::boolean>(file.val->peek() == EOF && !file.cur_line.size());
+  return gc::alloc<value::boolean>(file.val.peek() == EOF && !file.cur_line.size());
 }
 
 value::builtin_function file_init {fn_file_init, 1};
@@ -91,4 +91,4 @@ vv::value::type vv::builtin::type::file {gc::alloc<value::file>, {
   { {"get"},       &file_get       },
   { {"increment"}, &file_increment },
   { {"at_end"},    &file_at_end    }
-}, &vv::builtin::type::object, {"File"}};
+}, vv::builtin::type::object, {"File"}};

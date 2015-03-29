@@ -9,12 +9,22 @@ namespace value {
 
 struct dictionary : public object {
 public:
-  dictionary(const std::unordered_map<object_ptr, object_ptr>& mems = {});
+  struct hasher {
+    size_t operator()(object* obj) const { return obj->hash(); }
+  };
+  struct key_equal {
+    size_t operator()(object* first, object* second) const
+    {
+      return first->equals(*second);
+    }
+  };
+
+  dictionary(const std::unordered_map<object*, object*, hasher, key_equal>& mems = {});
 
   std::string value() const override;
   void mark() override;
 
-  std::unordered_map<object_ptr, object_ptr> val;
+  std::unordered_map<object*, object*, hasher, key_equal> val;
 };
 
 }

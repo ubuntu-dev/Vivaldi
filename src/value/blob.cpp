@@ -3,7 +3,7 @@
 using namespace vv;
 using namespace value;
 
-blob::blob(void* val, const std::function<void(object_ptr)>& dtor)
+blob::blob(void* val, const std::function<void(object*)>& dtor)
   : val    {val},
     c_dtor {dtor}
 { }

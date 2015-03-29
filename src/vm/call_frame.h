@@ -25,13 +25,13 @@ namespace vm {
 // collector is significantly faster than reference counting via shared_ptr.
 class environment : public value::object {
 public:
-  environment(gc::managed_ptr<environment> enclosing = nullptr,
-              value::object_ptr self                 = nullptr);
+  environment(environment* enclosing = nullptr,
+              value::object* self    = nullptr);
 
   // Frame in which current function (i.e. closure) was defined.
-  gc::managed_ptr<environment> enclosing;
+  environment* enclosing;
   // self, if this is a method call.
-  value::object_ptr self;
+  value::object* self;
 
   void mark() override;
 };
@@ -40,7 +40,7 @@ public:
 // in vm::machine. Each one represents a single function call.
 struct call_frame {
   call_frame(vector_ref<vm::command> instr_ptr = {},
-             gc::managed_ptr<environment> env  = nullptr,
+             environment* env                  = nullptr,
              size_t argc                       = 0,
              size_t frame_ptr                  = 0);
 
@@ -52,13 +52,13 @@ struct call_frame {
 
   // The outermost environment. Given lexical scoping, this will of course be
   // different for each call frame.
-  gc::managed_ptr<environment> env;
+  environment* env;
 
   // The calling function, if there is one; stored here only for GC purposes.
-  value::object_ptr caller;
+  value::object* caller;
 
   // The local catch function, if we're in a try...catch block.
-  value::object_ptr catcher;
+  value::object* catcher;
 
   // Pointer to the current VM instruction we're executing.
   vector_ref<vm::command> instr_ptr;

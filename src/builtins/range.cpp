@@ -12,10 +12,10 @@ using namespace builtin;
 
 namespace {
 
-value::object_ptr fn_range_init(vm::machine& vm)
+value::object* fn_range_init(vm::machine& vm)
 {
   vm.self();
-  auto rng = static_cast<gc::managed_ptr<value::range>>(vm.top());
+  auto rng = static_cast<value::range*>(vm.top());
   vm.arg(1);
   rng->end = vm.top();
   vm.arg(0);
@@ -23,12 +23,12 @@ value::object_ptr fn_range_init(vm::machine& vm)
   return rng;
 }
 
-value::object_ptr fn_range_start(value::object_ptr self)
+value::object* fn_range_start(value::object* self)
 {
   return gc::alloc<value::range>(static_cast<value::range&>(*self));
 }
 
-value::object_ptr fn_range_size(vm::machine& vm)
+value::object* fn_range_size(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -38,7 +38,7 @@ value::object_ptr fn_range_size(vm::machine& vm)
   return vm.top();
 }
 
-value::object_ptr fn_range_at_end(vm::machine& vm)
+value::object* fn_range_at_end(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -51,15 +51,15 @@ value::object_ptr fn_range_at_end(vm::machine& vm)
   return vm.top();
 }
 
-value::object_ptr fn_range_get(value::object_ptr self)
+value::object* fn_range_get(value::object* self)
 {
   return static_cast<value::range&>(*self).start;
 }
 
-value::object_ptr fn_range_increment(vm::machine& vm)
+value::object* fn_range_increment(vm::machine& vm)
 {
   vm.self();
-  auto rng = static_cast<gc::managed_ptr<value::range>>(vm.top());
+  auto rng = static_cast<value::range*>(vm.top());
   vm.pint(1);
   vm.push(rng->start);
   vm.opt_add();
@@ -67,7 +67,7 @@ value::object_ptr fn_range_increment(vm::machine& vm)
   return rng;
 }
 
-value::object_ptr fn_range_to_arr(vm::machine& vm)
+value::object* fn_range_to_arr(vm::machine& vm)
 {
   vm.self();
   auto& rng = static_cast<value::range&>(*vm.top());
@@ -80,7 +80,7 @@ value::object_ptr fn_range_to_arr(vm::machine& vm)
     vm.readm({"greater"});
     vm.call(1);
     vm.run_cur_scope();
-    if (!truthy(vm.top()))
+    if (!truthy(*vm.top()))
       break;
     vm.pop(1);
     vm.pint(1);
@@ -113,4 +113,4 @@ value::type type::range {gc::alloc<value::range>, {
   { {"get"},       &range_get },
   { {"increment"}, &range_increment },
   { {"to_arr"},    &range_to_arr },
-}, &builtin::type::object, {"Range"}};
+}, builtin::type::object, {"Range"}};

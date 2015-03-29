@@ -9,13 +9,13 @@ namespace value {
 
 struct blob : public object {
 public:
-  blob(void* val, const std::function<void(object_ptr)>& dtor);
+  blob(void* val, const std::function<void(object*)>& dtor);
 
   blob(blob&& other);
   blob& operator=(blob&& other);
 
   void* val;
-  std::function<void(object_ptr)> c_dtor;
+  std::function<void(object*)> c_dtor;
 
 
   ~blob();
