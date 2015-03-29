@@ -46,8 +46,8 @@ public:
 
   iterator insert(value_type ptr);
 
-  void erase(value_type ptr)     { m_data.erase(ptr); }
-  void erase(iterator iter) { m_data.erase(iter); }
+  iterator erase(value_type ptr) { return m_data.erase(find(ptr)); }
+  iterator erase(iterator iter)  { return m_data.erase(iter); }
 
   iterator begin()                       { return m_data.begin(); }
   const_iterator begin() const           { return cbegin(); }

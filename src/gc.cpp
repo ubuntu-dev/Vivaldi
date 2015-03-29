@@ -80,18 +80,24 @@ void expand()
 
 value::object* gc::internal::get_next_empty(tag type)
 {
+  static auto iter = std::begin(g_free);
+
   auto sz = size_for(type); // Why the *** ****** *** **** is this not inlined?
   auto search = [sz](auto block) { return block.second >= sz; };
 
-  auto iter = find_if(std::begin(g_free), std::end(g_free), search);
+  iter = find_if(iter, std::end(g_free), search);
   if (iter == std::end(g_free)) {
-    copy_live();
-    iter = find_if(std::begin(g_free), std::end(g_free), search);
-
+    auto tmp = find_if(std::begin(g_free), iter, search);
+    iter = tmp;
     if (iter == std::end(g_free)) {
-      --iter;
-      expand();
-      iter = find_if(iter, std::end(g_free), search);
+      copy_live();
+      iter = find_if(std::begin(g_free), std::end(g_free), search);
+
+      if (iter == std::end(g_free)) {
+        --iter;
+        expand();
+        iter = find_if(iter, std::end(g_free), search);
+      }
     }
   }
 
@@ -100,7 +106,7 @@ value::object* gc::internal::get_next_empty(tag type)
   // add remaining space to free list
   {
     auto block_sz = iter->second;
-    g_free.erase(iter);
+    iter = g_free.erase(iter);
     if (block_sz > sz)
       g_free.insert({ptr + sz, block_sz - sz});
   }
