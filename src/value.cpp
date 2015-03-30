@@ -165,31 +165,41 @@ bool vv::equals(const value::object& first, const value::object& second)
 // }}}
 // destruct {{{
 
+namespace {
+
+template <typename T>
+void call_dtor(T& obj)
+{
+  obj.~T();
+}
+
+}
+
 void vv::destruct(object& obj)
 {
   switch (obj.tag) {
-  case tag::object:           return obj.~object();
-  case tag::array:            return static_cast<array&>(obj).~array();
-  case tag::array_iterator:   return static_cast<array_iterator&>(obj).~array_iterator();
-  case tag::blob:             return static_cast<blob&>(obj).~blob();
-  case tag::boolean:          return static_cast<boolean&>(obj).~boolean();
-  case tag::builtin_function: return static_cast<builtin_function&>(obj).~builtin_function();
-  case tag::dictionary:       return static_cast<dictionary&>(obj).~dictionary();
-  case tag::file:             return static_cast<file&>(obj).~file();
-  case tag::floating_point:   return static_cast<floating_point&>(obj).~floating_point();
-  case tag::function:         return static_cast<function&>(obj).~function();
-  case tag::integer:          return static_cast<integer&>(obj).~integer();
-  case tag::nil:              return static_cast<nil&>(obj).~nil();
-  case tag::opt_monop:        return static_cast<opt_monop&>(obj).~opt_monop();
-  case tag::opt_binop:        return static_cast<opt_binop&>(obj).~opt_binop();
-  case tag::range:            return static_cast<range&>(obj).~range();
-  case tag::regex:            return static_cast<regex&>(obj).~regex();
-  case tag::regex_result:     return static_cast<regex_result&>(obj).~regex_result();
-  case tag::string:           return static_cast<string&>(obj).~string();
-  case tag::string_iterator:  return static_cast<string_iterator&>(obj).~string_iterator();
-  case tag::symbol:           return static_cast<value::symbol&>(obj).~symbol();
-  case tag::type:             return static_cast<type&>(obj).~type();
-  case tag::environment:      return static_cast<vm::environment&>(obj).~environment();
+  case tag::object:           return call_dtor(obj);
+  case tag::array:            return call_dtor(static_cast<array&>(obj));
+  case tag::array_iterator:   return call_dtor(static_cast<array_iterator&>(obj));
+  case tag::blob:             return call_dtor(static_cast<blob&>(obj));
+  case tag::boolean:          return call_dtor(static_cast<boolean&>(obj));
+  case tag::builtin_function: return call_dtor(static_cast<builtin_function&>(obj));
+  case tag::dictionary:       return call_dtor(static_cast<dictionary&>(obj));
+  case tag::file:             return call_dtor(static_cast<file&>(obj));
+  case tag::floating_point:   return call_dtor(static_cast<floating_point&>(obj));
+  case tag::function:         return call_dtor(static_cast<function&>(obj));
+  case tag::integer:          return call_dtor(static_cast<integer&>(obj));
+  case tag::nil:              return call_dtor(static_cast<nil&>(obj));
+  case tag::opt_monop:        return call_dtor(static_cast<opt_monop&>(obj));
+  case tag::opt_binop:        return call_dtor(static_cast<opt_binop&>(obj));
+  case tag::range:            return call_dtor(static_cast<range&>(obj));
+  case tag::regex:            return call_dtor(static_cast<regex&>(obj));
+  case tag::regex_result:     return call_dtor(static_cast<regex_result&>(obj));
+  case tag::string:           return call_dtor(static_cast<string&>(obj));
+  case tag::string_iterator:  return call_dtor(static_cast<string_iterator&>(obj));
+  case tag::symbol:           return call_dtor(static_cast<value::symbol&>(obj));
+  case tag::type:             return call_dtor(static_cast<type&>(obj));
+  case tag::environment:      return call_dtor(static_cast<vm::environment&>(obj));
   }
 }
 
