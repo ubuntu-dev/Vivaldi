@@ -1,7 +1,7 @@
 #ifndef VV_VALUE_ARRAY_ITERATOR_H
 #define VV_VALUE_ARRAY_ITERATOR_H
 
-#include "value.h"
+#include "value/object.h"
 #include "expression.h"
 
 namespace vv {
@@ -13,9 +13,6 @@ struct array_iterator : public object {
 public:
   // Constructs an array_iterator pointing to the start of arr.
   array_iterator(array& arr);
-
-  std::string value() const override;
-  void mark() override;
 
   // Owning array.
   array& arr;

@@ -1,24 +1,14 @@
 #include "call_frame.h"
 
-#include "gc.h"
+#include "builtins.h"
 
 using namespace vv;
 
 vm::environment::environment(environment* new_enclosing, value::object* new_self)
-  : enclosing {new_enclosing},
+  : object    {&builtin::type::object, tag::environment},
+    enclosing {new_enclosing},
     self      {new_self || !enclosing ? new_self : enclosing->self}
 { }
-
-void vm::environment::mark()
-{
-  object::mark();
-
-  if (enclosing)
-    gc::mark(enclosing);
-
-  if (self)
-    gc::mark(self);
-}
 
 vm::call_frame::call_frame(vector_ref<vm::command> instr_ptr,
                            environment* env,

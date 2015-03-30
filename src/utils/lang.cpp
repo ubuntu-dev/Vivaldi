@@ -5,6 +5,7 @@
 #include "utils/error.h"
 #include "value/boolean.h"
 #include "value/string.h"
+#include "value/type.h"
 
 bool vv::truthy(const value::object& val)
 {
@@ -50,8 +51,8 @@ std::string vv::pretty_print(value::object* object, vm::machine& vm)
     vm.run_cur_scope();
     auto str = vm.top();
     vm.pop(1);
-    return str->value();
+    return value_for(*str);
   }
 
-  return object->value();
+  return value_for(*object);
 }

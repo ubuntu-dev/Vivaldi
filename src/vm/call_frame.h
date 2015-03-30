@@ -4,9 +4,7 @@
 #include "instruction.h"
 
 #include "symbol.h"
-#include "value.h"
-#include "utils/dumb_ptr.h"
-#include "utils/hash_map.h"
+#include "value/object.h"
 #include "utils/vector_ref.h"
 
 namespace vv {
@@ -23,8 +21,7 @@ namespace vm {
 // inherit from value::object); this is because, because of closures, manual
 // memory management is basically impossible, and even my simplistic garbage
 // collector is significantly faster than reference counting via shared_ptr.
-class environment : public value::object {
-public:
+struct environment : public value::object {
   environment(environment* enclosing = nullptr,
               value::object* self    = nullptr);
 
@@ -32,8 +29,6 @@ public:
   environment* enclosing;
   // self, if this is a method call.
   value::object* self;
-
-  void mark() override;
 };
 
 // A single call frame. The VM's call stack is implemented as a vector of these

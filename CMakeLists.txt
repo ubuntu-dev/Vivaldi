@@ -78,6 +78,7 @@ add_executable(vivaldi
 
   src/value/array.cpp
   src/value/array_iterator.cpp
+  src/value/basic_function.cpp
   src/value/blob.cpp
   src/value/boolean.cpp
   src/value/builtin_function.cpp
@@ -87,12 +88,14 @@ add_executable(vivaldi
   src/value/function.cpp
   src/value/integer.cpp
   src/value/nil.cpp
+  src/value/object.cpp
   src/value/opt_functions.cpp
   src/value/range.cpp
   src/value/regex.cpp
   src/value/string.cpp
   src/value/string_iterator.cpp
   src/value/symbol.cpp
+  src/value/type.cpp
 
   src/vm/call_frame.cpp
   src/vm/instruction.cpp)

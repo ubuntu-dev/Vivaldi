@@ -1,7 +1,7 @@
 #ifndef VV_UTILS_LANG_H
 #define VV_UTILS_LANG_H
 
-#include "value.h"
+#include "value/basic_function.h"
 #include "vm.h"
 
 namespace vv {

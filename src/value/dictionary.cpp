@@ -7,25 +7,6 @@ using namespace vv;
 
 value::dictionary::dictionary(const std::unordered_map<object*, object*,
                                                        hasher, key_equal>& mems)
-  : object {&builtin::type::dictionary},
+  : object {&builtin::type::dictionary, tag::dictionary},
     val    {mems}
 { }
-
-std::string value::dictionary::value() const
-{
-  std::string str{"{"};
-  for (const auto& pair: val)
-    str += ' ' + pair.first->value() += ": " + pair.second->value() += ',';
-  if (val.size())
-    str.back() = ' ';
-  return str += '}';
-}
-
-void value::dictionary::mark()
-{
-  object::mark();
-  for (auto& pair : val) {
-    gc::mark(pair.first);
-    gc::mark(pair.second);
-  }
-}

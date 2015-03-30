@@ -19,6 +19,7 @@
 #include "value/regex.h"
 #include "value/string.h"
 #include "value/symbol.h"
+#include "value/type.h"
 
 #include <iostream>
 
@@ -82,18 +83,18 @@ void vm::machine::push(value::object* val)
 void vm::machine::mark()
 {
   for (auto i : m_stack)
-    gc::mark(i);
+    gc::mark(*i);
 
   if (m_transient_self)
-    gc::mark(m_transient_self);
+    gc::mark(*m_transient_self);
 
   for (auto& i : m_call_stack) {
     if (i.caller)
-      gc::mark(i.caller);
+      gc::mark(*i.caller);
     if (i.catcher)
-      gc::mark(i.catcher);
+      gc::mark(*i.catcher);
     if (i.env)
-      gc::mark(i.env);
+      gc::mark(*i.env);
   }
 }
 
@@ -289,19 +290,19 @@ void vm::machine::call(int argc)
   frame().caller = func;
 
   try {
-    if (func->type == value::basic_function::func_type::opt1) {
+    if (func->tag == tag::opt_monop) {
       auto monop = static_cast<value::opt_monop*>(func);
       auto ret = monop->fn_body(m_transient_self);
       push(ret);
 
     }
-    else if (func->type == value::basic_function::func_type::opt2) {
+    else if (func->tag == tag::opt_binop) {
       auto binop = static_cast<value::opt_binop*>(func);
       auto ret = binop->fn_body(m_transient_self, top());
       push(ret);
 
     }
-    else if (func->type == value::basic_function::func_type::builtin) {
+    else if (func->tag == tag::builtin_function) {
       auto builtin = static_cast<value::builtin_function*>(func);
       if (m_transient_self)
         frame().env = gc::alloc<environment>( nullptr, m_transient_self );

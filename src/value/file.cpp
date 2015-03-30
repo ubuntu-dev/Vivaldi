@@ -6,7 +6,7 @@
 using namespace vv;
 
 value::file::file(const std::string& filename)
-  : object {&builtin::type::file},
+  : object {&builtin::type::file, tag::file},
     name   {filename},
     val    {filename}
 {
@@ -14,14 +14,12 @@ value::file::file(const std::string& filename)
 }
 
 value::file::file()
-  : object {&builtin::type::file},
+  : object {&builtin::type::file, tag::file},
     name   {""}
 { }
 
 value::file::file(file&& other)
-  : object {&builtin::type::file},
+  : object {&builtin::type::file, tag::file},
     name   {move(other.name)},
     val    {std::move(other.val)}
 { }
-
-std::string value::file::value() const { return "File: " + name; }

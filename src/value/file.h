@@ -1,7 +1,7 @@
 #ifndef VV_VALUE_FILE_H
 #define VV_VALUE_FILE_H
 
-#include "value.h"
+#include "value/object.h"
 
 #include <fstream>
 
@@ -14,8 +14,6 @@ public:
   file(const std::string& filename);
   file();
   file(file&& other);
-
-  std::string value() const override;
 
   std::string name;
   std::string cur_line;

@@ -3,94 +3,193 @@
 #include "builtins.h"
 #include "gc.h"
 #include "utils/lang.h"
+#include "value/array.h"
+#include "value/array_iterator.h"
+#include "value/blob.h"
+#include "value/boolean.h"
+#include "value/builtin_function.h"
+#include "value/dictionary.h"
+#include "value/file.h"
+#include "value/floating_point.h"
+#include "value/function.h"
+#include "value/opt_functions.h"
+#include "value/range.h"
+#include "value/regex.h"
+#include "value/string.h"
+#include "value/string_iterator.h"
+#include "value/symbol.h"
+#include "value/type.h"
+
+#include <sstream>
 
 using namespace vv;
+using namespace value;
 
-value::object::object(struct type* new_type)
-  : members  {},
-    type     {new_type}
-{ }
-
-value::object::object()
-  : members  {},
-    type     {&builtin::type::object}
-{ }
-
-size_t value::object::hash() const
+size_t vv::size_for(tag type)
 {
-  const static std::hash<const void*> hasher{};
-  return hasher(static_cast<const void*>(this));
-}
-
-bool value::object::equals(const value::object& other) const
-{
-  return this == &other;
-}
-
-void value::object::mark()
-{
-  if (type)
-    gc::mark(type);
-  for (auto& i : members)
-    gc::mark(i.second);
-}
-
-value::basic_function::basic_function(func_type type,
-                                      int argc,
-                                      vm::environment* enclosing,
-                                      vector_ref<vm::command> body)
-  : object    {&builtin::type::function},
-    type      {type},
-    argc      {argc},
-    enclosing {enclosing},
-    body      {body}
-{ }
-
-void value::basic_function::mark()
-{
-  object::mark();
-  if (enclosing)
-    gc::mark(enclosing);
-}
-
-value::type::type(const std::function<object*()>& constructor,
-                  const hash_map<vv::symbol, basic_function*>& methods,
-                  type& parent,
-                  vv::symbol name)
-  : object      {&builtin::type::custom_type},
-    methods     {methods},
-    constructor {constructor},
-    parent      {parent},
-    name        {name}
-{
-  if (auto init = find_method(*this, {"init"})) {
-    init_shim.argc = init->argc;
-
-    for (auto i = 0; i != init_shim.argc; ++i) {
-      init_shim.body.emplace_back(vm::instruction::arg, i);
-    }
-
-    init_shim.body.emplace_back( vm::instruction::self );
-    init_shim.body.emplace_back( vm::instruction::readm, vv::symbol{"init"} );
-    init_shim.body.emplace_back( vm::instruction::call, init_shim.argc );
-    init_shim.body.emplace_back( vm::instruction::self );
-    init_shim.body.emplace_back( vm::instruction::ret, false );
-  }
-  else {
-    init_shim.argc = 0;
-    init_shim.body = {
-      { vm::instruction::self },
-      { vm::instruction::ret, false }
-    };
+  switch (type) {
+  case tag::object:           return sizeof(object);
+  case tag::array:            return sizeof(array);
+  case tag::array_iterator:   return sizeof(array_iterator);
+  case tag::blob:             return sizeof(blob);
+  case tag::boolean:          return sizeof(boolean);
+  case tag::builtin_function: return sizeof(builtin_function);
+  case tag::dictionary:       return sizeof(dictionary);
+  case tag::file:             return sizeof(file);
+  case tag::floating_point:   return sizeof(floating_point);
+  case tag::function:         return sizeof(function);
+  case tag::integer:          return sizeof(integer);
+  case tag::nil:              return sizeof(nil);
+  case tag::opt_monop:        return sizeof(opt_monop);
+  case tag::opt_binop:        return sizeof(opt_binop);
+  case tag::range:            return sizeof(range);
+  case tag::regex:            return sizeof(regex);
+  case tag::regex_result:     return sizeof(regex_result);
+  case tag::string:           return sizeof(string);
+  case tag::string_iterator:  return sizeof(string_iterator);
+  case tag::symbol:           return sizeof(value::symbol);
+  case tag::type:             return sizeof(type);
+  case tag::environment:      return sizeof(vm::environment);
   }
 }
 
-std::string value::type::value() const { return to_string(name); }
+// value_for {{{
 
-void value::type::mark()
+namespace {
+
+std::string array_val(const array& arr)
 {
-  object::mark();
-  for (const auto& i : methods)
-    gc::mark(i.second);
-  gc::mark(&parent);
+  std::ostringstream stm{'['};
+  if (arr.val.size()) {
+    for_each(begin(arr.val), end(arr.val) - 1,
+             [&](const auto& v) { stm << vv::value_for(*v) << ", "; });
+    stm << vv::value_for(*arr.val.back());
+  }
+  stm << ']';
+  return stm.str();
 }
+
+std::string dictionary_val(const dictionary& dict)
+{
+  std::string str{"{"};
+  for (const auto& pair: dict.val)
+    str += ' ' + vv::value_for(*pair.first) += ": " + vv::value_for(*pair.second) += ',';
+  if (dict.val.size())
+    str.back() = ' ';
+  return str += '}';
+}
+
+std::string range_val(const range& rng)
+{
+  return vv::value_for(*rng.start) += " to " + vv::value_for(*rng.end);
+}
+
+}
+
+std::string vv::value_for(const object& object)
+{
+  switch (object.tag) {
+  case tag::array:           return array_val(reinterpret_cast<const array&>(object));
+  case tag::array_iterator:  return "<array iterator>";
+  case tag::boolean:         return reinterpret_cast<const boolean&>(object).val ? "true" : "false";
+  case tag::dictionary:      return dictionary_val(reinterpret_cast<const dictionary&>(object));
+  case tag::file:            return "File: " + reinterpret_cast<const file&>(object).name;
+  case tag::floating_point:  return std::to_string(reinterpret_cast<const floating_point&>(object).val);
+  case tag::integer:         return std::to_string(reinterpret_cast<const integer&>(object).val);
+  case tag::nil:             return "nil";
+
+  case tag::opt_monop:
+  case tag::opt_binop:
+  case tag::builtin_function:
+  case tag::function:        return "<function>";
+  case tag::range:           return range_val(reinterpret_cast<const range&>(object));
+  case tag::regex:           return '`' + reinterpret_cast<const regex&>(object).str + '`';
+  case tag::regex_result:    return "<regex result>";
+  case tag::string:          return '"' + reinterpret_cast<const string&>(object).val + '"';
+  case tag::string_iterator: return "<string iterator>";
+  case tag::symbol:          return '\'' + to_string(reinterpret_cast<const value::symbol&>(object).val);
+  case tag::type:            return to_string(reinterpret_cast<const type&>(object).name);
+
+  case tag::blob:
+  case tag::environment:
+  case tag::object:          return "<object>";
+  }
+}
+
+// }}}
+// hash_for {{{
+
+size_t vv::hash_for(const value::object& obj)
+{
+  switch (obj.tag) {
+  case tag::boolean:        return std::hash<bool>{}(static_cast<const boolean&>(obj).val);
+  case tag::floating_point: return std::hash<double>{}(static_cast<const floating_point&>(obj).val);
+  case tag::integer:        return std::hash<int>{}(static_cast<const integer&>(obj).val);
+  case tag::string:         return std::hash<std::string>{}(static_cast<const string&>(obj).val);
+  case tag::symbol:         return std::hash<vv::symbol>{}(static_cast<const value::symbol&>(obj).val);
+  default:                  return std::hash<const value::object*>{}(&obj);
+  }
+}
+
+// }}}
+// equals {{{
+
+namespace {
+
+template <typename T>
+bool val_equals(const value::object& first, const value::object& second)
+{
+  return static_cast<const T&>(first).val == static_cast<const T&>(second).val;
+}
+
+}
+
+bool vv::equals(const value::object& first, const value::object& second)
+{
+  if (&first == &second)
+    return true;
+  if (first.tag != second.tag)
+    return false;
+
+  switch (first.tag) {
+  case tag::boolean:        return val_equals<boolean>(first, second);
+  case tag::floating_point: return val_equals<floating_point>(first, second);
+  case tag::integer:        return val_equals<integer>(first, second);
+  case tag::string:         return val_equals<string>(first, second);
+  case tag::symbol:         return val_equals<value::symbol>(first, second);
+  default:                  return false;
+  }
+}
+
+// }}}
+// destruct {{{
+
+void vv::destruct(object& obj)
+{
+  switch (obj.tag) {
+  case tag::object:           return obj.~object();
+  case tag::array:            return static_cast<array&>(obj).~array();
+  case tag::array_iterator:   return static_cast<array_iterator&>(obj).~array_iterator();
+  case tag::blob:             return static_cast<blob&>(obj).~blob();
+  case tag::boolean:          return static_cast<boolean&>(obj).~boolean();
+  case tag::builtin_function: return static_cast<builtin_function&>(obj).~builtin_function();
+  case tag::dictionary:       return static_cast<dictionary&>(obj).~dictionary();
+  case tag::file:             return static_cast<file&>(obj).~file();
+  case tag::floating_point:   return static_cast<floating_point&>(obj).~floating_point();
+  case tag::function:         return static_cast<function&>(obj).~function();
+  case tag::integer:          return static_cast<integer&>(obj).~integer();
+  case tag::nil:              return static_cast<nil&>(obj).~nil();
+  case tag::opt_monop:        return static_cast<opt_monop&>(obj).~opt_monop();
+  case tag::opt_binop:        return static_cast<opt_binop&>(obj).~opt_binop();
+  case tag::range:            return static_cast<range&>(obj).~range();
+  case tag::regex:            return static_cast<regex&>(obj).~regex();
+  case tag::regex_result:     return static_cast<regex_result&>(obj).~regex_result();
+  case tag::string:           return static_cast<string&>(obj).~string();
+  case tag::string_iterator:  return static_cast<string_iterator&>(obj).~string_iterator();
+  case tag::symbol:           return static_cast<value::symbol&>(obj).~symbol();
+  case tag::type:             return static_cast<type&>(obj).~type();
+  case tag::environment:      return static_cast<vm::environment&>(obj).~environment();
+  }
+}
+
+// }}}

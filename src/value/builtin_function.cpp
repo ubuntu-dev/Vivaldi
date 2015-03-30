@@ -16,11 +16,6 @@ const static std::array<vm::command, 1> builtin_shim {{
 value::builtin_function::builtin_function(
     const std::function<object*(vm::machine&)>& body,
     int argc)
-  : basic_function {func_type::builtin, argc, nullptr, builtin_shim},
+  : basic_function {tag::builtin_function, argc, nullptr, builtin_shim},
     fn_body        {body}
 { }
-
-std::string value::builtin_function::value() const
-{
-  return "<builtin function>";
-}

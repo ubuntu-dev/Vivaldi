@@ -8,7 +8,5 @@
 using namespace vv;
 
 value::nil::nil()
-  : object {&builtin::type::nil}
+  : object {&builtin::type::nil, tag::nil}
 { }
-
-std::string value::nil::value() const { return "nil"; }

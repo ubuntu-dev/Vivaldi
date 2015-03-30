@@ -11,6 +11,7 @@
 #include "value/string.h"
 #include "value/string_iterator.h"
 #include "value/symbol.h"
+#include "value/type.h"
 
 using namespace vv;
 using namespace builtin;
@@ -45,7 +46,7 @@ value::object* fn_string_init(vm::machine& vm)
   else if (arg->type == &type::symbol)
     str->val = to_string(to_symbol(arg));
   else
-     str->val = arg->value();
+     str->val = value_for(*arg);
   return str;
 }
 

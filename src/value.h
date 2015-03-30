@@ -1,25 +1,10 @@
 #ifndef VV_VALUE_H
 #define VV_VALUE_H
 
-#include "symbol.h"
-#include "utils/dumb_ptr.h"
-#include "utils/hash_map.h"
-#include "utils/vector_ref.h"
-#include "vm/instruction.h"
-
-#include <vector>
+#include <string>
+#include <utility>
 
 namespace vv {
-
-// Pre-declarations for headers dependent on this one
-namespace ast {
-class function_definition;
-}
-
-namespace vm {
-class machine;
-class environment;
-}
 
 // Classes representing Vivaldi objects.
 namespace value {
@@ -46,129 +31,97 @@ struct string_iterator;
 struct symbol;
 struct type;
 
-// Basic Object class from which all types are derived.
-struct object {
-  // Creates a new value::object of the provided type.
-  object(type* type);
-  // Creates a new value::object of type Object
-  object();
+}
 
-  // Outputs a human-readable string representing the object.
-  // The output of object::value is used in the REPL, and in 'puts' and 'print'
-  // for non-String types; override in subclasses with something more specific.
-  virtual std::string value() const { return "<object>"; }
+// Odd duck--- kept as an object for GC purposes and because it overlaps a lot
+// (objects, call frames, and types are all at their core just hash tables
+// mapping symbols to objects)
+namespace vm {
 
-  virtual ~object() { }
-
-  // Contains local, variable-specific members.
-  // Only members of this specific object are stored here; methods are stored
-  // inside of their owning classes.
-  hash_map<vv::symbol, object*> members;
-  // Pointer to type (this should never be null. TODO: make reference)
-  type* type;
-
-  // Hash method used in dictionaries.
-  // Overridden by classes with any useful concept of equality (as a rule of
-  // thumb, if a class has an "equals" / method, it should probably override
-  // this and object::equals).
-  virtual size_t hash() const;
-  // Provides an equality function for use in Dictionaries (see object::hash).
-  virtual bool equals(const object& other) const;
-
-  // Garbage collection interface.
-
-  // Any class that stores references to GCable / objects *must* override
-  // mark()--- but make sure you call object::mark in your overridden version!
-  virtual void mark();
-};
-
-// Base class for all callable types. All function types (currently function,
-// builtin_function, opt_monop, and opt_binop) are subclasses of basic_function.
-struct basic_function : public object {
-  // Indicates which type of function this is.
-  // Used instead of RTTI and all its convenience because of measurably
-  // increased performance.
-  enum class func_type {
-    opt1,
-    opt2,
-    builtin,
-    vv
-  };
-
-  basic_function(func_type type,
-                 int argc,
-                 vm::environment* enclosing,
-                 vector_ref<vm::command> body);
-
-  // The type of function, as enumerated above.
-  const func_type type;
-  // Expected number of arguments.
-  const int argc;
-  // Enclosing environment, or nullptr if none exists.
-  vm::environment* const enclosing;
-  // The VM code to run in the new call frame (if this is a C++ function (as in
-  // opt_monop, opt_binop, and builtin_function), just provide a stub with a
-  // single 'ret false' command.
-  vector_ref<vm::command> body;
-
-  void mark() override;
-};
-
-// C++ representation of a Vivaldi Type.
-struct type : public object {
-  type(const std::function<object*()>& constructor,
-       const hash_map<vv::symbol, basic_function*>& methods,
-       type& parent,
-       vv::symbol name);
-
-  // Class methods.
-  // Whenever a object's member is looked for, if it isn't found
-  // locally, the class will search its type's methods, and that type's parent's
-  // methods, and so on recursively until it's found or there are no more
-  // parents left.
-  hash_map<vv::symbol, basic_function*> methods;
-
-  // Very simple constructor.
-  // This constructor should just provides an allocated bit of memory of
-  // the appropriate type; any actual initialization (including reading passed
-  // arguments) has to happen in the class's "init" method.
-  std::function<object*()> constructor;
-
-  // Blob of VM code used in initialization.
-  // This shim is necessary because, of course, when you create a new object you
-  // want to get that object back. Unfortunately it's not possible to guarantee
-  // this in the init function, since someone could do something like
-  //
-  //     class Foo
-  //       fn init(): 5
-  //     end
-  //
-  // When you instantiate Foo, you'd prefer you get your new object back, not 5.
-  // So the init shim creates a function that looks something like
-  //
-  //     fn (<args...): do
-  //       self.init(<args...>)
-  //       self
-  //     end
-  //
-  // and the constructor calls that fake init function instead of 'init'.
-  vm::function_t init_shim;
-
-  // Parent class. Parent classes are stored as references, since they're
-  // unchangeable and can't ever be null (Object's just points to itself).
-  type& parent;
-
-  // Name of class. Stored in class so value() can be prettier than just
-  // "<type>".
-  vv::symbol name;
-
-  // Overriden string representation returning the type's name.
-  std::string value() const override;
-
-  void mark() override;
-};
+struct environment;
 
 }
+
+std::string value_for(const value::object& object);
+size_t hash_for(const value::object& object);
+bool equals(const value::object& first, const value::object& second);
+void destruct(value::object& object);
+
+enum class tag {
+  object,
+  array,
+  array_iterator,
+  blob,
+  boolean,
+  builtin_function,
+  dictionary,
+  file,
+  floating_point,
+  function,
+  integer,
+  nil,
+  opt_monop,
+  opt_binop,
+  range,
+  regex,
+  regex_result,
+  string,
+  string_iterator,
+  symbol,
+  type,
+  environment
+};
+
+size_t size_for(tag type);
+
+template <typename T>
+struct tag_for {};
+
+template <>
+struct tag_for<value::object> : std::integral_constant<tag, tag::object> {};
+template <>
+struct tag_for<value::array> : std::integral_constant<tag, tag::array> {};
+template <>
+struct tag_for<value::array_iterator> : std::integral_constant<tag, tag::array_iterator> {};
+template <>
+struct tag_for<value::blob> : std::integral_constant<tag, tag::blob> {};
+template <>
+struct tag_for<value::boolean> : std::integral_constant<tag, tag::boolean> {};
+template <>
+struct tag_for<value::builtin_function> : std::integral_constant<tag, tag::builtin_function> {};
+template <>
+struct tag_for<value::dictionary> : std::integral_constant<tag, tag::dictionary> {};
+template <>
+struct tag_for<value::file> : std::integral_constant<tag, tag::file> {};
+template <>
+struct tag_for<value::floating_point> : std::integral_constant<tag, tag::floating_point> {};
+template <>
+struct tag_for<value::function> : std::integral_constant<tag, tag::function> {};
+template <>
+struct tag_for<value::integer> : std::integral_constant<tag, tag::integer> {};
+template <>
+struct tag_for<value::nil> : std::integral_constant<tag, tag::nil> {};
+template <>
+struct tag_for<value::opt_monop> : std::integral_constant<tag, tag::opt_monop> {};
+template <>
+struct tag_for<value::opt_binop> : std::integral_constant<tag, tag::opt_binop> {};
+template <>
+struct tag_for<value::range> : std::integral_constant<tag, tag::range> {};
+template <>
+struct tag_for<value::regex> : std::integral_constant<tag, tag::regex> {};
+template <>
+struct tag_for<value::regex_result> : std::integral_constant<tag, tag::regex_result> {};
+template <>
+struct tag_for<value::string> : std::integral_constant<tag, tag::string> {};
+template <>
+struct tag_for<value::string_iterator> : std::integral_constant<tag, tag::string_iterator> {};
+template <>
+struct tag_for<value::symbol> : std::integral_constant<tag, tag::symbol> {};
+template <>
+struct tag_for<value::type> : std::integral_constant<tag, tag::type> {};
+template <>
+struct tag_for<vm::environment> : std::integral_constant<tag, tag::environment> {};
+
 
 }
 

@@ -8,6 +8,7 @@
 #include "value/function.h"
 #include "value/nil.h"
 #include "value/string.h"
+#include "value/type.h"
 
 #include <iostream>
 

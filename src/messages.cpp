@@ -1,5 +1,8 @@
 #include "messages.h"
 
+#include "utils/lang.h"
+#include "value/type.h"
+
 #include <sstream>
 
 using namespace vv;
@@ -35,13 +38,13 @@ std::string message::already_exists(vv::symbol var)
 
 std::string message::has_no_member(const value::object& obj, vv::symbol mem)
 {
-  return obj.value() += " has no member " + to_string(mem);
+  return value_for(obj) += " has no member " + to_string(mem);
 }
 
 std::string message::not_callable(const value::object& callee)
 {
-  return "Object " + callee.value() += " of type " + callee.type->value() +=
-         " cannot be called";
+  return "Object " + value_for(callee) += " of type " +
+         value_for(*callee.type) += " cannot be called";
 }
 
 std::string message::wrong_argc(int expected, int recieved)
@@ -52,64 +55,64 @@ std::string message::wrong_argc(int expected, int recieved)
 
 std::string message::nonconstructible(const value::type& type)
 {
-  return "Objects of type " + type.value() += " cannot be directly construced";
+  return "Objects of type " + value_for(type) += " cannot be directly construced";
 }
 
 std::string message::init_type_error(const value::type& self,
                                      const value::type& expected,
                                      const value::type& recieved)
 {
-  return "Objects of type " + self.value() +=
-         " can only be constructed from objects of type " + expected.value() +=
-         ", not " + recieved.value();
+  return "Objects of type " + value_for(self) +=
+         " can only be constructed from objects of type " +
+         value_for(expected) += ", not " + value_for(recieved);
 }
 
 std::string message::init_multi_type_error(const value::type& self,
                                            const value::type& recieved)
 {
-  return "Objects of type " + self.value() +=
-         " cannot be constructed from objects of type " + recieved.value();
+  return "Objects of type " + value_for(self) +=
+         " cannot be constructed from objects of type " + value_for(recieved);
 }
 
 std::string message::add_type_error(const value::type& self,
                                     const value::type& expected)
 {
-  return "Only objects of type " + expected.value() +=
-         " can be added to objects of type " + self.value();
+  return "Only objects of type " + value_for(expected) +=
+         " can be added to objects of type " + value_for(self);
 }
 
 std::string message::at_type_error(const value::type& self,
                                    const value::type& expected)
 {
-  return "Only objects of type " + expected.value() +=
-         " can index into objects of type " + self.value();
+  return "Only objects of type " + value_for(expected) +=
+         " can index into objects of type " + value_for(self);
 }
 
 std::string message::type_error(const value::type& expected,
                                 const value::type& recieved)
 {
-  return "Function expected " + expected.value() += ", but recieved " +
-         recieved.value();
+  return "Function expected " + value_for(expected) += ", but recieved " +
+         value_for(recieved);
 }
 
 std::string message::iterator_owner_error(const value::type& owner)
 {
-  return "Expected iterators from the same " + owner.value();
+  return "Expected iterators from the same " + value_for(owner);
 }
 
 std::string message::iterator_past_start(const value::type& self)
 {
-  return self.value() += " cannot be decremented past start";
+  return value_for(self) += " cannot be decremented past start";
 }
 
 std::string message::iterator_past_end(const value::type& self)
 {
-  return self.value() += " cannot be decremented past end";
+  return value_for(self) += " cannot be decremented past end";
 }
 
 std::string message::iterator_at_end(const value::type& self)
 {
-  return self.value() += " cannot be accessed at end";
+  return value_for(self) += " cannot be accessed at end";
 }
 
 std::string message::out_of_range(size_t lower, size_t upper, int recieved)
@@ -122,5 +125,5 @@ std::string message::out_of_range(size_t lower, size_t upper, int recieved)
 
 std::string message::caught_exception(const value::object& err)
 {
-  return "Caught execption: " + err.value();
+  return "Caught execption: " + value_for(err);
 }

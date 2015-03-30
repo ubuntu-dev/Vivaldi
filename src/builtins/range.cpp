@@ -6,6 +6,7 @@
 #include "value/builtin_function.h"
 #include "value/opt_functions.h"
 #include "value/range.h"
+#include "value/type.h"
 
 using namespace vv;
 using namespace builtin;

@@ -1,7 +1,9 @@
 #ifndef VV_VALUE_DICTIONARY_H
 #define VV_VALUE_DICTIONARY_H
 
-#include "value.h"
+#include "value/object.h"
+
+#include <unordered_map>
 
 namespace vv {
 
@@ -10,19 +12,16 @@ namespace value {
 struct dictionary : public object {
 public:
   struct hasher {
-    size_t operator()(object* obj) const { return obj->hash(); }
+    size_t operator()(object* obj) const { return hash_for(*obj); }
   };
   struct key_equal {
     size_t operator()(object* first, object* second) const
     {
-      return first->equals(*second);
+      return equals(*first, *second);
     }
   };
 
   dictionary(const std::unordered_map<object*, object*, hasher, key_equal>& mems = {});
-
-  std::string value() const override;
-  void mark() override;
 
   std::unordered_map<object*, object*, hasher, key_equal> val;
 };

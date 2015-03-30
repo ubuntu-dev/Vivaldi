@@ -1,7 +1,7 @@
 #ifndef VV_VALUE_BLOB_H
 #define VV_VALUE_BLOB_H
 
-#include "value.h"
+#include "value/object.h"
 
 namespace vv {
 

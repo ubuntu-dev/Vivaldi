@@ -2,6 +2,7 @@
 #define VV_MESSAGE_H
 
 #include "value.h"
+#include "symbol.h"
 
 // Predefined error messages, for use in exceptions, REPL messages, etc.
 

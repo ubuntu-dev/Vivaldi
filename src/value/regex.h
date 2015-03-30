@@ -1,7 +1,7 @@
 #ifndef VV_VALUE_REGEX_H
 #define VV_VALUE_REGEX_H
 
-#include "value.h"
+#include "value/object.h"
 
 #include <regex>
 
@@ -10,10 +10,7 @@ namespace vv {
 namespace value {
 
 struct regex : public object {
-public:
   regex(const std::regex& val = {}, const std::string& str = {});
-
-  std::string value() const override;
 
   std::regex val;
   // Regex in string form (stored for pretty-printing)
@@ -21,12 +18,7 @@ public:
 };
 
 struct regex_result : public object {
-public:
   regex_result(value::string& str, std::smatch&& res);
-
-  std::string value() const override;
-
-  void mark() override;
 
   std::smatch val;
 
@@ -34,7 +26,6 @@ public:
   // pointers into the original string and it'd be a shame if it was deleted
   // before those pointers
   value::string& owning_str;
-private:
 };
 
 }
