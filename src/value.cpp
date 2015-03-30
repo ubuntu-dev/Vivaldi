@@ -59,7 +59,8 @@ namespace {
 
 std::string array_val(const array& arr)
 {
-  std::ostringstream stm{'['};
+  std::ostringstream stm{};
+  stm << '[';
   if (arr.val.size()) {
     for_each(begin(arr.val), end(arr.val) - 1,
              [&](const auto& v) { stm << vv::value_for(*v) << ", "; });
