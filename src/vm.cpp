@@ -21,8 +21,6 @@
 #include "value/symbol.h"
 #include "value/type.h"
 
-#include <iostream>
-
 using namespace vv;
 
 vm::machine::machine(call_frame&& frame)

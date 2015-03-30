@@ -1,7 +1,5 @@
 #include "memory.h"
 
-#include <cassert>
-
 using namespace vv;
 
 free_block_list::iterator free_block_list::insert(value_type ptr)
