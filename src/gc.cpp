@@ -26,7 +26,6 @@
 #include "vm/call_frame.h"
 
 #include <list>
-#include <iostream>
 
 using namespace vv;
 using namespace gc;
@@ -81,38 +80,41 @@ void expand()
 // }}}
 // External functions {{{
 
-value::object* gc::internal::get_next_empty(tag type)
+value::object* gc::internal::get_next_empty(const tag type)
 {
-  static auto iter = std::begin(g_free);
+  using std::begin;
+  using std::end;
 
-  auto sz = size_for(type); // Why the *** ****** *** **** is this not inlined?
-  auto search = [sz](auto block) { return block.second >= sz; };
+  static auto iter = begin(g_free);
 
-  iter = find_if(iter, std::end(g_free), search);
-  if (iter == std::end(g_free)) {
-    iter = find_if(std::begin(g_free), iter, search);
-    if (iter == std::end(g_free)) {
+  const auto sz = size_for(type);
+  const auto search = [sz](const auto block) { return block.second >= sz; };
+
+  iter = find_if(iter, end(g_free), search);
+  if (iter == end(g_free)) {
+    iter = find_if(begin(g_free), iter, search);
+    if (iter == end(g_free)) {
       copy_live();
-      iter = find_if(std::begin(g_free), std::end(g_free), search);
+      iter = find_if(begin(g_free), end(g_free), search);
 
-      if (iter == std::end(g_free)) {
+      if (iter == end(g_free)) {
         expand();
-        iter = find_if(std::begin(g_free), std::end(g_free), search);
+        iter = find_if(begin(g_free), end(g_free), search);
       }
     }
   }
 
-  auto ptr = iter->first;
+  const auto ptr = iter->first;
 
   // add remaining space to free list
   {
-    auto block_sz = iter->second;
+    const auto block_sz = iter->second;
     iter = g_free.erase(iter);
     if (block_sz > sz)
       iter = g_free.insert({ptr + sz, block_sz - sz});
   }
 
-  auto obj = reinterpret_cast<value::object*>(ptr);
+  const auto obj = reinterpret_cast<value::object*>(ptr);
   g_unmarked.insert(obj);
   return obj;
 }
