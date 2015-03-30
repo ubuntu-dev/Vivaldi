@@ -120,14 +120,24 @@ std::string vv::value_for(const object& object)
 // }}}
 // hash_for {{{
 
+namespace {
+
+template <typename T>
+size_t hash_val(const T& item)
+{
+  return std::hash<decltype(item.val)>{}(item.val);
+}
+
+}
+
 size_t vv::hash_for(const value::object& obj)
 {
   switch (obj.tag) {
-  case tag::boolean:        return std::hash<bool>{}(static_cast<const boolean&>(obj).val);
-  case tag::floating_point: return std::hash<double>{}(static_cast<const floating_point&>(obj).val);
-  case tag::integer:        return std::hash<int>{}(static_cast<const integer&>(obj).val);
-  case tag::string:         return std::hash<std::string>{}(static_cast<const string&>(obj).val);
-  case tag::symbol:         return std::hash<vv::symbol>{}(static_cast<const value::symbol&>(obj).val);
+  case tag::boolean:        return hash_val(static_cast<const boolean&>(obj));
+  case tag::floating_point: return hash_val(static_cast<const floating_point&>(obj));
+  case tag::integer:        return hash_val(static_cast<const integer&>(obj));
+  case tag::string:         return hash_val(static_cast<const string&>(obj));
+  case tag::symbol:         return hash_val(static_cast<const value::symbol&>(obj));
   default:                  return std::hash<const value::object*>{}(&obj);
   }
 }
