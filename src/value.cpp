@@ -28,27 +28,27 @@ using namespace value;
 size_t vv::size_for(tag type)
 {
   switch (type) {
-  case tag::object:           return sizeof(object);
-  case tag::array:            return sizeof(array);
-  case tag::array_iterator:   return sizeof(array_iterator);
-  case tag::blob:             return sizeof(blob);
-  case tag::boolean:          return sizeof(boolean);
-  case tag::builtin_function: return sizeof(builtin_function);
-  case tag::dictionary:       return sizeof(dictionary);
-  case tag::file:             return sizeof(file);
-  case tag::floating_point:   return sizeof(floating_point);
-  case tag::function:         return sizeof(function);
-  case tag::integer:          return sizeof(integer);
-  case tag::nil:              return sizeof(nil);
-  case tag::opt_monop:        return sizeof(opt_monop);
-  case tag::opt_binop:        return sizeof(opt_binop);
-  case tag::range:            return sizeof(range);
-  case tag::regex:            return sizeof(regex);
-  case tag::regex_result:     return sizeof(regex_result);
-  case tag::string:           return sizeof(string);
-  case tag::string_iterator:  return sizeof(string_iterator);
+  case tag::object:           return sizeof(value::object);
+  case tag::array:            return sizeof(value::array);
+  case tag::array_iterator:   return sizeof(value::array_iterator);
+  case tag::blob:             return sizeof(value::blob);
+  case tag::boolean:          return sizeof(value::boolean);
+  case tag::builtin_function: return sizeof(value::builtin_function);
+  case tag::dictionary:       return sizeof(value::dictionary);
+  case tag::file:             return sizeof(value::file);
+  case tag::floating_point:   return sizeof(value::floating_point);
+  case tag::function:         return sizeof(value::function);
+  case tag::integer:          return sizeof(value::integer);
+  case tag::nil:              return sizeof(value::nil);
+  case tag::opt_monop:        return sizeof(value::opt_monop);
+  case tag::opt_binop:        return sizeof(value::opt_binop);
+  case tag::range:            return sizeof(value::range);
+  case tag::regex:            return sizeof(value::regex);
+  case tag::regex_result:     return sizeof(value::regex_result);
+  case tag::string:           return sizeof(value::string);
+  case tag::string_iterator:  return sizeof(value::string_iterator);
   case tag::symbol:           return sizeof(value::symbol);
-  case tag::type:             return sizeof(type);
+  case tag::type:             return sizeof(value::type);
   case tag::environment:      return sizeof(vm::environment);
   }
 }
