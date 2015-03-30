@@ -90,26 +90,26 @@ std::string range_val(const range& rng)
 std::string vv::value_for(const object& object)
 {
   switch (object.tag) {
-  case tag::array:           return array_val(reinterpret_cast<const array&>(object));
+  case tag::array:           return array_val(static_cast<const array&>(object));
   case tag::array_iterator:  return "<array iterator>";
-  case tag::boolean:         return reinterpret_cast<const boolean&>(object).val ? "true" : "false";
-  case tag::dictionary:      return dictionary_val(reinterpret_cast<const dictionary&>(object));
-  case tag::file:            return "File: " + reinterpret_cast<const file&>(object).name;
-  case tag::floating_point:  return std::to_string(reinterpret_cast<const floating_point&>(object).val);
-  case tag::integer:         return std::to_string(reinterpret_cast<const integer&>(object).val);
+  case tag::boolean:         return static_cast<const boolean&>(object).val ? "true" : "false";
+  case tag::dictionary:      return dictionary_val(static_cast<const dictionary&>(object));
+  case tag::file:            return "File: " + static_cast<const file&>(object).name;
+  case tag::floating_point:  return std::to_string(static_cast<const floating_point&>(object).val);
+  case tag::integer:         return std::to_string(static_cast<const integer&>(object).val);
   case tag::nil:             return "nil";
 
   case tag::opt_monop:
   case tag::opt_binop:
   case tag::builtin_function:
   case tag::function:        return "<function>";
-  case tag::range:           return range_val(reinterpret_cast<const range&>(object));
-  case tag::regex:           return '`' + reinterpret_cast<const regex&>(object).str + '`';
+  case tag::range:           return range_val(static_cast<const range&>(object));
+  case tag::regex:           return '`' + static_cast<const regex&>(object).str + '`';
   case tag::regex_result:    return "<regex result>";
-  case tag::string:          return '"' + reinterpret_cast<const string&>(object).val + '"';
+  case tag::string:          return '"' + static_cast<const string&>(object).val + '"';
   case tag::string_iterator: return "<string iterator>";
-  case tag::symbol:          return '\'' + to_string(reinterpret_cast<const value::symbol&>(object).val);
-  case tag::type:            return to_string(reinterpret_cast<const type&>(object).name);
+  case tag::symbol:          return '\'' + to_string(static_cast<const value::symbol&>(object).val);
+  case tag::type:            return to_string(static_cast<const type&>(object).name);
 
   case tag::blob:
   case tag::environment:
