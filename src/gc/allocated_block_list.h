@@ -2,13 +2,14 @@
 #define VV_GC_ALLOCATED_BLOCK_LIST_H
 
 #include "value.h"
-#include "utils/memory.h"
+
+#include <set>
 
 namespace vv {
 
 namespace gc {
 
-free_block_list::value_type get_next_empty(size_t sz);
+std::pair<char*, size_t> get_next_empty(size_t sz);
 
 class allocated_block_list {
 public:
@@ -47,8 +48,8 @@ public:
   value_type erase(value_type ptr);
   value_type erase(iterator iter);
 
-  free_block_list::value_type erase_destruct(iterator iter);
-  free_block_list::value_type erase_destruct(value_type ptr);
+  void erase_destruct(iterator iter);
+  void erase_destruct(value_type ptr);
 
   void clear() { m_data.clear(); }
 

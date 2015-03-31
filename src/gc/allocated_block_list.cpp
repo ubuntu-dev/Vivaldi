@@ -34,19 +34,17 @@ allocated_block_list::value_type allocated_block_list::erase(value_type ptr)
   return ptr;
 }
 
-free_block_list::value_type allocated_block_list::erase_destruct(iterator iter)
+void allocated_block_list::erase_destruct(iterator iter)
 {
   destruct(**iter);
   auto ptr = reinterpret_cast<char*>(*iter);
-  auto tag = (*iter)->tag;
   m_data.erase(iter);
-
-  return {ptr, size_for(tag)};
+  free(ptr);
 }
 
-free_block_list::value_type allocated_block_list::erase_destruct(value_type ptr)
+void allocated_block_list::erase_destruct(value_type ptr)
 {
-  return erase_destruct(find(ptr));
+  erase_destruct(find(ptr));
 }
 
 allocated_block_list::~allocated_block_list()
