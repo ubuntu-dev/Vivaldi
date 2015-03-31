@@ -71,9 +71,9 @@ add_executable(vivaldi
   src/ast/while_loop.cpp
 
   src/gc/allocated_block_list.cpp
+  src/gc/free_block_list.cpp
 
   src/utils/lang.cpp
-  src/utils/memory.cpp
   src/utils/string_helpers.cpp
 
   src/value/array.cpp

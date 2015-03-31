@@ -1,6 +1,7 @@
 #include "gc.h"
 
 #include "gc/alloc.h"
+#include "gc/free_block_list.h"
 #include "gc/managed_ptr.h"
 
 #include "builtins.h"
@@ -44,6 +45,8 @@ std::array<value::integer, 1024> gc::internal::g_ints;
 
 namespace {
 
+std::list<std::array<char, 4'096>> g_blocks( 4 );
+
 // Loaded dynamic libraries (i.e. C extensions); stored here to be destructed at
 // the end of runtime. XXX: This _has_ to come before g_marked and g_unmarked,
 // since the lirbraries have to be destructed first (so that no value::blob
@@ -55,12 +58,24 @@ vm::machine* g_vm;
 gc::allocated_block_list g_marked;
 gc::allocated_block_list g_unmarked;
 
+gc::free_block_list g_free;
+
 void copy_live()
 {
   g_vm->mark();
   std::swap(g_marked, g_unmarked);
   while (g_marked.size()) {
+    auto ptr = *std::begin(g_marked);
     g_marked.erase_destruct(std::begin(g_marked));
+    g_free.reclaim(ptr, size_for(ptr->tag));
+  }
+}
+
+void expand()
+{
+  for (auto i = g_blocks.size() / 2; i--;) {
+    g_blocks.emplace_back();
+    g_free.insert(g_blocks.back().data(), g_blocks.back().size());
   }
 }
 
@@ -71,14 +86,16 @@ void copy_live()
 
 value::object* gc::internal::get_next_empty(const tag type)
 {
-  static size_t max_sz{4096};
-
-  if (g_unmarked.size() == max_sz) {
+  auto ptr = g_free.allocate(size_for(type));
+  if (!ptr) {
     copy_live();
-    if (g_unmarked.size() == max_sz)
-      max_sz *= 2;
+    ptr = g_free.allocate(size_for(type));
+    if (!ptr) {
+      expand();
+      ptr = g_free.allocate(size_for(type));
+    }
   }
-  auto ptr = malloc(size_for(type));
+
   const auto obj = reinterpret_cast<value::object*>(ptr);
   g_unmarked.insert(obj);
   return obj;
@@ -105,6 +122,9 @@ void gc::init()
   int value = 0;
   for (auto& i : internal::g_ints)
     i.val = value++;
+  for (auto& i : g_blocks) {
+    g_free.insert(i.data(), i.size());
+  }
 }
 
 namespace {

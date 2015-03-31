@@ -37,9 +37,7 @@ allocated_block_list::value_type allocated_block_list::erase(value_type ptr)
 void allocated_block_list::erase_destruct(iterator iter)
 {
   destruct(**iter);
-  auto ptr = reinterpret_cast<char*>(*iter);
   m_data.erase(iter);
-  free(ptr);
 }
 
 void allocated_block_list::erase_destruct(value_type ptr)
