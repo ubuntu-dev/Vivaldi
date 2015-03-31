@@ -2,6 +2,7 @@
 #define VV_GC_FREE_BLOCK_LIST_H
 
 #include <vector>
+#include <set>
 
 namespace vv {
 
@@ -27,7 +28,18 @@ private:
     char* ptr;
   };
 
-  std::vector<free_block> m_list;
+  struct super_block {
+    super_block(size_t sz, char* p);
+
+    size_t size;
+    char* ptr;
+    std::vector<free_block> blk;
+    //size_t cur_pos;
+    std::vector<free_block>::iterator cur_pos;
+  };
+
+  std::vector<super_block> m_list;
+  std::vector<super_block>::iterator m_cur_pos;
 };
 
 }

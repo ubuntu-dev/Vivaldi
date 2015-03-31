@@ -45,7 +45,7 @@ std::array<value::integer, 1024> gc::internal::g_ints;
 
 namespace {
 
-std::list<std::array<char, 4'096>> g_blocks( 4 );
+std::list<std::array<char, 65'536>> g_blocks( 4 );
 
 // Loaded dynamic libraries (i.e. C extensions); stored here to be destructed at
 // the end of runtime. XXX: This _has_ to come before g_marked and g_unmarked,
@@ -66,8 +66,8 @@ void copy_live()
   std::swap(g_marked, g_unmarked);
   while (g_marked.size()) {
     auto ptr = *std::begin(g_marked);
-    g_marked.erase_destruct(std::begin(g_marked));
     g_free.reclaim(ptr, size_for(ptr->tag));
+    g_marked.erase_destruct(std::begin(g_marked));
   }
 }
 
@@ -172,6 +172,7 @@ void gc::mark(value::object& obj)
 {
   using namespace value;
 
+  // Either already marked or stack-allocated
   if (!g_unmarked.count(&obj))
     return;
 
@@ -198,3 +199,4 @@ void gc::mark(value::object& obj)
 }
 
 // }}}
+
