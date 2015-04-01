@@ -21,17 +21,19 @@
 using namespace vv;
 using namespace gc;
 
-allocated_block_list::value_type allocated_block_list::erase(iterator iter)
+allocated_block_list::allocated_block_list()
 {
-  auto val = *iter;
-  m_data.erase(iter);
-  return val;
+  m_data.max_load_factor(0.3f);
 }
 
-allocated_block_list::value_type allocated_block_list::erase(value_type ptr)
+allocated_block_list::iterator allocated_block_list::erase(iterator iter)
 {
-  m_data.erase(ptr);
-  return ptr;
+  return m_data.erase(iter);
+}
+
+size_t allocated_block_list::erase(value_type ptr)
+{
+  return m_data.erase(ptr);
 }
 
 void allocated_block_list::erase_destruct(iterator iter)
@@ -42,7 +44,8 @@ void allocated_block_list::erase_destruct(iterator iter)
 
 void allocated_block_list::erase_destruct(value_type ptr)
 {
-  erase_destruct(find(ptr));
+  destruct(*ptr);
+  m_data.erase(ptr);
 }
 
 allocated_block_list::~allocated_block_list()

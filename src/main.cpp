@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     vv::vm::machine vm{std::move(frame)};
 
     // Add argument 'argv' to the base environment. Done in this weird order for
-    // GC reasons (not *really* necessary, since GC won't be triggered until 512
+    // GC reasons (not *really* necessary, since GC won't be triggered until 1Kb
     // or so objects have been allocated, but this is probably more future-proof
     // or something. Besides, you never know; someone might have passed a *lot*
     // of arguments...)

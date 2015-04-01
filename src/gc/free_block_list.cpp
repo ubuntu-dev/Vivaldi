@@ -50,14 +50,14 @@ void* get_allocated_space(V& blk, typename V::iterator& cur_pos, size_t sz)
 void* gc::free_block_list::allocate(size_t sz)
 {
   for (auto i = m_cur_pos; i != end(m_list); ++i) {
-    auto ptr = get_allocated_space(i->blk, i->cur_pos, sz);
+    auto ptr = get_allocated_space(i->second.blk, i->second.cur_pos, sz);
     if (ptr) {
       m_cur_pos = i;
       return ptr;
     }
   }
   for (auto i = begin(m_list); i != m_cur_pos; ++i) {
-    auto ptr = get_allocated_space(i->blk, i->cur_pos, sz);
+    auto ptr = get_allocated_space(i->second.blk, i->second.cur_pos, sz);
     if (ptr) {
       m_cur_pos = i;
       return ptr;
@@ -70,8 +70,9 @@ void* gc::free_block_list::allocate(size_t sz)
 void gc::free_block_list::reclaim(void* ptr, size_t size)
 {
   free_block blk{size, static_cast<char*>(ptr)};
-  auto it = --upper_bound(begin(m_list), end(m_list), blk, blk_less);
-  auto& list = it->blk;
+  //auto it = --upper_bound(begin(m_list), end(m_list), blk, blk_less);
+  auto it = --m_list.upper_bound(blk.ptr);
+  auto& list = it->second.blk;
 
   auto pos = upper_bound(begin(list), end(list), blk, blk_less);
 
@@ -82,7 +83,7 @@ void gc::free_block_list::reclaim(void* ptr, size_t size)
       if (pos != end(list) && pos->ptr == prev->ptr + prev->size) {
         prev->size += pos->size;
         auto tmp = list.erase(pos);
-        it->cur_pos = tmp;
+        it->second.cur_pos = tmp;
       }
       return;
     }
@@ -94,7 +95,7 @@ void gc::free_block_list::reclaim(void* ptr, size_t size)
   }
   else {
     auto tmp = list.insert(pos, blk);
-    it->cur_pos = tmp;
+    it->second.cur_pos = tmp;
   }
 }
 
@@ -102,8 +103,7 @@ void gc::free_block_list::insert(void* ptr, size_t size)
 {
   super_block blk{size, static_cast<char*>(ptr)};
 
-  auto pos = upper_bound(begin(m_list), end(m_list), blk, blk_less);
-  m_cur_pos = m_list.insert(pos, std::move(blk));
+  m_cur_pos = m_list.emplace(blk.ptr, std::move(blk)).first;
 }
 
 gc::free_block_list::super_block::super_block(size_t sz, char* p)

@@ -2,7 +2,7 @@
 #define VV_GC_FREE_BLOCK_LIST_H
 
 #include <vector>
-#include <set>
+#include <map>
 
 namespace vv {
 
@@ -38,8 +38,8 @@ private:
     std::vector<free_block>::iterator cur_pos;
   };
 
-  std::vector<super_block> m_list;
-  std::vector<super_block>::iterator m_cur_pos;
+  std::map<void*, super_block> m_list;
+  std::map<void*, super_block>::iterator m_cur_pos;
 };
 
 }

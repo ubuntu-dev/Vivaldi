@@ -7,6 +7,7 @@
 #include "value/dictionary.h"
 #include "value/nil.h"
 #include "value/opt_functions.h"
+#include "value/type.h"
 
 using namespace vv;
 using namespace builtin;

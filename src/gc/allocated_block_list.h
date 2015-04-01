@@ -3,22 +3,20 @@
 
 #include "value.h"
 
-#include <set>
+#include <unordered_set>
 
 namespace vv {
 
 namespace gc {
 
-std::pair<char*, size_t> get_next_empty(size_t sz);
-
 class allocated_block_list {
 public:
   using value_type = value::object*;
 
-  using iterator = std::set<value_type>::iterator;
-  using const_iterator = std::set<value_type>::const_iterator;
+  using iterator = std::unordered_set<value_type>::iterator;
+  using const_iterator = std::unordered_set<value_type>::const_iterator;
 
-  allocated_block_list() { }
+  allocated_block_list();
 
   allocated_block_list(const allocated_block_list& other) = delete;
   allocated_block_list(allocated_block_list&& other) = default;
@@ -27,26 +25,15 @@ public:
   allocated_block_list& operator=(allocated_block_list&& other) = default;
 
   bool empty() const { return m_data.empty(); }
+
   size_t size() const { return m_data.size(); }
 
-  size_t count(value_type ptr) const     { return m_data.count(ptr); }
-
-  iterator find(value_type ptr)                 { return m_data.find(ptr); }
-  const_iterator find(value_type ptr) const     { return m_data.find(ptr); }
-
-  template <typename T, typename... Args>
-  iterator emplace(Args&&... args)
-  {
-    auto mem = get_next_empty(sizeof(T));
-    auto tag = tag_for<T>();
-    new (mem.first) T{std::forward<Args>(args)...};
-    return m_data.emplace(mem.first, tag);
-  }
+  size_t count(value_type ptr) const { return m_data.count(ptr); }
 
   iterator insert(value_type ptr) { return m_data.insert(ptr).first; }
 
-  value_type erase(value_type ptr);
-  value_type erase(iterator iter);
+  size_t erase(value_type ptr);
+  iterator erase(iterator iter);
 
   void erase_destruct(iterator iter);
   void erase_destruct(value_type ptr);
@@ -64,7 +51,7 @@ public:
   ~allocated_block_list();
 
 private:
-  std::set<value_type> m_data;
+  std::unordered_set<value_type> m_data;
 };
 
 }

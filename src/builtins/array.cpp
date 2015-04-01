@@ -8,6 +8,7 @@
 #include "value/boolean.h"
 #include "value/builtin_function.h"
 #include "value/opt_functions.h"
+#include "value/type.h"
 
 using namespace vv;
 using namespace builtin;

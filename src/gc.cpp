@@ -1,6 +1,7 @@
 #include "gc.h"
 
 #include "gc/alloc.h"
+#include "gc/allocated_block_list.h"
 #include "gc/free_block_list.h"
 #include "gc/managed_ptr.h"
 
@@ -64,11 +65,11 @@ void copy_live()
 {
   g_vm->mark();
   std::swap(g_marked, g_unmarked);
-  while (g_marked.size()) {
-    auto ptr = *std::begin(g_marked);
-    g_free.reclaim(ptr, size_for(ptr->tag));
-    g_marked.erase_destruct(std::begin(g_marked));
+  for (auto i : g_marked) {
+    g_free.reclaim(i, size_for(i->tag));
+    destruct(*i);
   }
+  g_marked.clear();
 }
 
 void expand()
@@ -176,8 +177,8 @@ void gc::mark(value::object& obj)
   if (!g_unmarked.count(&obj))
     return;
 
-  auto val = g_unmarked.erase(&obj);
-  g_marked.insert(val);
+  g_unmarked.erase(&obj);
+  g_marked.insert(&obj);
 
   for (auto i : obj.members)
     mark(*i.second);

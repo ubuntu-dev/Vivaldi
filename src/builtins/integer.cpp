@@ -9,6 +9,7 @@
 #include "value/integer.h"
 #include "value/opt_functions.h"
 #include "value/string.h"
+#include "value/type.h"
 
 using namespace vv;
 using namespace builtin;

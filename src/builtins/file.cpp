@@ -9,6 +9,7 @@
 #include "value/file.h"
 #include "value/opt_functions.h"
 #include "value/string.h"
+#include "value/type.h"
 
 #include <sstream>
 

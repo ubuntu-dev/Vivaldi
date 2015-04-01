@@ -7,6 +7,7 @@
 #include "value/floating_point.h"
 #include "value/integer.h"
 #include "value/opt_functions.h"
+#include "value/type.h"
 
 using namespace vv;
 using namespace builtin;

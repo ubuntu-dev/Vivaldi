@@ -1,10 +1,7 @@
 #ifndef VV_GC_ALLOC_H
 #define VV_GC_ALLOC_H
 
-#include "gc/allocated_block_list.h"
-#include "value.h"
 #include "value/integer.h"
-#include "value/type.h"
 
 #include <array>
 
