@@ -3,27 +3,17 @@
 #include "gc/alloc.h"
 #include "gc/allocated_block_list.h"
 #include "gc/free_block_list.h"
-#include "gc/managed_ptr.h"
+#include "gc/object_list.h"
 
 #include "builtins.h"
 #include "value/array.h"
 #include "value/array_iterator.h"
-#include "value/blob.h"
-#include "value/builtin_function.h"
-#include "value/boolean.h"
 #include "value/dictionary.h"
-#include "value/integer.h"
-#include "value/file.h"
-#include "value/floating_point.h"
 #include "value/function.h"
-#include "value/nil.h"
-#include "value/object.h"
-#include "value/opt_functions.h"
 #include "value/range.h"
 #include "value/regex.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
-#include "value/symbol.h"
 #include "value/type.h"
 #include "vm/call_frame.h"
 
@@ -56,20 +46,23 @@ std::vector<dynamic_library> g_libs;
 
 vm::machine* g_vm;
 
-gc::allocated_block_list g_marked;
-gc::allocated_block_list g_unmarked;
-
+gc::allocated_block_list g_block_list;
 gc::free_block_list g_free;
+gc::object_list g_allocated;
 
 void copy_live()
 {
   g_vm->mark();
-  std::swap(g_marked, g_unmarked);
-  for (auto i : g_marked) {
+
+  auto start = partition(std::begin(g_allocated), std::end(g_allocated),
+                         [](auto* i) { return g_block_list.marked(i); });
+  for_each(start, std::end(g_allocated), [](auto* i)
+  {
     g_free.reclaim(i, size_for(i->tag));
     destruct(*i);
-  }
-  g_marked.clear();
+  });
+  g_allocated.erase(start, std::end(g_allocated));
+  g_block_list.unmark();
 }
 
 void expand()
@@ -77,6 +70,7 @@ void expand()
   for (auto i = g_blocks.size() / 2; i--;) {
     g_blocks.emplace_back();
     g_free.insert(g_blocks.back().data(), g_blocks.back().size());
+    g_block_list.insert_block(g_blocks.back().data());
   }
 }
 
@@ -98,7 +92,7 @@ value::object* gc::internal::get_next_empty(const tag type)
   }
 
   const auto obj = reinterpret_cast<value::object*>(ptr);
-  g_unmarked.insert(obj);
+  g_allocated.push_back(obj);
   return obj;
 }
 
@@ -125,6 +119,7 @@ void gc::init()
     i.val = value++;
   for (auto& i : g_blocks) {
     g_free.insert(i.data(), i.size());
+    g_block_list.insert_block(i.data());
   }
 }
 
@@ -174,11 +169,9 @@ void gc::mark(value::object& obj)
   using namespace value;
 
   // Either already marked or stack-allocated
-  if (!g_unmarked.count(&obj))
+  if (!g_block_list.contains(&obj) || g_block_list.marked(&obj))
     return;
-
-  g_unmarked.erase(&obj);
-  g_marked.insert(&obj);
+  g_block_list.mark(&obj);
 
   for (auto i : obj.members)
     mark(*i.second);

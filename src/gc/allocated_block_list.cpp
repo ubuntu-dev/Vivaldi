@@ -1,55 +1,41 @@
 #include "allocated_block_list.h"
 
-#include "value/array.h"
-#include "value/array_iterator.h"
-#include "value/blob.h"
-#include "value/boolean.h"
-#include "value/builtin_function.h"
-#include "value/dictionary.h"
-#include "value/file.h"
-#include "value/floating_point.h"
-#include "value/function.h"
-#include "value/integer.h"
-#include "value/nil.h"
-#include "value/opt_functions.h"
-#include "value/range.h"
-#include "value/regex.h"
-#include "value/string.h"
-#include "value/string_iterator.h"
-#include "value/symbol.h"
-
 using namespace vv;
 using namespace gc;
 
-allocated_block_list::allocated_block_list()
+bool allocated_block_list::contains(void* ptr)
 {
-  m_data.max_load_factor(0.3f);
+  auto iter = m_blocks.upper_bound(ptr);
+  if (iter == begin(m_blocks))
+    return false;
+
+  --iter;
+  if (static_cast<char*>(iter->first) + 65'536 <= static_cast<char*>(ptr))
+    return false;
+  return true;
 }
 
-allocated_block_list::iterator allocated_block_list::erase(iterator iter)
+bool allocated_block_list::marked(void* ptr)
 {
-  return m_data.erase(iter);
+  auto iter = --m_blocks.upper_bound(ptr);
+  auto dist = static_cast<char*>(ptr) - static_cast<char*>(iter->first);
+  return iter->second[dist / 8];
 }
 
-size_t allocated_block_list::erase(value_type ptr)
+void allocated_block_list::mark(void* ptr)
 {
-  return m_data.erase(ptr);
+  auto iter = --m_blocks.upper_bound(ptr);
+  auto dist = static_cast<char*>(ptr) - static_cast<char*>(iter->first);
+  iter->second.set(dist / 8);
 }
 
-void allocated_block_list::erase_destruct(iterator iter)
+void allocated_block_list::unmark()
 {
-  destruct(**iter);
-  m_data.erase(iter);
+  for (auto& i : m_blocks)
+    i.second.reset();
 }
 
-void allocated_block_list::erase_destruct(value_type ptr)
+void allocated_block_list::insert_block(void* block_start)
 {
-  destruct(*ptr);
-  m_data.erase(ptr);
-}
-
-allocated_block_list::~allocated_block_list()
-{
-  while (!empty())
-    erase_destruct(begin());
+  m_blocks[block_start] = {};
 }
