@@ -54,7 +54,7 @@ void expand()
 {
   for (auto i = g_blocks.size() / 2; i--;) {
     g_blocks.emplace_back();
-    g_free.insert(g_blocks.back().data(), g_blocks.back().size());
+    g_free.insert(g_blocks.back().data());
     g_block_list.insert_block(g_blocks.back().data());
   }
 }
@@ -119,7 +119,7 @@ void gc::init()
   for (auto& i : internal::g_ints)
     i.val = value++;
   for (auto& i : g_blocks) {
-    g_free.insert(i.data(), i.size());
+    g_free.insert(i.data());
     g_block_list.insert_block(i.data());
   }
 }

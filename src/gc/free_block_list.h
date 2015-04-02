@@ -20,7 +20,7 @@ public:
   void reclaim(void* ptr, size_t size);
 
   // Insert a new block of memory into the free block list
-  void insert(void* ptr, size_t size);
+  void insert(void* ptr);
 
 private:
   struct free_block {
@@ -29,9 +29,8 @@ private:
   };
 
   struct super_block {
-    super_block(size_t sz, char* p);
+    super_block(char* p);
 
-    size_t size;
     char* ptr;
     std::vector<free_block> blk;
     //size_t cur_pos;

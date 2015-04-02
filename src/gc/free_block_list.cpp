@@ -99,16 +99,15 @@ void gc::free_block_list::reclaim(void* ptr, size_t size)
   }
 }
 
-void gc::free_block_list::insert(void* ptr, size_t size)
+void gc::free_block_list::insert(void* ptr)
 {
-  super_block blk{size, static_cast<char*>(ptr)};
+  super_block blk{static_cast<char*>(ptr)};
 
   m_cur_pos = m_list.emplace(blk.ptr, std::move(blk)).first;
 }
 
-gc::free_block_list::super_block::super_block(size_t sz, char* p)
-  : size    {sz},
-    ptr     {p},
-    blk     {{size, ptr}},
+gc::free_block_list::super_block::super_block(char* p)
+  : ptr     {p},
+    blk     {{65'536, ptr}},
     cur_pos {begin(blk)}
 { }
