@@ -1,8 +1,7 @@
 #include "gc.h"
 
 #include "gc/alloc.h"
-#include "gc/allocated_block_list.h"
-#include "gc/free_block_list.h"
+#include "gc/block_list.h"
 #include "gc/object_list.h"
 
 #include "builtins.h"
@@ -36,8 +35,6 @@ std::array<value::integer, 1024> gc::internal::g_ints;
 
 namespace {
 
-std::list<std::array<char, 65'536>> g_blocks( 4 );
-
 // Loaded dynamic libraries (i.e. C extensions); stored here to be destructed at
 // the end of runtime. XXX: This _has_ to come before g_marked and g_unmarked,
 // since the lirbraries have to be destructed first (so that no value::blob
@@ -46,18 +43,8 @@ std::vector<dynamic_library> g_libs;
 
 vm::machine* g_vm;
 
-gc::allocated_block_list g_block_list;
-gc::free_block_list g_free;
+gc::block_list g_blocks;
 gc::object_list g_allocated;
-
-void expand()
-{
-  for (auto i = g_blocks.size() / 2; i--;) {
-    g_blocks.emplace_back();
-    g_free.insert(g_blocks.back().data());
-    g_block_list.insert_block(g_blocks.back().data());
-  }
-}
 
 void copy_live()
 {
@@ -66,17 +53,17 @@ void copy_live()
   g_vm->mark();
 
   auto start = partition(std::begin(g_allocated), std::end(g_allocated),
-                         [](auto* i) { return g_block_list.marked(i); });
+                         [](auto* i) { return g_blocks.is_marked(i); });
   for_each(start, std::end(g_allocated), [](auto* i)
   {
-    g_free.reclaim(i, size_for(i->tag));
+    g_blocks.reclaim(i, size_for(i->tag));
     destruct(*i);
   });
   g_allocated.erase(start, std::end(g_allocated));
-  g_block_list.unmark();
+  g_blocks.unmark_all();
 
   if (old_sz - g_allocated.size() < g_allocated.size() / 2)
-    expand();
+    g_blocks.expand();
 }
 
 }
@@ -86,10 +73,10 @@ void copy_live()
 
 value::object* gc::internal::get_next_empty(const tag type)
 {
-  auto ptr = g_free.allocate(size_for(type));
+  auto ptr = g_blocks.allocate(size_for(type));
   if (!ptr) {
     copy_live();
-    ptr = g_free.allocate(size_for(type));
+    ptr = g_blocks.allocate(size_for(type));
   }
 
   const auto obj = reinterpret_cast<value::object*>(ptr);
@@ -118,10 +105,6 @@ void gc::init()
   int value = 0;
   for (auto& i : internal::g_ints)
     i.val = value++;
-  for (auto& i : g_blocks) {
-    g_free.insert(i.data());
-    g_block_list.insert_block(i.data());
-  }
 }
 
 namespace {
@@ -170,9 +153,9 @@ void gc::mark(value::object& obj)
   using namespace value;
 
   // Either already marked or stack-allocated
-  if (!g_block_list.contains(&obj) || g_block_list.marked(&obj))
+  if (!g_blocks.contains(&obj) || g_blocks.is_marked(&obj))
     return;
-  g_block_list.mark(&obj);
+  g_blocks.mark(&obj);
 
   for (auto i : obj.members)
     mark(*i.second);
