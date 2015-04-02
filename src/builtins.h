@@ -29,6 +29,11 @@ const extern vv::symbol divides;
 
 const extern vv::symbol equals;
 const extern vv::symbol unequal;
+
+const extern vv::symbol greater;
+const extern vv::symbol less;
+const extern vv::symbol greater_equals;
+const extern vv::symbol less_equals;
 }
 
 // Standalone functions in the standard library.

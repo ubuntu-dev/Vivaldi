@@ -45,7 +45,7 @@ value::object* fn_range_at_end(vm::machine& vm)
   auto& rng = static_cast<value::range&>(*vm.top());
   vm.push(rng.start);
   vm.push(rng.end);
-  vm.readm({"greater"});
+  vm.readm(sym::greater);
   vm.call(1);
   vm.run_cur_scope();
   vm.opt_not();
@@ -78,7 +78,7 @@ value::object* fn_range_to_arr(vm::machine& vm)
   for (;;) {
     vm.dup();
     vm.push(rng.end);
-    vm.readm({"greater"});
+    vm.readm(sym::greater);
     vm.call(1);
     vm.run_cur_scope();
     if (!truthy(*vm.top()))

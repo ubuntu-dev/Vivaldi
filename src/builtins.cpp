@@ -33,6 +33,10 @@ const vv::symbol sym::divides{"divides"};
 const vv::symbol sym::equals{"equals"};
 const vv::symbol sym::unequal{"unequal"};
 
+const vv::symbol sym::greater{"greater"};
+const vv::symbol sym::less{"less"};
+const vv::symbol sym::greater_equals{"greater_equals"};
+const vv::symbol sym::less_equals{"less_equals"};
 // }}}
 // Freestanding functions {{{
 
