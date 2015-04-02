@@ -50,8 +50,19 @@ gc::allocated_block_list g_block_list;
 gc::free_block_list g_free;
 gc::object_list g_allocated;
 
+void expand()
+{
+  for (auto i = g_blocks.size() / 2; i--;) {
+    g_blocks.emplace_back();
+    g_free.insert(g_blocks.back().data(), g_blocks.back().size());
+    g_block_list.insert_block(g_blocks.back().data());
+  }
+}
+
 void copy_live()
 {
+  auto old_sz = g_allocated.size();
+
   g_vm->mark();
 
   auto start = partition(std::begin(g_allocated), std::end(g_allocated),
@@ -63,15 +74,9 @@ void copy_live()
   });
   g_allocated.erase(start, std::end(g_allocated));
   g_block_list.unmark();
-}
 
-void expand()
-{
-  for (auto i = g_blocks.size() / 2; i--;) {
-    g_blocks.emplace_back();
-    g_free.insert(g_blocks.back().data(), g_blocks.back().size());
-    g_block_list.insert_block(g_blocks.back().data());
-  }
+  if (old_sz - g_allocated.size() < g_allocated.size() / 2)
+    expand();
 }
 
 }
@@ -85,10 +90,6 @@ value::object* gc::internal::get_next_empty(const tag type)
   if (!ptr) {
     copy_live();
     ptr = g_free.allocate(size_for(type));
-    if (!ptr) {
-      expand();
-      ptr = g_free.allocate(size_for(type));
-    }
   }
 
   const auto obj = reinterpret_cast<value::object*>(ptr);
