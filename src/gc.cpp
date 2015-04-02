@@ -36,24 +36,32 @@ std::array<value::integer, 1024> gc::internal::g_ints;
 namespace {
 
 // Loaded dynamic libraries (i.e. C extensions); stored here to be destructed at
-// the end of runtime. XXX: This _has_ to come before g_marked and g_unmarked,
-// since the lirbraries have to be destructed first (so that no value::blob
-// destructors try to call functions in dynamic libraries).
+// the end of runtime. XXX: This _has_ to come before g_allocated, since the
+// libraries have to be destructed last (so that no value::blob destructors try
+// to call functions in dynamic libraries).
 std::vector<dynamic_library> g_libs;
 
+// Running VM (TODO: clearly this is pretty hacky. When multithreading is added,
+// somewhere along the line, I'll need to support multiple VMs; until then, the
+// GC interface is basically a subset of the VM interface and it's silly to keep
+// them separate.
 vm::machine* g_vm;
 
+// Allocated blocks of memory.
 gc::block_list g_blocks;
+// List of allocated objects.
 gc::object_list g_allocated;
 
-void copy_live()
+// Performs actual marking and sweeping, along with expanding available memory
+// if we've genuinely run out.
+void mark_sweep()
 {
-  auto old_sz = g_allocated.size();
+  const auto old_sz = g_allocated.size();
 
   g_vm->mark();
 
-  auto start = partition(std::begin(g_allocated), std::end(g_allocated),
-                         [](auto* i) { return g_blocks.is_marked(i); });
+  const auto start = partition(std::begin(g_allocated), std::end(g_allocated),
+                               [](auto* i) { return g_blocks.is_marked(i); });
   for_each(start, std::end(g_allocated), [](auto* i)
   {
     g_blocks.reclaim(i, size_for(i->tag));
@@ -62,7 +70,7 @@ void copy_live()
   g_allocated.erase(start, std::end(g_allocated));
   g_blocks.unmark_all();
 
-  if (old_sz - g_allocated.size() < g_allocated.size() / 2)
+  if (old_sz - g_allocated.size() < g_allocated.size())
     g_blocks.expand();
 }
 
@@ -75,7 +83,7 @@ value::object* gc::internal::get_next_empty(const tag type)
 {
   auto ptr = g_blocks.allocate(size_for(type));
   if (!ptr) {
-    copy_live();
+    mark_sweep();
     ptr = g_blocks.allocate(size_for(type));
   }
 
