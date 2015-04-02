@@ -60,16 +60,22 @@ void mark_sweep()
 
   g_vm->mark();
 
-  const auto start = partition(std::begin(g_allocated), std::end(g_allocated),
-                               [](auto* i) { return g_blocks.is_marked(i); });
-  for_each(start, std::end(g_allocated), [](auto* i)
+  const auto last = remove_if(std::begin(g_allocated), std::end(g_allocated),
+                              [](auto* i)
   {
+    if (g_blocks.is_marked(i))
+      return false;
     g_blocks.reclaim(i, size_for(i->tag));
     destruct(*i);
+    return true;
   });
-  g_allocated.erase(start, std::end(g_allocated));
+
+  g_allocated.erase(last, std::end(g_allocated));
   g_blocks.unmark_all();
 
+  // Expand memory if less than half was reclaimed (to avoid cases if, e.g.,
+  // 50000 objects are marked and only 4 are swept, over and over again every
+  // 4 allocations).
   if (old_sz - g_allocated.size() < g_allocated.size())
     g_blocks.expand();
 }
