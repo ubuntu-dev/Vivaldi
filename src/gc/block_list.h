@@ -10,19 +10,42 @@ namespace vv {
 
 namespace gc {
 
+// This class serves a dual purpose. On one hand, it keeps track of all
+// available free space, and provides interfaces for allocating and freeing
+// memory. On the other hand, it handles marking for any allocated object. It
+// doesn't handle actual marking and sweeping--- that's dealt with in gc.cpp.
+// There's no particular reason for that separation, though (it just so happens
+// that the various functions this class handles are really interconnected, so
+// it's more convenient to glom them together). TODO: Move more GC functionality
+// to this class, so we can get rid of some of the remaining GC-related globals.
 class block_list {
 public:
   block_list();
 
+  // Marking interface:
+  // Returns true if ptr is heap-allocated (i.e. contained in this class), and
+  // false otherwise.
   bool contains(void* ptr) const;
+  // Returns true if heap-allocated pointer ptr is marked, and false otherwise.
+  // Behavior is undefined if ptr wasn't allocated by this class.
   bool is_marked(void* ptr) const;
 
+  // After calling this function, is_marked(ptr) will return true. As above, ptr
+  // *must* be allocated by this class (i.e. contains(ptr) must return true).
   void mark(void* ptr);
+  // Unmarks all allocated objects.
   void unmark_all();
 
+  // Provides a pointer to a block of memory of the given size, or nullptr if
+  // none can be found (in that case, destruct and call reclaim on unused
+  // objects, or expand).
   void* allocate(size_t size);
+  // Re-adds the given block of memory to the free list. The provided memory
+  // *must* have originallly been obtained via allocate.
   void reclaim(void* ptr, size_t size);
 
+  // Expands available memory by ~50% (including currently allocated memory),
+  // providing free space if none exists.
   void expand();
 
 private:
