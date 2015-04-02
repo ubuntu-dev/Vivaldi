@@ -28,7 +28,7 @@ vv::value::object* vv::throw_exception(value::object* value)
   throw vm_error{value};
 }
 
-vv::value::basic_function* vv::find_method(value::type& t, symbol name)
+vv::value::basic_function* vv::find_method(value::type& t, const symbol name)
 {
   auto i = std::begin(t.methods);
   auto ptr = &t;
@@ -49,7 +49,7 @@ std::string vv::pretty_print(value::object* object, vm::machine& vm)
     vm.readm({"str"});
     vm.call(0);
     vm.run_cur_scope();
-    auto str = vm.top();
+    const auto str = vm.top();
     vm.pop(1);
     return value_for(*str);
   }

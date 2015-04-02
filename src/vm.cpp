@@ -47,7 +47,7 @@ void vm::machine::run()
 // frame off the call stack
 void vm::machine::run_cur_scope()
 {
-  auto exit_sz = m_call_stack.size();
+  const auto exit_sz = m_call_stack.size();
 
   while (frame().instr_ptr.size()) {
     // Get next instruction (and argument, if it exists), and increment the
@@ -136,21 +136,21 @@ void vm::machine::psym(symbol val)
 void vm::machine::ptype(const type_t& type)
 {
   read(type.parent);
-  auto parent_arg = top();
+  const auto parent_arg = top();
   if (parent_arg->type != &builtin::type::custom_type) {
     pstr(message::inheritance_type_err);
     exc();
     return;
   }
-  auto parent = static_cast<value::type*>(parent_arg);
+  const auto parent = static_cast<value::type*>(parent_arg);
 
   hash_map<symbol, value::basic_function*> methods;
   for (const auto& i : type.methods) {
     pfn(i.second);
-    auto fn = static_cast<value::basic_function*>(top());
+    const auto fn = static_cast<value::basic_function*>(top());
     methods.insert(i.first, fn);
   }
-  auto newtype = gc::alloc<value::type>( nullptr, methods, *parent, type.name );
+  const auto newtype = gc::alloc<value::type>(nullptr, methods, *parent, type.name);
 
   pop(methods.size() + 1); // methods and parent
   push(newtype);
@@ -167,30 +167,30 @@ void vm::machine::pre(const std::string& val)
   }
 }
 
-void vm::machine::parr(int size)
+void vm::machine::parr(const int size)
 {
   std::vector<value::object*> vec{end(m_stack) - size, end(m_stack)};
-  auto val = gc::alloc<value::array>( move(vec) );
+  const auto val = gc::alloc<value::array>( move(vec) );
   pop(size);
   push(val);
 }
 
-void vm::machine::pdict(int size)
+void vm::machine::pdict(const int size)
 {
   std::unordered_map<value::object*, value::object*,
                      value::dictionary::hasher, value::dictionary::key_equal> dict;
   for (auto i = end(m_stack) - size; i != end(m_stack); i += 2)
     dict[i[0]] = i[1];
 
-  auto val = gc::alloc<value::dictionary>( dict );
+  const auto val = gc::alloc<value::dictionary>( dict );
   pop(size);
   push(val);
 }
 
-void vm::machine::read(symbol sym)
+void vm::machine::read(const symbol sym)
 {
   for (auto i = frame().env; i; i = i->enclosing) {
-    auto iter = i->members.find(sym);
+    const auto iter = i->members.find(sym);
     if (iter != std::end(i->members)) {
       push(iter->second);
       return;
@@ -200,10 +200,10 @@ void vm::machine::read(symbol sym)
   exc();
 }
 
-void vm::machine::write(symbol sym)
+void vm::machine::write(const symbol sym)
 {
   for (auto i = frame().env; i; i = i->enclosing) {
-    auto iter = i->members.find(sym);
+    const auto iter = i->members.find(sym);
     if (iter != std::end(i->members)) {
       iter->second = top();
       return;
@@ -213,7 +213,7 @@ void vm::machine::write(symbol sym)
   exc();
 }
 
-void vm::machine::let(symbol sym)
+void vm::machine::let(const symbol sym)
 {
   if (frame().env->members.count(sym)) {
     pstr(message::already_exists(sym));
@@ -235,18 +235,18 @@ void vm::machine::self()
   }
 }
 
-void vm::machine::arg(int idx)
+void vm::machine::arg(const int idx)
 {
   push(*(begin(m_stack) + frame().frame_ptr - idx));
 }
 
-void vm::machine::readm(symbol sym)
+void vm::machine::readm(const symbol sym)
 {
   m_transient_self = top();
   pop(1);
 
   // First check local members, then methods
-  auto iter = m_transient_self->members.find(sym);
+  const auto iter = m_transient_self->members.find(sym);
   if (iter != std::end(m_transient_self->members)) {
     push(iter->second);
   }
@@ -259,14 +259,14 @@ void vm::machine::readm(symbol sym)
   }
 }
 
-void vm::machine::writem(symbol sym)
+void vm::machine::writem(const symbol sym)
 {
-  auto obj = top();
+  const auto obj = top();
   m_stack.pop_back();
   obj->members[sym] = top();
 }
 
-void vm::machine::call(int argc)
+void vm::machine::call(const int argc)
 {
   if (top()->type != &builtin::type::function) {
     pstr(message::not_callable(*top()));
@@ -274,7 +274,7 @@ void vm::machine::call(int argc)
     return;
   }
 
-  auto func = static_cast<value::basic_function*>(top());
+  const auto func = static_cast<value::basic_function*>(top());
   pop(1);
   if (func->argc != argc) {
     pstr(message::wrong_argc(func->argc, argc));
@@ -289,19 +289,19 @@ void vm::machine::call(int argc)
 
   try {
     if (func->tag == tag::opt_monop) {
-      auto monop = static_cast<value::opt_monop*>(func);
-      auto ret = monop->fn_body(m_transient_self);
+      const auto monop = static_cast<value::opt_monop*>(func);
+      const auto ret = monop->fn_body(m_transient_self);
       push(ret);
 
     }
     else if (func->tag == tag::opt_binop) {
-      auto binop = static_cast<value::opt_binop*>(func);
-      auto ret = binop->fn_body(m_transient_self, top());
+      const auto binop = static_cast<value::opt_binop*>(func);
+      const auto ret = binop->fn_body(m_transient_self, top());
       push(ret);
 
     }
     else if (func->tag == tag::builtin_function) {
-      auto builtin = static_cast<value::builtin_function*>(func);
+      const auto builtin = static_cast<value::builtin_function*>(func);
       if (m_transient_self)
         frame().env = gc::alloc<environment>( nullptr, m_transient_self );
       push(builtin->fn_body(*this));
@@ -316,7 +316,7 @@ void vm::machine::call(int argc)
   }
 }
 
-void vm::machine::pobj(int argc)
+void vm::machine::pobj(const int argc)
 {
   if (top()->type != &builtin::type::custom_type) {
     pstr(message::construction_type_err);
@@ -324,7 +324,7 @@ void vm::machine::pobj(int argc)
     return;
   }
 
-  auto type = static_cast<value::type*>(top());
+  const auto type = static_cast<value::type*>(top());
 
   auto ctor_type = type;
   while (!ctor_type->constructor)
@@ -351,7 +351,7 @@ void vm::machine::dup()
   push(top());
 }
 
-void vm::machine::pop(int quant)
+void vm::machine::pop(const int quant)
 {
   m_stack.erase(end(m_stack) - quant, end(m_stack));
 }
@@ -366,13 +366,13 @@ void vm::machine::lblk()
   frame().env = frame().env->enclosing;
 }
 
-void vm::machine::ret(bool copy)
+void vm::machine::ret(const bool copy)
 {
-  auto retval = top();
+  const auto retval = top();
   m_stack.erase(begin(m_stack) + frame().frame_ptr - frame().argc + 1, end(m_stack));
   push(retval);
 
-  auto cur_env = frame().env;
+  const auto cur_env = frame().env;
   m_call_stack.pop_back();
   if (copy)
     for (const auto& i : cur_env->members)
@@ -382,7 +382,7 @@ void vm::machine::ret(bool copy)
 void vm::machine::req(const std::string& filename)
 {
   // Add extension, if it was left off
-  auto name = get_real_filename(filename, m_req_path);
+  const auto name = get_real_filename(filename, m_req_path);
   if (is_c_exension(name)) {
     // Place in separate environment (along with environment) so as to avoid any
     // weirdnesses with adding things to the stack or declaring new variables
@@ -391,7 +391,7 @@ void vm::machine::req(const std::string& filename)
                               0,
                               m_stack.size() - 1);
     // TODO: Support actual error handling for C extensions
-    auto err = read_c_lib(name);
+    const auto err = read_c_lib(name);
     if (err) {
       pstr("Unable to load C extension: " + *err);
       exc();
@@ -415,18 +415,18 @@ void vm::machine::req(const std::string& filename)
   }
 }
 
-void vm::machine::jmp(int offset)
+void vm::machine::jmp(const int offset)
 {
   frame().instr_ptr = frame().instr_ptr.shifted_by(offset);
 }
 
-void vm::machine::jf(int offset)
+void vm::machine::jf(const int offset)
 {
   if (!truthy(*top()))
     jmp(offset);
 }
 
-void vm::machine::jt(int offset)
+void vm::machine::jt(const int offset)
 {
   if (truthy(*top()))
     jmp(offset);
@@ -461,17 +461,17 @@ void vm::machine::noop() { }
 namespace {
 
 template <typename F>
-void int_optimization(vm::machine& vm, const F& fn, vv::symbol sym)
+void int_optimization(vm::machine& vm, const F& fn, const vv::symbol sym)
 {
-  auto first = vm.top();
+  const auto first = vm.top();
   vm.pop(1);
-  auto second = vm.top();
+  const auto second = vm.top();
 
   if (first->type == &builtin::type::integer && !first->members.count(sym)) {
     if (second->type == &builtin::type::integer) {
       vm.pop(1);
-      auto left = static_cast<value::integer&>(*first).val;
-      auto right = static_cast<value::integer&>(*second).val;
+      const auto left = static_cast<value::integer&>(*first).val;
+      const auto right = static_cast<value::integer&>(*second).val;
       vm.pint(fn(left, right));
       return;
     }
@@ -508,10 +508,10 @@ void vm::machine::opt_not()
 {
   const static symbol sym{"not"};
 
-  auto val = top();
+  const auto val = top();
   if (!val->members.count(sym)) {
     if (find_method(*val->type, sym) == builtin::type::object.methods.at(sym)) {
-      auto res = !truthy(*val);
+      const auto res = !truthy(*val);
       pop(1);
       pbool(res);
       return;
@@ -528,7 +528,7 @@ void vm::machine::run_single_command(const vm::command& command)
 {
   using boost::get;
 
-  auto instr = command.instr;
+  const auto instr = command.instr;
   const auto& arg = command.arg;
 
   // HACK--- avoid weirdness like the following:
@@ -596,15 +596,15 @@ void vm::machine::run_single_command(const vm::command& command)
   }
 }
 
-void vm::machine::except_until(size_t stack_pos)
+void vm::machine::except_until(const size_t stack_pos)
 {
-  auto except_val = top();
+  const auto except_val = top();
 
-  auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - stack_pos,
-                      [](const auto& i) { return i.catcher; });
+  const auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - stack_pos,
+                            [](const auto& i) { return i.catcher; });
 
   if (last != rbegin(m_call_stack)) {
-    auto last_erased = last.base();
+    const auto last_erased = last.base();
     m_stack.erase(begin(m_stack) + last_erased->frame_ptr - last_erased->argc + 1,
                   end(m_stack));
   }

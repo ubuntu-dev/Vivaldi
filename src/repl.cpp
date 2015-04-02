@@ -41,7 +41,7 @@ std::vector<std::unique_ptr<ast::expression>> vv::get_valid_line()
     // just feed it std::cin, because of prompts and stuff).
     std::istringstream linestream{line};
     // Tokenize and validate
-    auto new_tokens = parser::tokenize(linestream);
+    const auto new_tokens = parser::tokenize(linestream);
     copy(begin(new_tokens), end(new_tokens), back_inserter(tokens));
     validator = parser::is_valid(tokens);
     // If there were no validation errors, we've grabbed a complete expression.
@@ -83,12 +83,12 @@ void vv::run_repl()
 {
   gc::init();
 
-  auto env = gc::alloc<vm::environment>( );
+  const auto env = gc::alloc<vm::environment>( );
   builtin::make_base_env(*env);
 
   while (!std::cin.eof()) {
     for (const auto& expr : get_valid_line()) {
-      auto body = expr->code();
+      const auto body = expr->code();
       vm::call_frame frame{body, env};
       vm::machine machine{std::move(frame)};
       try {

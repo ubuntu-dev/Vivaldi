@@ -13,7 +13,7 @@ block_list::block_list()
 
 bool block_list::contains(void* ptr) const
 {
-  auto ch_ptr = static_cast<char*>(ptr);
+  const auto ch_ptr = static_cast<char*>(ptr);
   auto iter = m_list.upper_bound(ch_ptr);
   if (iter == begin(m_list))
     return false;
@@ -113,7 +113,7 @@ void* block_list::allocate(const size_t size)
   return nullptr;
 }
 
-void block_list::reclaim(void* ptr, size_t size)
+void block_list::reclaim(void* ptr, const size_t size)
 {
   const auto ch_ptr = static_cast<char*>(ptr);
   const auto it = --m_list.upper_bound(ch_ptr);
@@ -123,7 +123,7 @@ void block_list::reclaim(void* ptr, size_t size)
                                [](auto* ptr, auto blk) { return ptr < blk.data; });
 
   if (pos != begin(list)) {
-    auto prev = pos - 1;
+    const auto prev = pos - 1;
     if (prev->data + prev->size == ch_ptr) {
       prev->size += size;
       if (pos != end(list) && pos->data == prev->data + prev->size) {

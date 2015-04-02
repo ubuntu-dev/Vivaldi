@@ -21,14 +21,14 @@ int main(int argc, char** argv)
   }
   else {
     // Try to parse file; if unsuccessful, exit with status 64
-    auto tok_res = vv::get_file_contents(argv[1]);
+    const auto tok_res = vv::get_file_contents(argv[1]);
     if (!tok_res.successful()) {
       std::cerr << tok_res.error() << '\n';
       return 64; // bad usage
     }
 
     // Populate base environment with builtin classes and functions
-    auto env = vv::gc::alloc<vv::vm::environment>( );
+    const auto env = vv::gc::alloc<vv::vm::environment>( );
     vv::builtin::make_base_env(*env);
     vv::vm::call_frame frame{tok_res.result(), env};
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     // or something. Besides, you never know; someone might have passed a *lot*
     // of arguments...)
     vv::builtin::make_base_env(*env);
-    auto arg_array = vv::gc::alloc<vv::value::array>( );
+    const auto arg_array = vv::gc::alloc<vv::value::array>( );
     env->members[{"argv"}] = arg_array;
 
     // Fill 'argv' with command-line arguments, chopping off 'vivaldi' and the

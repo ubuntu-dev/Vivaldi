@@ -51,13 +51,13 @@ struct call_result {
 
 call_result call_method(vm::machine& vm,
                         value::object* self,
-                        symbol method)
+                        const symbol method)
 {
   vm.push(self);
   vm.readm(method);
   vm.call(0);
   vm.run_cur_scope();
-  auto val = vm.top();
+  const auto val = vm.top();
   vm.pop(1);
   return { true, val };
 }
@@ -67,22 +67,22 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
 {
   // Get iterator from range
   vm.arg(0);
-  auto range = vm.top();
+  const auto range = vm.top();
   auto iter = call_method(vm, range, sym::start).value;
 
   vm.arg(1);
-  auto supplied_fn = vm.top();
+  const auto supplied_fn = vm.top();
 
   for (;;) {
-    auto at_end = call_method(vm, iter, sym::at_end).value;
+    const auto at_end = call_method(vm, iter, sym::at_end).value;
     if (truthy(*at_end)) {
       vm.pop(1); // iter
       return { true, at_end };
     }
 
-    auto next_item = call_method(vm, iter, sym::get).value;
+    const auto next_item = call_method(vm, iter, sym::get).value;
 
-    auto res = inner(vm, supplied_fn, next_item);
+    const auto res = inner(vm, supplied_fn, next_item);
     if (res.completed) {
       vm.pop(1); // iter
       return res;
@@ -103,7 +103,7 @@ call_result transformed_range(vm::machine& vm, const F& inner)
     vm.call(1);
     vm.run_cur_scope();
 
-    auto completed = inner(orig, vm.top());
+    const auto completed = inner(orig, vm.top());
     return call_result{ completed, vm.top() };
   });
 }
@@ -114,7 +114,7 @@ call_result transformed_range(vm::machine& vm, const F& inner)
 value::object* fn_print(vm::machine& vm)
 {
   vm.arg(0);
-  auto arg = vm.top();
+  const auto arg = vm.top();
 
   if (arg->type == &type::string)
     std::cout << static_cast<value::string&>(*arg).val;
@@ -125,7 +125,7 @@ value::object* fn_print(vm::machine& vm)
 
 value::object* fn_puts(vm::machine& vm)
 {
-  auto ret = fn_print(vm);
+  const auto ret = fn_print(vm);
   std::cout << '\n';
   return ret;
 }
@@ -144,7 +144,7 @@ value::object* fn_gets(vm::machine&)
 value::object* fn_filter(vm::machine& vm)
 {
   vm.parr(0);
-  auto array = static_cast<value::array*>(vm.top());
+  const auto array = static_cast<value::array*>(vm.top());
 
   transformed_range(vm, [array](auto item, auto pred)
   {
@@ -160,7 +160,7 @@ value::object* fn_map(vm::machine& vm)
 {
   // Get pointer to empty Array
   vm.parr(0);
-  auto mapped = static_cast<value::array*>(vm.top());
+  const auto mapped = static_cast<value::array*>(vm.top());
 
   transformed_range(vm, [mapped](auto, auto val)
                                 { mapped->val.push_back(val); return false; });
@@ -197,22 +197,22 @@ value::object* fn_reduce(vm::machine& vm)
 {
   // Get iterator from range
   vm.arg(0);
-  auto range = vm.top();
+  const auto range = vm.top();
   vm.pop(1);
-  auto iter = call_method(vm, range, sym::start).value;
+  const auto iter = call_method(vm, range, sym::start).value;
   vm.push(iter);
 
   vm.arg(1); // put total on stack
 
 
   for (;;) {
-    auto at_end = call_method(vm, iter, sym::at_end).value;
+    const auto at_end = call_method(vm, iter, sym::at_end).value;
     if (truthy(*at_end)) {
       return vm.top();
     }
 
     auto total = vm.top();
-    auto next_item = call_method(vm, iter, sym::get).value;
+    const auto next_item = call_method(vm, iter, sym::get).value;
     vm.push(next_item);
     vm.push(total);
 
@@ -232,20 +232,20 @@ value::object* fn_reduce(vm::machine& vm)
 value::object* fn_sort(vm::machine& vm)
 {
   vm.parr(0);
-  auto array = static_cast<value::array*>(vm.top());
+  const auto array = static_cast<value::array*>(vm.top());
 
   vm.arg(0);
-  auto range = vm.top();
+  const auto range = vm.top();
   vm.pop(1);
-  auto iter = call_method(vm, range, sym::start).value;
+  const auto iter = call_method(vm, range, sym::start).value;
   vm.push(iter);
 
   for (;;) {
-    auto at_end = call_method(vm, iter, sym::at_end).value;
+    const auto at_end = call_method(vm, iter, sym::at_end).value;
     if (truthy(*at_end))
       break;
 
-    auto next_item = call_method(vm, iter, sym::get).value;
+    const auto next_item = call_method(vm, iter, sym::get).value;
     array->val.push_back(next_item);
 
     call_method(vm, iter, sym::increment);
@@ -258,7 +258,7 @@ value::object* fn_sort(vm::machine& vm)
     vm.readm({"less"});
     vm.call(1);
     vm.run_cur_scope();
-    auto res = vm.top();
+    const auto res = vm.top();
     vm.pop(1);
     return truthy(*res);
   });
@@ -278,21 +278,21 @@ value::object* fn_reverse(vm::machine& vm)
 {
   // Get iterator from range
   vm.arg(0);
-  auto range = vm.top();
-  auto iter = call_method(vm, range, sym::start).value;
+  const auto range = vm.top();
+  const auto iter = call_method(vm, range, sym::start).value;
 
   vm.parr(0);
-  auto arr = static_cast<value::array*>(vm.top());
+  const auto arr = static_cast<value::array*>(vm.top());
 
   for (;;) {
-    auto at_end = call_method(vm, iter, sym::at_end).value;
+    const auto at_end = call_method(vm, iter, sym::at_end).value;
     if (truthy(*at_end)) {
       vm.pop(1); // iter
       reverse(begin(arr->val), end(arr->val));
       return arr;
     }
 
-    auto next_item = call_method(vm, iter, sym::get).value;
+    const auto next_item = call_method(vm, iter, sym::get).value;
     arr->val.push_back(next_item);
 
     call_method(vm, iter, sym::increment);

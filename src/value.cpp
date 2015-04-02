@@ -25,7 +25,7 @@
 using namespace vv;
 using namespace value;
 
-size_t vv::size_for(tag type)
+size_t vv::size_for(const tag type)
 {
   switch (type) {
   case tag::object:           return sizeof(value::object);

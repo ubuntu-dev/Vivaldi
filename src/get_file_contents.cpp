@@ -20,9 +20,9 @@ using namespace parser;
 namespace {
 
 // Provide a pretty error message for syntax errors
-std::string message_for(token_string tokens,
+std::string message_for(const token_string tokens,
                         const std::string& filename,
-                        val_res validator)
+                        const val_res validator)
 {
   // Check if we properly detected the specific syntax error
   if (validator.invalid()) {
@@ -30,9 +30,9 @@ std::string message_for(token_string tokens,
     // this is ever reached the program's basically guaranteed to terminate
     // (unless someone wraps a 'require' in a try...catch block, which seems to
     // unlikely), so added runtime isn't too big a concern in any case
-    auto line = std::count_if(tokens.begin(), validator->begin(),
-                              [](const auto& i)
-                                { return i.which == token::type::newline; });
+    const auto line = std::count_if(tokens.begin(), validator->begin(),
+                                    [](const auto& i)
+                                      { return i.which == token::type::newline; });
 
     std::ostringstream str;
     str << "Invalid syntax at ";
@@ -60,15 +60,15 @@ std::string vv::get_real_filename(const std::string& filename, const std::string
   if (ref.ends_with(".vv") || ref.ends_with(".so") || ref.ends_with(".dylib"))
     return filename;
 
-  auto check_vv = absolute(boost::filesystem::path{filename + ".vv"}, path);
+  const auto check_vv = absolute(boost::filesystem::path{filename + ".vv"}, path);
   if (exists(check_vv))
     return check_vv.native();
 
-  auto check_so = absolute(boost::filesystem::path{filename + ".so"}, path);
+  const auto check_so = absolute(boost::filesystem::path{filename + ".so"}, path);
   if (exists(check_so))
     return check_so.native();
 
-  auto check_dylib = absolute(boost::filesystem::path{filename + ".dylib"}, path);
+  const auto check_dylib = absolute(boost::filesystem::path{filename + ".dylib"}, path);
   if (exists(check_dylib))
     return check_dylib.native();
 
@@ -84,7 +84,7 @@ bool vv::is_c_exension(const std::string& filename)
 read_file_result vv::get_file_contents(const std::string& filename,
                                        const std::string& cur_path)
 {
-  auto real_filename = absolute(boost::filesystem::path{filename}, cur_path);
+  const auto real_filename = absolute(boost::filesystem::path{filename}, cur_path);
   std::ifstream file{real_filename.native()};
   if (!file)
     return { "", '"' + filename + "\": file not found" };
@@ -93,18 +93,18 @@ read_file_result vv::get_file_contents(const std::string& filename,
   // Search in current search path, NOT cwd
   path = absolute(path, cur_path);
 
-  auto tokens = tokenize(file);
-  auto validator = is_valid(tokens);
+  const auto tokens = tokenize(file);
+  const auto validator = is_valid(tokens);
   if (!validator)
     return { path.native(), message_for(tokens, filename, validator) };
 
-  auto exprs = parse(tokens);
+  const auto exprs = parse(tokens);
   std::vector<vm::command> body;
   // set working directory to path of file, so nested 'require's don't bork
   body.emplace_back(vm::instruction::chreqp, path.native());
   body.emplace_back(vm::instruction::pnil); // HACK--- for pops below
   for (const auto& i : exprs) {
-    auto code = i->code();
+    const auto code = i->code();
     body.emplace_back(vm::instruction::pop, 1);
     copy(begin(code), end(code), back_inserter(body));
   }
@@ -115,7 +115,7 @@ boost::optional<std::string> vv::read_c_lib(const std::string& filename)
 {
   try {
     auto& dylib = gc::load_dynamic_library(filename);
-    auto init = dylib.get_fn<void()>("vv_init_lib");
+    const auto init = dylib.get_fn<void()>("vv_init_lib");
 
     init();
 
