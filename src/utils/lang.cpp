@@ -44,7 +44,7 @@ vv::value::basic_function* vv::find_method(value::type& t, symbol name)
 
 std::string vv::pretty_print(value::object* object, vm::machine& vm)
 {
-  if (object->members.contains({"str"}) || find_method(*object->type, {"str"})) {
+  if (object->members.count({"str"}) || find_method(*object->type, {"str"})) {
     vm.push(object);
     vm.readm({"str"});
     vm.call(0);

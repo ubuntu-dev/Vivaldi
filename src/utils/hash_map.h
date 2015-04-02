@@ -30,7 +30,7 @@ public:
       ++m_minor;
       if (m_minor == std::end(m_major->slots)) {
         m_major = std::find_if(m_major + 1, m_end,
-                               [](const auto& i) { return i.size; });
+                               [](const auto& i) { return !i.slots.empty(); });
         if (m_major == m_end)
           m_minor = {};
         else
@@ -83,8 +83,8 @@ public:
                       [](auto sz, const auto& b) { return sz + b.size; });
   }
 
-  // Returns whether or not the hash_map contains an element with key item.
-  bool contains(const K& item) const
+  // Returns 1 if hash_map contains an element with key item, and 0 otherwise.
+  size_t count(const K& item) const
   {
     if (!m_buckets.size())
       return false;
@@ -196,7 +196,7 @@ public:
   iterator begin()
   {
     auto first_nonempty = find_if(std::begin(m_buckets), std::end(m_buckets),
-                                  [](const auto& i) { return i.size; });
+                                  [](const auto& i) { return !i.slots.empty(); });
     if (first_nonempty == std::end(m_buckets))
       return end();
     return {first_nonempty,

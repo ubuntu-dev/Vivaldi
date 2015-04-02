@@ -120,7 +120,7 @@ vv_object_t* vv_call_fn(vv_object_t* func, vv_object_t** args, size_t argc)
 
 vv_object_t* vv_get_mem(vv_object_t* obj, vv_symbol_t name)
 {
-  if (obj->members.contains({name.string})) {
+  if (obj->members.count({name.string})) {
     return obj->members.at({name.string});
   }
   return nullptr;

@@ -215,7 +215,7 @@ void vm::machine::write(symbol sym)
 
 void vm::machine::let(symbol sym)
 {
-  if (frame().env->members.contains(sym)) {
+  if (frame().env->members.count(sym)) {
     pstr(message::already_exists(sym));
     exc();
   }
@@ -467,7 +467,7 @@ void int_optimization(vm::machine& vm, const F& fn, vv::symbol sym)
   vm.pop(1);
   auto second = vm.top();
 
-  if (first->type == &builtin::type::integer && !first->members.contains(sym)) {
+  if (first->type == &builtin::type::integer && !first->members.count(sym)) {
     if (second->type == &builtin::type::integer) {
       vm.pop(1);
       auto left = static_cast<value::integer&>(*first).val;
@@ -509,7 +509,7 @@ void vm::machine::opt_not()
   const static symbol sym{"not"};
 
   auto val = top();
-  if (!val->members.contains(sym)) {
+  if (!val->members.count(sym)) {
     if (find_method(*val->type, sym) == builtin::type::object.methods.at(sym)) {
       auto res = !truthy(*val);
       pop(1);
