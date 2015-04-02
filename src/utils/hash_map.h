@@ -71,7 +71,7 @@ public:
 
   // Constructs a hash map with the members of init.
   hash_map(std::initializer_list<std::pair<K, V>> init)
-    : m_buckets ( std::max(init.size() / 6, size_t{6}) )
+    : m_buckets ( std::max(init.size() / 3, size_t{6}) )
   {
     for (const auto& i : init)
       insert(i.first, i.second);
@@ -220,7 +220,7 @@ private:
       members.splice_after(members.before_begin(), std::move(i.slots));
       i.size = 0;
     }
-    m_buckets.resize(m_buckets.size() + 6);
+    m_buckets.resize(m_buckets.size() + 3);
 
     for (auto& i : members) {
       auto& bucket = m_buckets[s_hash(i.first) % m_buckets.size()];
