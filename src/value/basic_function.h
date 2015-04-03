@@ -1,7 +1,7 @@
 #ifndef VV_VALUE_BASIC_FUNCTION_H
 #define VV_VALUE_BASIC_FUNCTION_H
 
-#include "value/object.h"
+#include "value/basic_object.h"
 
 #include "vm/call_frame.h"
 
@@ -11,7 +11,7 @@ namespace value {
 
 // Base class for all callable types. All function types (currently function,
 // builtin_function, opt_monop, and opt_binop) are subclasses of basic_function.
-struct basic_function : public object {
+struct basic_function : public basic_object {
   basic_function(vv::tag type,
                  int argc,
                  vm::environment* enclosing,

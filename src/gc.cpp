@@ -9,6 +9,7 @@
 #include "value/array_iterator.h"
 #include "value/dictionary.h"
 #include "value/function.h"
+#include "value/object.h"
 #include "value/range.h"
 #include "value/regex.h"
 #include "value/string.h"
@@ -49,7 +50,7 @@ vm::machine* g_vm;
 
 // Allocated blocks of memory.
 gc::block_list g_blocks;
-// List of allocated objects.
+// List of allocated basic_objects.
 gc::object_list g_allocated;
 
 // Performs actual marking and sweeping, along with expanding available memory
@@ -85,7 +86,7 @@ void mark_sweep()
 // }}}
 // External functions {{{
 
-value::object* gc::internal::get_next_empty(const tag type)
+value::basic_object* gc::internal::get_next_empty(const tag type)
 {
   auto ptr = g_blocks.allocate(size_for(type));
   if (!ptr) {
@@ -93,7 +94,7 @@ value::object* gc::internal::get_next_empty(const tag type)
     ptr = g_blocks.allocate(size_for(type));
   }
 
-  const auto obj = reinterpret_cast<value::object*>(ptr);
+  const auto obj = reinterpret_cast<value::basic_object*>(ptr);
   g_allocated.push_back(obj);
   return obj;
 }
@@ -158,11 +159,19 @@ void mark_environment(vm::environment& env)
     mark(*env.enclosing);
   if (env.self)
     mark(*env.self);
+  for (auto i : env.members)
+    gc::mark(*i.second);
+}
+
+void mark_object(value::object& obj)
+{
+  for (auto i : obj.members)
+    gc::mark(*i.second);
 }
 
 }
 
-void gc::mark(value::object& obj)
+void gc::mark(value::basic_object& obj)
 {
   using namespace value;
 
@@ -170,9 +179,6 @@ void gc::mark(value::object& obj)
   if (!g_blocks.contains(&obj) || g_blocks.is_marked(&obj))
     return;
   g_blocks.mark(&obj);
-
-  for (auto i : obj.members)
-    mark(*i.second);
 
   mark(*obj.type);
 
@@ -186,6 +192,8 @@ void gc::mark(value::object& obj)
   case tag::string_iterator: return mark(static_cast<string_iterator&>(obj).str);
   case tag::type:            return mark_type(static_cast<type&>(obj));
   case tag::environment:     return mark_environment(static_cast<vm::environment&>(obj));
+  case tag::blob:
+  case tag::object:          return mark_object(static_cast<object&>(obj));
   default:                   return;
   }
 }

@@ -19,12 +19,12 @@ using value::opt_binop;
 
 namespace {
 
-int to_int(value::object* boxed)
+int to_int(value::basic_object* boxed)
 {
   return static_cast<value::integer&>(*boxed).val;
 }
 
-double to_float(value::object* boxed)
+double to_float(value::basic_object* boxed)
 {
   return static_cast<value::floating_point&>(*boxed).val;
 }
@@ -34,7 +34,7 @@ double to_float(value::object* boxed)
 template <typename F>
 auto fn_int_or_flt_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg) -> value::object*
+  return [=](value::basic_object* self, value::basic_object* arg) -> value::basic_object*
   {
     auto left = to_int(self);
     if (arg->type == &type::floating_point)
@@ -49,7 +49,7 @@ auto fn_int_or_flt_op(const F& op)
 template <typename F>
 auto fn_integer_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg) -> value::object*
+  return [=](value::basic_object* self, value::basic_object* arg) -> value::basic_object*
   {
     auto left = to_int(self);
     if (arg->type != &type::integer)
@@ -63,7 +63,7 @@ auto fn_integer_op(const F& op)
 template <typename F>
 auto fn_integer_monop(const F& op)
 {
-  return [=](value::object* self)
+  return [=](value::basic_object* self)
   {
     return gc::alloc<value::integer, int>( op(to_int(self)) );
   };
@@ -72,7 +72,7 @@ auto fn_integer_monop(const F& op)
 template <typename F>
 auto fn_int_to_flt_monop(const F& op)
 {
-  return [=](value::object* self)
+  return [=](value::basic_object* self)
   {
     return gc::alloc<value::floating_point>( op(to_int(self)) );
   };
@@ -81,7 +81,7 @@ auto fn_int_to_flt_monop(const F& op)
 template <typename F>
 auto fn_int_bool_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg) -> value::object*
+  return [=](value::basic_object* self, value::basic_object* arg) -> value::basic_object*
   {
     if (arg->type == &type::floating_point) {
       auto left = to_int(self);
@@ -97,7 +97,7 @@ auto fn_int_bool_op(const F& op)
   };
 }
 
-value::object* fn_integer_divides(value::object* self, value::object* arg)
+value::basic_object* fn_integer_divides(value::basic_object* self, value::basic_object* arg)
 {
   auto left = to_int(self);
   if (arg->type == &type::floating_point) {
@@ -113,7 +113,7 @@ value::object* fn_integer_divides(value::object* self, value::object* arg)
   return gc::alloc<value::integer>( left / to_int(arg));
 }
 
-bool boxed_integer_equal(value::object* self, value::object* arg)
+bool boxed_integer_equal(value::basic_object* self, value::basic_object* arg)
 {
   if (arg->type == &type::floating_point) {
     auto left = to_int(self);
@@ -128,17 +128,17 @@ bool boxed_integer_equal(value::object* self, value::object* arg)
   return left == right;
 }
 
-value::object* fn_integer_equals(value::object* left, value::object* right)
+value::basic_object* fn_integer_equals(value::basic_object* left, value::basic_object* right)
 {
   return gc::alloc<value::boolean>( boxed_integer_equal(left, right) );
 }
 
-value::object* fn_integer_unequal(value::object* left, value::object* right)
+value::basic_object* fn_integer_unequal(value::basic_object* left, value::basic_object* right)
 {
   return gc::alloc<value::boolean>( !boxed_integer_equal(left, right) );
 }
 
-value::object* fn_integer_pow(value::object* self, value::object* arg)
+value::basic_object* fn_integer_pow(value::basic_object* self, value::basic_object* arg)
 {
   if (arg->type == &type::floating_point) {
     auto left = to_int(self);
@@ -156,7 +156,7 @@ value::object* fn_integer_pow(value::object* self, value::object* arg)
   return gc::alloc<value::integer>( static_cast<int>(pow(left, right)) );
 }
 
-value::object* fn_integer_chr(value::object* self)
+value::basic_object* fn_integer_chr(value::basic_object* self)
 {
   auto ord = to_int(self);
   if (ord < 0 || ord > 255)

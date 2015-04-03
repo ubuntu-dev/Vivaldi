@@ -11,7 +11,7 @@ using namespace builtin;
 
 namespace {
 
-value::object* fn_bool_init(vm::machine& vm)
+value::basic_object* fn_bool_init(vm::machine& vm)
 {
   vm.arg(0);
   if (vm.top()->type == &type::boolean)

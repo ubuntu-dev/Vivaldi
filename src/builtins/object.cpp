@@ -4,6 +4,7 @@
 #include "utils/lang.h"
 #include "value/boolean.h"
 #include "value/opt_functions.h"
+#include "value/object.h"
 #include "value/type.h"
 
 using namespace vv;
@@ -11,22 +12,22 @@ using namespace builtin;
 
 namespace {
 
-value::object* fn_object_equals(value::object* self, value::object* arg)
+value::basic_object* fn_object_equals(value::basic_object* self, value::basic_object* arg)
 {
   return gc::alloc<value::boolean>( equals(*self, *arg) );
 }
 
-value::object* fn_object_unequal(value::object* self, value::object* arg)
+value::basic_object* fn_object_unequal(value::basic_object* self, value::basic_object* arg)
 {
   return gc::alloc<value::boolean>( !equals(*self, *arg) );
 }
 
-value::object* fn_object_not(value::object* self)
+value::basic_object* fn_object_not(value::basic_object* self)
 {
   return gc::alloc<value::boolean>( !truthy(*self) );
 }
 
-value::object* fn_object_type(value::object* self)
+value::basic_object* fn_object_type(value::basic_object* self)
 {
   return self->type;
 }

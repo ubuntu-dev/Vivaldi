@@ -17,23 +17,23 @@ using namespace builtin;
 
 namespace {
 
-int to_int(const value::object& val)
+int to_int(const value::basic_object& val)
 {
   return static_cast<const value::integer&>(val).val;
 }
 
-const std::regex& to_regex(const value::object& val)
+const std::regex& to_regex(const value::basic_object& val)
 {
   return static_cast<const value::regex&>(val).val;
 }
 
-const std::string& to_string(const value::object& val)
+const std::string& to_string(const value::basic_object& val)
 {
   return static_cast<const value::string&>(val).val;
 }
 
-std::pair<const std::smatch&, size_t> get_match_idx(value::object* self,
-                                                    value::object* arg)
+std::pair<const std::smatch&, size_t> get_match_idx(value::basic_object* self,
+                                                    value::basic_object* arg)
 {
   if (arg->type != &type::integer) {
     auto str = gc::alloc<value::string>(message::at_type_error(type::regex_result,
@@ -54,7 +54,7 @@ std::pair<const std::smatch&, size_t> get_match_idx(value::object* self,
 
 // regex {{{
 
-value::object* fn_regex_init(vm::machine& vm)
+value::basic_object* fn_regex_init(vm::machine& vm)
 {
   vm.self();
   auto regex = static_cast<value::regex*>(vm.top());
@@ -74,7 +74,7 @@ value::object* fn_regex_init(vm::machine& vm)
   return regex;
 }
 
-value::object* fn_regex_match(value::object* self, value::object* arg)
+value::basic_object* fn_regex_match(value::basic_object* self, value::basic_object* arg)
 {
   if (arg->type != &type::string)
     return throw_exception("RegExes can only be matched against Strings");
@@ -89,7 +89,7 @@ value::object* fn_regex_match(value::object* self, value::object* arg)
   return gc::alloc<value::regex_result>( *str_ref, std::move(results) );
 }
 
-value::object* fn_regex_match_index(value::object* self, value::object* arg)
+value::basic_object* fn_regex_match_index(value::basic_object* self, value::basic_object* arg)
 {
   if (arg->type != &type::string)
     return throw_exception("RegExes can only be matched against Strings");
@@ -107,20 +107,20 @@ value::object* fn_regex_match_index(value::object* self, value::object* arg)
 // }}}
 // regex_result {{{
 
-value::object* fn_regex_result_at(value::object* self, value::object* arg)
+value::basic_object* fn_regex_result_at(value::basic_object* self, value::basic_object* arg)
 {
 
   auto res = get_match_idx(self, arg);
   return gc::alloc<value::string>( res.first[res.second].str() );
 }
 
-value::object* fn_regex_result_index(value::object* self, value::object* arg)
+value::basic_object* fn_regex_result_index(value::basic_object* self, value::basic_object* arg)
 {
   auto res = get_match_idx(self, arg);
   return gc::alloc<value::integer>( static_cast<int>(res.first.position(res.second)) );
 }
 
-value::object* fn_regex_result_size(value::object* self)
+value::basic_object* fn_regex_result_size(value::basic_object* self)
 {
   auto sz = static_cast<value::regex_result&>(*self).val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );

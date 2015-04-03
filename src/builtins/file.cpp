@@ -18,7 +18,7 @@ using namespace builtin;
 
 namespace {
 
-value::object* fn_file_init(vm::machine& vm)
+value::basic_object* fn_file_init(vm::machine& vm)
 {
   vm.arg(0);
   auto arg = vm.top();
@@ -36,7 +36,7 @@ value::object* fn_file_init(vm::machine& vm)
   return self;
 }
 
-value::object* fn_file_contents(value::object* self)
+value::basic_object* fn_file_contents(value::basic_object* self)
 {
   auto& file = static_cast<value::file&>(*self);
   std::ostringstream str_stream;
@@ -46,18 +46,18 @@ value::object* fn_file_contents(value::object* self)
   return gc::alloc<value::string>( str_stream.str() );
 }
 
-value::object* fn_file_start(value::object* self)
+value::basic_object* fn_file_start(value::basic_object* self)
 {
   return self;
 }
 
-value::object* fn_file_get(value::object* self)
+value::basic_object* fn_file_get(value::basic_object* self)
 {
   const auto& file = static_cast<value::file&>(*self);
   return gc::alloc<value::string>( file.cur_line );
 }
 
-value::object* fn_file_increment(value::object* self)
+value::basic_object* fn_file_increment(value::basic_object* self)
 {
   auto& file = static_cast<value::file&>(*self);
   if (file.val.peek() == EOF) {
@@ -70,7 +70,7 @@ value::object* fn_file_increment(value::object* self)
   return self;
 }
 
-value::object* fn_file_at_end(value::object* self)
+value::basic_object* fn_file_at_end(value::basic_object* self)
 {
   auto& file = static_cast<value::file&>(*self);
   return gc::alloc<value::boolean>(file.val.peek() == EOF && !file.cur_line.size());

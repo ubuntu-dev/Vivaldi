@@ -4,10 +4,10 @@
 
 using namespace vv;
 
-vm::environment::environment(environment* new_enclosing, value::object* new_self)
-  : object    {&builtin::type::object, tag::environment},
-    enclosing {new_enclosing},
-    self      {new_self || !enclosing ? new_self : enclosing->self}
+vm::environment::environment(environment* new_enclosing, value::basic_object* new_self)
+  : basic_object    {&builtin::type::object, tag::environment},
+    enclosing       {new_enclosing},
+    self            {new_self || !enclosing ? new_self : enclosing->self}
 { }
 
 vm::call_frame::call_frame(vector_ref<vm::command> instr_ptr,

@@ -1,5 +1,5 @@
-#ifndef VV_GC_OBJECT_LIST_H
-#define VV_GC_OBJECT_LIST_H
+#ifndef VV_GC_basic_object_LIST_H
+#define VV_GC_basic_object_LIST_H
 
 #include "value.h"
 
@@ -11,11 +11,11 @@ namespace gc {
 
 class object_list {
 public:
-  using iterator = std::vector<value::object*>::iterator;
+  using iterator = std::vector<value::basic_object*>::iterator;
 
   size_t size() const { return m_list.size(); }
 
-  void push_back(value::object* obj) { m_list.push_back(obj); }
+  void push_back(value::basic_object* obj) { m_list.push_back(obj); }
 
   void erase(iterator first, iterator second) { m_list.erase(first, second); }
 
@@ -25,7 +25,7 @@ public:
   ~object_list() { for (auto i : m_list) destruct(*i); }
 
 private:
-  std::vector<value::object*> m_list;
+  std::vector<value::basic_object*> m_list;
 };
 
 }

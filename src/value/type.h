@@ -3,7 +3,7 @@
 
 #include "value.h"
 
-#include "object.h"
+#include "basic_object.h"
 #include "basic_function.h"
 #include "vm/instruction.h"
 
@@ -12,14 +12,14 @@ namespace vv {
 namespace value {
 
 // C++ representation of a Vivaldi Type.
-struct type : public object {
-  type(const std::function<object*()>& constructor,
+struct type : public basic_object {
+  type(const std::function<basic_object*()>& constructor,
        const hash_map<vv::symbol, basic_function*>& methods,
        type& parent,
        vv::symbol name);
 
   // Class methods.
-  // Whenever a object's member is looked for, if it isn't found
+  // Whenever a basic_object's member is looked for, if it isn't found
   // locally, the class will search its type's methods, and that type's parent's
   // methods, and so on recursively until it's found or there are no more
   // parents left.
@@ -29,7 +29,7 @@ struct type : public object {
   // This constructor should just provides an allocated bit of memory of
   // the appropriate type; any actual initialization (including reading passed
   // arguments) has to happen in the class's "init" method.
-  std::function<object*()> constructor;
+  std::function<basic_object*()> constructor;
 
   // Blob of VM code used in initialization.
   // This shim is necessary because, of course, when you create a new object you
@@ -52,7 +52,7 @@ struct type : public object {
   vm::function_t init_shim;
 
   // Parent class. Parent classes are stored as references, since they're
-  // unchangeable and can't ever be null (Object's just points to itself).
+  // unchangeable and can't ever be null (basic_object's just points to itself).
   type& parent;
 
   // Name of class. Stored in class so value() can be prettier than just

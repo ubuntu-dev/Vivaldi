@@ -68,12 +68,12 @@ void vm::machine::run_cur_scope()
   }
 }
 
-value::object* vm::machine::top()
+value::basic_object* vm::machine::top()
 {
   return m_stack.back();
 }
 
-void vm::machine::push(value::object* val)
+void vm::machine::push(value::basic_object* val)
 {
   m_stack.push_back(val);
 }
@@ -169,7 +169,7 @@ void vm::machine::pre(const std::string& val)
 
 void vm::machine::parr(const int size)
 {
-  std::vector<value::object*> vec{end(m_stack) - size, end(m_stack)};
+  std::vector<value::basic_object*> vec{end(m_stack) - size, end(m_stack)};
   const auto val = gc::alloc<value::array>( move(vec) );
   pop(size);
   push(val);
@@ -177,7 +177,7 @@ void vm::machine::parr(const int size)
 
 void vm::machine::pdict(const int size)
 {
-  std::unordered_map<value::object*, value::object*,
+  std::unordered_map<value::basic_object*, value::basic_object*,
                      value::dictionary::hasher, value::dictionary::key_equal> dict;
   for (auto i = end(m_stack) - size; i != end(m_stack); i += 2)
     dict[i[0]] = i[1];
@@ -246,11 +246,10 @@ void vm::machine::readm(const symbol sym)
   pop(1);
 
   // First check local members, then methods
-  const auto iter = m_transient_self->members.find(sym);
-  if (iter != std::end(m_transient_self->members)) {
-    push(iter->second);
+  if (has_member(*m_transient_self, sym)) {
+    push(&get_member(*m_transient_self, sym));
   }
-  else if (auto method = find_method(*m_transient_self->type, sym)) {
+  else if (auto method = get_method(*m_transient_self->type, sym)) {
     push(method);
   }
   else {
@@ -263,7 +262,7 @@ void vm::machine::writem(const symbol sym)
 {
   const auto obj = top();
   m_stack.pop_back();
-  obj->members[sym] = top();
+  set_member(*obj, sym, *top());
 }
 
 void vm::machine::call(const int argc)
@@ -467,7 +466,7 @@ void int_optimization(vm::machine& vm, const F& fn, const vv::symbol sym)
   vm.pop(1);
   const auto second = vm.top();
 
-  if (first->type == &builtin::type::integer && !first->members.count(sym)) {
+  if (first->type == &builtin::type::integer && !has_member(*first, sym)) {
     if (second->type == &builtin::type::integer) {
       vm.pop(1);
       const auto left = static_cast<value::integer&>(*first).val;
@@ -509,8 +508,8 @@ void vm::machine::opt_not()
   const static symbol sym{"not"};
 
   const auto val = top();
-  if (!val->members.count(sym)) {
-    if (find_method(*val->type, sym) == builtin::type::object.methods.at(sym)) {
+  if (!has_member(*val, sym)) {
+    if (get_method(*val->type, sym) == builtin::type::object.methods.at(sym)) {
       const auto res = !truthy(*val);
       pop(1);
       pbool(res);

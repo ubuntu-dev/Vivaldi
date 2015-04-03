@@ -4,10 +4,15 @@
 #include <string>
 #include <utility>
 
+#include "symbol.h"
+
 namespace vv {
 
 // Classes representing Vivaldi objects.
 namespace value {
+
+struct basic_object;
+struct basic_function;
 
 struct array;
 struct array_iterator;
@@ -15,6 +20,7 @@ struct blob;
 struct boolean;
 struct builtin_function;
 struct dictionary;
+struct object;
 struct file;
 struct floating_point;
 struct function;
@@ -42,10 +48,19 @@ struct environment;
 
 }
 
-std::string value_for(const value::object& object);
-size_t hash_for(const value::object& object);
-bool equals(const value::object& first, const value::object& second);
-void destruct(value::object& object);
+std::string value_for(const value::basic_object& object);
+size_t hash_for(const value::basic_object& object);
+bool equals(const value::basic_object& lhs, const value::basic_object& rhs);
+void destruct(value::basic_object& object);
+
+bool has_member(value::basic_object& object, vv::symbol mem_name);
+value::basic_object& get_member(value::basic_object& object,
+                                vv::symbol mem_name);
+void set_member(value::basic_object& object,
+                vv::symbol mem_name,
+                value::basic_object& member);
+
+value::basic_function* get_method(value::type& type, vv::symbol name);
 
 enum class tag {
   object,

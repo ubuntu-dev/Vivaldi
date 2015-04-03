@@ -7,7 +7,7 @@
 #include "value/string.h"
 #include "value/type.h"
 
-bool vv::truthy(const value::object& val)
+bool vv::truthy(const value::basic_object& val)
 {
   if (val.type == &builtin::type::nil)
     return false;
@@ -17,34 +17,20 @@ bool vv::truthy(const value::object& val)
 }
 
 [[noreturn]]
-vv::value::object* vv::throw_exception(const std::string& value)
+vv::value::basic_object* vv::throw_exception(const std::string& value)
 {
   throw vm_error{gc::alloc<value::string>( value )};
 }
 
 [[noreturn]]
-vv::value::object* vv::throw_exception(value::object* value)
+vv::value::basic_object* vv::throw_exception(value::basic_object* value)
 {
   throw vm_error{value};
 }
 
-vv::value::basic_function* vv::find_method(value::type& t, const symbol name)
+std::string vv::pretty_print(value::basic_object* object, vm::machine& vm)
 {
-  auto i = std::begin(t.methods);
-  auto ptr = &t;
-  while ((i = ptr->methods.find(name)) == std::end(ptr->methods) &&
-         &ptr->parent != ptr)
-    ptr = &ptr->parent;
-
-  if (i != std::end(t.methods))
-    return i->second;
-
-  return nullptr;
-}
-
-std::string vv::pretty_print(value::object* object, vm::machine& vm)
-{
-  if (object->members.count({"str"}) || find_method(*object->type, {"str"})) {
+  if (has_member(*object, {"str"}) || get_method(*object->type, {"str"})) {
     vm.push(object);
     vm.readm({"str"});
     vm.call(0);

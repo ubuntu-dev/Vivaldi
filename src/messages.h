@@ -14,7 +14,7 @@ namespace message {
 const extern std::string inheritance_type_err;
 // attempted to call 'new' on something other than a type
 const extern std::string construction_type_err;
-// attempted to call self outside of an object
+// attempted to call self outside of an basic_object
 const extern std::string invalid_self_access;
 const extern std::string divide_by_zero;
 
@@ -24,13 +24,13 @@ std::string invalid_regex(const std::string& error);
 std::string no_such_variable(vv::symbol var);
 // Attempted to declare an extant variable
 std::string already_exists(vv::symbol var);
-// Attempted to read an object member that doesn't exist
-std::string has_no_member(const value::object& obj, vv::symbol mem);
+// Attempted to read an basic_object member that doesn't exist
+std::string has_no_member(const value::basic_object& obj, vv::symbol mem);
 // Attempted to call something other than a function
-std::string not_callable(const value::object& callee);
+std::string not_callable(const value::basic_object& callee);
 // Function called with the wrong number of arguments
 std::string wrong_argc(int expected, int recieved);
-// Attempt to directly construct a nonconstructible object (e.g. Integer)
+// Attempt to directly construct a nonconstructible basic_object (e.g. Integer)
 std::string nonconstructible(const value::type& type);
 
 // Constructor called with wrong argument type
@@ -64,7 +64,7 @@ std::string iterator_at_end(const value::type& self);
 std::string out_of_range(size_t lower, size_t upper, int recieved);
 
 // Error message for unhandled exception
-std::string caught_exception(const value::object& error);
+std::string caught_exception(const value::basic_object& error);
 
 }
 

@@ -4,7 +4,8 @@
 #include "instruction.h"
 
 #include "symbol.h"
-#include "value/object.h"
+#include "value/basic_object.h"
+#include "utils/hash_map.h"
 #include "utils/vector_ref.h"
 
 namespace vv {
@@ -17,18 +18,19 @@ namespace vm {
 // Vivaldi functions are closures) or a block, the enclosing environment is
 // stored in environment::enclosing.
 //
-// Execution environments are, hackishly, actually Vivaldi objects (they
-// inherit from value::object); this is because, because of closures, manual
+// Execution environments are, hackishly, actually Vivaldi basic_objects (they
+// inherit from value::basic_object); this is because, because of closures, manual
 // memory management is basically impossible, and even my simplistic garbage
 // collector is significantly faster than reference counting via shared_ptr.
-struct environment : public value::object {
-  environment(environment* enclosing = nullptr,
-              value::object* self    = nullptr);
+struct environment : public value::basic_object {
+  environment(environment* enclosing    = nullptr,
+              value::basic_object* self = nullptr);
 
   // Frame in which current function (i.e. closure) was defined.
   environment* enclosing;
   // self, if this is a method call.
-  value::object* self;
+  value::basic_object* self;
+  hash_map<symbol, value::basic_object*> members;
 };
 
 // A single call frame. The VM's call stack is implemented as a vector of these
@@ -50,10 +52,10 @@ struct call_frame {
   environment* env;
 
   // The calling function, if there is one; stored here only for GC purposes.
-  value::object* caller;
+  value::basic_object* caller;
 
   // The local catch function, if we're in a try...catch block.
-  value::object* catcher;
+  value::basic_object* catcher;
 
   // Pointer to the current VM instruction we're executing.
   vector_ref<vm::command> instr_ptr;

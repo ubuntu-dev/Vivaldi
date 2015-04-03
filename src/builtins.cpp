@@ -46,11 +46,11 @@ namespace {
 
 struct call_result {
   bool completed;
-  value::object* value;
+  value::basic_object* value;
 };
 
 call_result call_method(vm::machine& vm,
-                        value::object* self,
+                        value::basic_object* self,
                         const symbol method)
 {
   vm.push(self);
@@ -111,7 +111,7 @@ call_result transformed_range(vm::machine& vm, const F& inner)
 // }}}
 // I/O {{{
 
-value::object* fn_print(vm::machine& vm)
+value::basic_object* fn_print(vm::machine& vm)
 {
   vm.arg(0);
   const auto arg = vm.top();
@@ -123,14 +123,14 @@ value::object* fn_print(vm::machine& vm)
   return gc::alloc<value::nil>( );
 }
 
-value::object* fn_puts(vm::machine& vm)
+value::basic_object* fn_puts(vm::machine& vm)
 {
   const auto ret = fn_print(vm);
   std::cout << '\n';
   return ret;
 }
 
-value::object* fn_gets(vm::machine&)
+value::basic_object* fn_gets(vm::machine&)
 {
   std::string str;
   getline(std::cin, str);
@@ -141,7 +141,7 @@ value::object* fn_gets(vm::machine&)
 // }}}
 // Functional stuff {{{
 
-value::object* fn_filter(vm::machine& vm)
+value::basic_object* fn_filter(vm::machine& vm)
 {
   vm.parr(0);
   const auto array = static_cast<value::array*>(vm.top());
@@ -156,7 +156,7 @@ value::object* fn_filter(vm::machine& vm)
   return array;
 }
 
-value::object* fn_map(vm::machine& vm)
+value::basic_object* fn_map(vm::machine& vm)
 {
   // Get pointer to empty Array
   vm.parr(0);
@@ -169,7 +169,7 @@ value::object* fn_map(vm::machine& vm)
   return mapped;
 }
 
-value::object* fn_count(vm::machine& vm)
+value::basic_object* fn_count(vm::machine& vm)
 {
   int count{};
   transformed_range(vm, [&](auto, auto pred)
@@ -177,7 +177,7 @@ value::object* fn_count(vm::machine& vm)
   return gc::alloc<value::integer>( count );
 }
 
-value::object* fn_all(vm::machine& vm)
+value::basic_object* fn_all(vm::machine& vm)
 {
   auto all = true;
   transformed_range(vm, [&](auto, auto pred)
@@ -185,7 +185,7 @@ value::object* fn_all(vm::machine& vm)
   return gc::alloc<value::boolean>( all );
 }
 
-value::object* fn_any(vm::machine& vm)
+value::basic_object* fn_any(vm::machine& vm)
 {
   auto found = false;
   transformed_range(vm, [&](auto, auto pred)
@@ -193,7 +193,7 @@ value::object* fn_any(vm::machine& vm)
   return gc::alloc<value::boolean>( found );
 }
 
-value::object* fn_reduce(vm::machine& vm)
+value::basic_object* fn_reduce(vm::machine& vm)
 {
   // Get iterator from range
   vm.arg(0);
@@ -229,7 +229,7 @@ value::object* fn_reduce(vm::machine& vm)
   }
 }
 
-value::object* fn_sort(vm::machine& vm)
+value::basic_object* fn_sort(vm::machine& vm)
 {
   vm.parr(0);
   const auto array = static_cast<value::array*>(vm.top());
@@ -269,12 +269,12 @@ value::object* fn_sort(vm::machine& vm)
 // }}}
 // Other {{{
 
-value::object* fn_quit(vm::machine&)
+value::basic_object* fn_quit(vm::machine&)
 {
   exit(0);
 }
 
-value::object* fn_reverse(vm::machine& vm)
+value::basic_object* fn_reverse(vm::machine& vm)
 {
   // Get iterator from range
   vm.arg(0);

@@ -11,10 +11,10 @@ namespace gc {
 
 namespace internal {
 
-value::object* get_next_empty(tag type);
+value::basic_object* get_next_empty(tag type);
 
 template <typename T>
-value::object* emplace(T&& item)
+value::basic_object* emplace(T&& item)
 {
   auto slot = get_next_empty(tag_for<T>());
   new (slot) T{std::forward<T>(item)};

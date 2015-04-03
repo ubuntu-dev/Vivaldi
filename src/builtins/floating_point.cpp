@@ -16,12 +16,12 @@ using value::opt_binop;
 
 namespace {
 
-bool is_float(value::object* boxed) noexcept
+bool is_float(value::basic_object* boxed) noexcept
 {
   return boxed->type == &type::floating_point || boxed->type == &type::integer;
 }
 
-double to_float(value::object* boxed) noexcept
+double to_float(value::basic_object* boxed) noexcept
 {
   if (boxed->type == &type::floating_point)
     return static_cast<const value::floating_point&>(*boxed).val;
@@ -31,37 +31,37 @@ double to_float(value::object* boxed) noexcept
 template <typename F>
 auto fn_floating_point_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg)
+  return [=](value::basic_object* self, value::basic_object* arg)
   {
     if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::floating_point>(op(to_float(self), to_float(arg)));
-    return static_cast<value::object*>(res);
+    return static_cast<value::basic_object*>(res);
   };
 }
 
 template <typename F>
 auto fn_float_bool_op(const F& op)
 {
-  return [=](value::object* self, value::object* arg)
+  return [=](value::basic_object* self, value::basic_object* arg)
   {
     if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::boolean>( op(to_float(self), to_float(arg)) );
-    return static_cast<value::object*>(res);
+    return static_cast<value::basic_object*>(res);
   };
 }
 
 template <typename F>
 auto fn_floating_point_monop(const F& op)
 {
-  return [=](value::object* self)
+  return [=](value::basic_object* self)
   {
     return gc::alloc<value::floating_point>( op(to_float(self)) );
   };
 }
 
-value::object* fn_floating_point_divides(value::object* self, value::object* arg)
+value::basic_object* fn_floating_point_divides(value::basic_object* self, value::basic_object* arg)
 {
   if (!is_float(arg))
     return throw_exception("Right-hand argument is not a Float");

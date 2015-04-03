@@ -1,18 +1,18 @@
 #ifndef VV_VALUE_RANGE_H
 #define VV_VALUE_RANGE_H
 
-#include "value/object.h"
+#include "value/basic_object.h"
 
 namespace vv {
 
 namespace value {
 
-struct range : public object {
-  range(object* start, object* end);
+struct range : public basic_object {
+  range(basic_object* start, basic_object* end);
   range();
 
-  object* start;
-  object* end;
+  basic_object* start;
+  basic_object* end;
 };
 
 }

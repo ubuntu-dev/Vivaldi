@@ -22,7 +22,7 @@ dynamic_library& load_dynamic_library(const std::string& filename);
 // Called in main at the start of the program
 void init();
 
-void mark(value::object& object);
+void mark(value::basic_object& basic_object);
 
 }
 

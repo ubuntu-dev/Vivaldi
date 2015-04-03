@@ -1,16 +1,20 @@
 #include "blob.h"
 
+#include "builtins.h"
+
 using namespace vv;
 using namespace value;
 
-blob::blob(void* val, const std::function<void(object*)>& dtor)
-  : val    {val},
-    c_dtor {dtor}
+blob::blob(void* val, const std::function<void(basic_object*)>& dtor)
+  : basic_object {&builtin::type::object, tag::blob},
+    val          {val},
+    c_dtor       {dtor}
 { }
 
 blob::blob(blob&& other)
-  : val    {other.val},
-    c_dtor {std::move(other.c_dtor)}
+  : basic_object {&builtin::type::object, tag::blob},
+    val          {other.val},
+    c_dtor       {std::move(other.c_dtor)}
 {
   other.val = nullptr;
   other.c_dtor = nullptr;
@@ -26,5 +30,5 @@ blob& blob::operator=(blob&& other)
 blob::~blob()
 {
   if (c_dtor)
-    c_dtor(reinterpret_cast<object*>(this));
+    c_dtor(reinterpret_cast<basic_object*>(this));
 }

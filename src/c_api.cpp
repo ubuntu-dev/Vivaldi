@@ -120,15 +120,15 @@ vv_object_t* vv_call_fn(vv_object_t* func, vv_object_t** args, size_t argc)
 
 vv_object_t* vv_get_mem(vv_object_t* obj, vv_symbol_t name)
 {
-  if (obj->members.count({name.string})) {
-    return obj->members.at({name.string});
+  if (has_member(*obj, {name.string})) {
+    return &get_member(*obj, {name.string});
   }
   return nullptr;
 }
 
 vv_object_t* vv_set_mem(vv_object_t* obj, vv_symbol_t name, vv_object_t* val)
 {
-  obj->members[{name.string}] = val;
+  set_member(*obj, {name.string}, *val);
   return val;
 }
 
@@ -137,9 +137,7 @@ vv_object_t* vv_get_type(vv_object_t* obj)
   return obj->type;
 }
 
-vv_object_t* vv_new_object(vv_object_t* type,
-                              vv_object_t** args,
-                              size_t argc)
+vv_object_t* vv_new_object(vv_object_t* type, vv_object_t** args, size_t argc)
 {
   for (size_t i{}; i != argc; ++i)
     cvm().push(args[i]);

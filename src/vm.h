@@ -25,11 +25,11 @@ public:
   void run_cur_scope();
 
   // Returns the value on top of the stack.
-  value::object* top();
+  value::basic_object* top();
   // Pushes the provided value onto the stack.
-  void push(value::object* newtop);
+  void push(value::basic_object* newtop);
 
-  // GC interface; mark all objects immediately reachable from within the VM.
+  // GC interface; mark all basic_objects immediately reachable from within the VM.
   void mark();
 
   // VM Instructions (publicly accessible, since value::builtin_funciton needs
@@ -99,9 +99,9 @@ private:
   call_frame& frame();
 
   std::vector<call_frame> m_call_stack;
-  std::vector<value::object*> m_stack;
+  std::vector<value::basic_object*> m_stack;
 
-  value::object* m_transient_self;
+  value::basic_object* m_transient_self;
 
   std::string m_req_path;
 };

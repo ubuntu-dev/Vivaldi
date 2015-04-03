@@ -1,7 +1,7 @@
 #ifndef VV_VALUE_REGEX_H
 #define VV_VALUE_REGEX_H
 
-#include "value/object.h"
+#include "value/basic_object.h"
 
 #include <regex>
 
@@ -9,7 +9,7 @@ namespace vv {
 
 namespace value {
 
-struct regex : public object {
+struct regex : public basic_object {
   regex(const std::regex& val = {}, const std::string& str = {});
 
   std::regex val;
@@ -17,7 +17,7 @@ struct regex : public object {
   std::string str;
 };
 
-struct regex_result : public object {
+struct regex_result : public basic_object {
   regex_result(value::string& str, std::smatch&& res);
 
   std::smatch val;

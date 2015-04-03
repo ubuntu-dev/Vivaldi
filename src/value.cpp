@@ -12,6 +12,7 @@
 #include "value/file.h"
 #include "value/floating_point.h"
 #include "value/function.h"
+#include "value/object.h"
 #include "value/opt_functions.h"
 #include "value/range.h"
 #include "value/regex.h"
@@ -24,6 +25,14 @@
 
 using namespace vv;
 using namespace value;
+
+namespace {
+
+// Global value, used to store instance variables for non-value::object classes
+std::unordered_map<value::basic_object*,
+                   hash_map<vv::symbol, value::basic_object*>> g_generic_members;
+
+}
 
 size_t vv::size_for(const tag type)
 {
@@ -87,7 +96,7 @@ std::string range_val(const range& rng)
 
 }
 
-std::string vv::value_for(const object& object)
+std::string vv::value_for(const basic_object& object)
 {
   switch (object.tag) {
   case tag::array:           return array_val(static_cast<const array&>(object));
@@ -121,7 +130,6 @@ std::string vv::value_for(const object& object)
 // hash_for {{{
 
 namespace {
-
 template <typename T>
 size_t hash_val(const T& item)
 {
@@ -130,7 +138,7 @@ size_t hash_val(const T& item)
 
 }
 
-size_t vv::hash_for(const value::object& obj)
+size_t vv::hash_for(const value::basic_object& obj)
 {
   switch (obj.tag) {
   case tag::boolean:        return hash_val(static_cast<const boolean&>(obj));
@@ -138,7 +146,7 @@ size_t vv::hash_for(const value::object& obj)
   case tag::integer:        return hash_val(static_cast<const integer&>(obj));
   case tag::string:         return hash_val(static_cast<const string&>(obj));
   case tag::symbol:         return hash_val(static_cast<const value::symbol&>(obj));
-  default:                  return std::hash<const value::object*>{}(&obj);
+  default:                  return std::hash<const value::basic_object*>{}(&obj);
   }
 }
 
@@ -148,14 +156,14 @@ size_t vv::hash_for(const value::object& obj)
 namespace {
 
 template <typename T>
-bool val_equals(const value::object& first, const value::object& second)
+bool val_equals(const value::basic_object& first, const value::basic_object& second)
 {
   return static_cast<const T&>(first).val == static_cast<const T&>(second).val;
 }
 
 }
 
-bool vv::equals(const value::object& first, const value::object& second)
+bool vv::equals(const value::basic_object& first, const value::basic_object& second)
 {
   if (&first == &second)
     return true;
@@ -185,7 +193,7 @@ void call_dtor(T& obj)
 
 }
 
-void vv::destruct(object& obj)
+void vv::destruct(basic_object& obj)
 {
   switch (obj.tag) {
   case tag::object:           return call_dtor(obj);
@@ -211,6 +219,48 @@ void vv::destruct(object& obj)
   case tag::type:             return call_dtor(static_cast<type&>(obj));
   case tag::environment:      return call_dtor(static_cast<vm::environment&>(obj));
   }
+
+  if (obj.tag != tag::object && obj.tag != tag::blob)
+    g_generic_members.erase(&obj);
 }
 
 // }}}
+// Member and method access {{{
+
+bool vv::has_member(value::basic_object& object, const symbol sym)
+{
+  if (object.tag == tag::object || object.tag == tag::blob)
+    return static_cast<value::object&>(object).members.count(sym);
+  return g_generic_members.count(&object)
+     &&  g_generic_members[&object].count(sym);
+}
+
+value::basic_object& vv::get_member(value::basic_object& object, const symbol sym)
+{
+  if (object.tag == tag::object || object.tag == tag::blob)
+    return *static_cast<value::object&>(object).members[sym];
+  return *g_generic_members[&object][sym];
+}
+
+void vv::set_member(value::basic_object& object,
+                    const symbol sym,
+                    value::basic_object& member)
+{
+  if (object.tag == tag::object || object.tag == tag::blob)
+    static_cast<value::object&>(object).members[sym] = &member;
+  g_generic_members[&object][sym] = &member;
+}
+
+value::basic_function* vv::get_method(value::type& type, vv::symbol name)
+{
+  for (auto i = &type; true; i = &i->parent) {
+    const auto iter = i->methods.find(name);
+    if (iter != std::end(i->methods))
+      return iter->second;
+    if (i == &i->parent)
+      return nullptr;
+  }
+}
+
+// }}}
+

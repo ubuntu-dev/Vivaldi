@@ -9,7 +9,7 @@ using namespace builtin;
 
 namespace {
 
-value::object* fn_custom_type_parent(value::object* self)
+value::basic_object* fn_custom_type_parent(value::basic_object* self)
 {
   return &static_cast<value::type&>(*self).parent;
 }

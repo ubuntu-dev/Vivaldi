@@ -9,10 +9,10 @@ namespace vv {
 
 class vm_error : public std::exception {
 public:
-  vm_error(value::object* val) : m_val{val} { }
-  value::object* error() const { return m_val; }
+  vm_error(value::basic_object* val) : m_val{val} { }
+  value::basic_object* error() const { return m_val; }
 private:
-  value::object* m_val;
+  value::basic_object* m_val;
 };
 
 }
