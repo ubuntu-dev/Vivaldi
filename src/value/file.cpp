@@ -5,20 +5,18 @@
 using namespace vv;
 
 value::file::file(const std::string& filename)
-  : basic_object {&builtin::type::file, tag::file},
-    name         {filename},
-    val          {filename}
+  : basic_object {builtin::type::file},
+    value        {filename, "", std::fstream{filename}}
 {
-  std::getline(val, cur_line);
+  std::getline(value.val, value.cur_line);
 }
 
 value::file::file()
-  : basic_object {&builtin::type::file, tag::file},
-    name         {""}
+  : basic_object {builtin::type::file},
+    value        {"", "", {}}
 { }
 
 value::file::file(file&& other)
-  : basic_object {&builtin::type::file, tag::file},
-    name         {move(other.name)},
-    val          {std::move(other.val)}
+  : basic_object {builtin::type::file},
+    value        ( std::move(other.value) )
 { }

@@ -6,7 +6,6 @@
 #include "value/array.h"
 #include "value/array_iterator.h"
 #include "value/blob.h"
-#include "value/boolean.h"
 #include "value/builtin_function.h"
 #include "value/dictionary.h"
 #include "value/file.h"
@@ -29,8 +28,8 @@ using namespace value;
 namespace {
 
 // Global value, used to store instance variables for non-value::object classes
-std::unordered_map<value::basic_object*,
-                   hash_map<vv::symbol, value::basic_object*>> g_generic_members;
+std::unordered_map<gc::managed_ptr,
+                   hash_map<vv::symbol, gc::managed_ptr>> g_generic_members;
 
 }
 
@@ -48,7 +47,7 @@ size_t vv::size_for(const tag type)
   case tag::floating_point:   return sizeof(value::floating_point);
   case tag::function:         return sizeof(value::function);
   case tag::integer:          return sizeof(value::integer);
-  case tag::nil:              return sizeof(value::nil);
+  case tag::nil:              return 0;
   case tag::opt_monop:        return sizeof(value::opt_monop);
   case tag::opt_binop:        return sizeof(value::opt_binop);
   case tag::range:            return sizeof(value::range);
@@ -66,59 +65,59 @@ size_t vv::size_for(const tag type)
 
 namespace {
 
-std::string array_val(const array& arr)
+std::string array_val(const array::value_type& arr)
 {
   std::ostringstream stm{};
   stm << '[';
-  if (arr.val.size()) {
-    for_each(begin(arr.val), end(arr.val) - 1,
-             [&](const auto& v) { stm << vv::value_for(*v) << ", "; });
-    stm << vv::value_for(*arr.val.back());
+  if (arr.size()) {
+    for_each(begin(arr), end(arr) - 1,
+             [&](const auto& v) { stm << vv::value_for(v) << ", "; });
+    stm << vv::value_for(arr.back());
   }
   stm << ']';
   return stm.str();
 }
 
-std::string dictionary_val(const dictionary& dict)
+std::string dictionary_val(const dictionary::value_type& dict)
 {
   std::string str{"{"};
-  for (const auto& pair: dict.val)
-    str += ' ' + vv::value_for(*pair.first) += ": " + vv::value_for(*pair.second) += ',';
-  if (dict.val.size())
+  for (const auto& pair: dict)
+    str += ' ' + vv::value_for(pair.first) += ": " + vv::value_for(pair.second) += ',';
+  if (dict.size())
     str.back() = ' ';
   return str += '}';
 }
 
-std::string range_val(const range& rng)
+std::string range_val(const range::value_type& rng)
 {
-  return vv::value_for(*rng.start) += " to " + vv::value_for(*rng.end);
+  return vv::value_for(rng.start) += " to " + vv::value_for(rng.end);
 }
 
 }
 
-std::string vv::value_for(const basic_object& object)
+std::string vv::value_for(gc::managed_ptr ptr)
 {
-  switch (object.tag) {
-  case tag::array:           return array_val(static_cast<const array&>(object));
+  switch (ptr.tag()) {
+  case tag::array:           return array_val(get<array>(ptr));
   case tag::array_iterator:  return "<array iterator>";
-  case tag::boolean:         return static_cast<const boolean&>(object).val ? "true" : "false";
-  case tag::dictionary:      return dictionary_val(static_cast<const dictionary&>(object));
-  case tag::file:            return "File: " + static_cast<const file&>(object).name;
-  case tag::floating_point:  return std::to_string(static_cast<const floating_point&>(object).val);
-  case tag::integer:         return std::to_string(static_cast<const integer&>(object).val);
+  case tag::boolean:         return get<boolean>(ptr) ? "true" : "false";
+  case tag::dictionary:      return dictionary_val(get<dictionary>(ptr));
+  case tag::file:            return "File: " + get<file>(ptr).name;
+  case tag::floating_point:  return std::to_string(get<floating_point>(ptr));
+  case tag::integer:         return std::to_string(get<integer>(ptr));
   case tag::nil:             return "nil";
 
   case tag::opt_monop:
   case tag::opt_binop:
   case tag::builtin_function:
   case tag::function:        return "<function>";
-  case tag::range:           return range_val(static_cast<const range&>(object));
-  case tag::regex:           return '`' + static_cast<const regex&>(object).str + '`';
+  case tag::range:           return range_val(get<range>(ptr));
+  case tag::regex:           return '`' + get<regex>(ptr).str + '`';
   case tag::regex_result:    return "<regex result>";
-  case tag::string:          return '"' + static_cast<const string&>(object).val + '"';
+  case tag::string:          return '"' + get<string>(ptr) + '"';
   case tag::string_iterator: return "<string iterator>";
-  case tag::symbol:          return '\'' + to_string(static_cast<const value::symbol&>(object).val);
-  case tag::type:            return to_string(static_cast<const type&>(object).name);
+  case tag::symbol:          return '\'' + to_string(get<value::symbol>(ptr));
+  case tag::type:            return to_string(get<type>(ptr).name);
 
   case tag::blob:
   case tag::environment:
@@ -133,20 +132,20 @@ namespace {
 template <typename T>
 size_t hash_val(const T& item)
 {
-  return std::hash<decltype(item.val)>{}(item.val);
+  return std::hash<T>{}(item);
 }
 
 }
 
-size_t vv::hash_for(const value::basic_object& obj)
+size_t vv::hash_for(gc::managed_ptr obj)
 {
-  switch (obj.tag) {
-  case tag::boolean:        return hash_val(static_cast<const boolean&>(obj));
-  case tag::floating_point: return hash_val(static_cast<const floating_point&>(obj));
-  case tag::integer:        return hash_val(static_cast<const integer&>(obj));
-  case tag::string:         return hash_val(static_cast<const string&>(obj));
-  case tag::symbol:         return hash_val(static_cast<const value::symbol&>(obj));
-  default:                  return std::hash<const value::basic_object*>{}(&obj);
+  switch (obj.tag()) {
+  case tag::boolean:        return hash_val(get<boolean>(obj));
+  case tag::floating_point: return hash_val(get<floating_point>(obj));
+  case tag::integer:        return hash_val(get<integer>(obj));
+  case tag::string:         return hash_val(get<string>(obj));
+  case tag::symbol:         return hash_val(get<value::symbol>(obj));
+  default:                  return std::hash<gc::managed_ptr>{}(obj);
   }
 }
 
@@ -156,26 +155,26 @@ size_t vv::hash_for(const value::basic_object& obj)
 namespace {
 
 template <typename T>
-bool val_equals(const value::basic_object& first, const value::basic_object& second)
+bool val_equals(gc::managed_ptr lhs, gc::managed_ptr rhs)
 {
-  return static_cast<const T&>(first).val == static_cast<const T&>(second).val;
+  return get<T>(lhs) == get<T>(rhs);
 }
 
 }
 
-bool vv::equals(const value::basic_object& first, const value::basic_object& second)
+bool vv::equals(gc::managed_ptr lhs, gc::managed_ptr rhs)
 {
-  if (&first == &second)
+  if (lhs == rhs)
     return true;
-  if (first.tag != second.tag)
+  if (lhs.tag() != lhs.tag())
     return false;
 
-  switch (first.tag) {
-  case tag::boolean:        return val_equals<boolean>(first, second);
-  case tag::floating_point: return val_equals<floating_point>(first, second);
-  case tag::integer:        return val_equals<integer>(first, second);
-  case tag::string:         return val_equals<string>(first, second);
-  case tag::symbol:         return val_equals<value::symbol>(first, second);
+  switch (lhs.tag()) {
+  case tag::boolean:        return val_equals<boolean>(lhs, rhs);
+  case tag::floating_point: return val_equals<floating_point>(lhs, rhs);
+  case tag::integer:        return val_equals<integer>(lhs, rhs);
+  case tag::string:         return val_equals<string>(lhs, rhs);
+  case tag::symbol:         return val_equals<value::symbol>(lhs, rhs);
   default:                  return false;
   }
 }
@@ -193,72 +192,84 @@ void call_dtor(T& obj)
 
 }
 
-void vv::destruct(basic_object& obj)
+void vv::destruct(gc::managed_ptr obj)
 {
-  switch (obj.tag) {
-  case tag::object:           return call_dtor(obj);
-  case tag::array:            return call_dtor(static_cast<array&>(obj));
-  case tag::array_iterator:   return call_dtor(static_cast<array_iterator&>(obj));
-  case tag::blob:             return call_dtor(static_cast<blob&>(obj));
-  case tag::boolean:          return call_dtor(static_cast<boolean&>(obj));
-  case tag::builtin_function: return call_dtor(static_cast<builtin_function&>(obj));
-  case tag::dictionary:       return call_dtor(static_cast<dictionary&>(obj));
-  case tag::file:             return call_dtor(static_cast<file&>(obj));
-  case tag::floating_point:   return call_dtor(static_cast<floating_point&>(obj));
-  case tag::function:         return call_dtor(static_cast<function&>(obj));
-  case tag::integer:          return call_dtor(static_cast<integer&>(obj));
-  case tag::nil:              return call_dtor(static_cast<nil&>(obj));
-  case tag::opt_monop:        return call_dtor(static_cast<opt_monop&>(obj));
-  case tag::opt_binop:        return call_dtor(static_cast<opt_binop&>(obj));
-  case tag::range:            return call_dtor(static_cast<range&>(obj));
-  case tag::regex:            return call_dtor(static_cast<regex&>(obj));
-  case tag::regex_result:     return call_dtor(static_cast<regex_result&>(obj));
-  case tag::string:           return call_dtor(static_cast<string&>(obj));
-  case tag::string_iterator:  return call_dtor(static_cast<string_iterator&>(obj));
-  case tag::symbol:           return call_dtor(static_cast<value::symbol&>(obj));
-  case tag::type:             return call_dtor(static_cast<type&>(obj));
-  case tag::environment:      return call_dtor(static_cast<vm::environment&>(obj));
+  switch (obj.tag()) {
+  case tag::object:           call_dtor(*obj.get());                                 break;
+  case tag::array:            call_dtor(static_cast<array&>(*obj.get()));            break;
+  case tag::array_iterator:   call_dtor(static_cast<array_iterator&>(*obj.get()));   break;
+  case tag::blob:             call_dtor(static_cast<blob&>(*obj.get()));             break;
+  case tag::builtin_function: call_dtor(static_cast<builtin_function&>(*obj.get())); break;
+  case tag::dictionary:       call_dtor(static_cast<dictionary&>(*obj.get()));       break;
+  case tag::file:             call_dtor(static_cast<file&>(*obj.get()));             break;
+  case tag::floating_point:   call_dtor(static_cast<floating_point&>(*obj.get()));   break;
+  case tag::function:         call_dtor(static_cast<function&>(*obj.get()));         break;
+  case tag::opt_monop:        call_dtor(static_cast<opt_monop&>(*obj.get()));        break;
+  case tag::opt_binop:        call_dtor(static_cast<opt_binop&>(*obj.get()));        break;
+  case tag::range:            call_dtor(static_cast<range&>(*obj.get()));            break;
+  case tag::regex:            call_dtor(static_cast<regex&>(*obj.get()));            break;
+  case tag::regex_result:     call_dtor(static_cast<regex_result&>(*obj.get()));     break;
+  case tag::string:           call_dtor(static_cast<string&>(*obj.get()));           break;
+  case tag::string_iterator:  call_dtor(static_cast<string_iterator&>(*obj.get()));  break;
+  case tag::symbol:           call_dtor(static_cast<value::symbol&>(*obj.get()));    break;
+  case tag::type:             call_dtor(static_cast<type&>(*obj.get()));             break;
+  case tag::environment:      call_dtor(static_cast<vm::environment&>(*obj.get()));  break;
+  default: break;
   }
 
-  if (obj.tag != tag::object && obj.tag != tag::blob)
-    g_generic_members.erase(&obj);
+  if (obj.tag() != tag::object && obj.tag() != tag::blob)
+    g_generic_members.erase(obj);
 }
 
 // }}}
 // Member and method access {{{
 
-bool vv::has_member(value::basic_object& object, const symbol sym)
+bool vv::has_member(gc::managed_ptr object, const symbol sym)
 {
-  if (object.tag == tag::object || object.tag == tag::blob)
-    return static_cast<value::object&>(object).members.count(sym);
-  return g_generic_members.count(&object)
-     &&  g_generic_members[&object].count(sym);
+  if (object.tag() == tag::object || object.tag() == tag::blob)
+    return value::get<value::object>(object).count(sym);
+  return g_generic_members.count(object) && g_generic_members[object].count(sym);
 }
 
-value::basic_object& vv::get_member(value::basic_object& object, const symbol sym)
+gc::managed_ptr vv::get_member(gc::managed_ptr object, const symbol sym)
 {
-  if (object.tag == tag::object || object.tag == tag::blob)
-    return *static_cast<value::object&>(object).members[sym];
-  return *g_generic_members[&object][sym];
+  if (object.tag() == tag::object || object.tag() == tag::blob)
+    return value::get<value::object>(object)[sym];
+  return g_generic_members[object][sym];
 }
 
-void vv::set_member(value::basic_object& object,
+void vv::set_member(gc::managed_ptr object,
                     const symbol sym,
-                    value::basic_object& member)
+                    gc::managed_ptr member)
 {
-  if (object.tag == tag::object || object.tag == tag::blob)
-    static_cast<value::object&>(object).members[sym] = &member;
-  g_generic_members[&object][sym] = &member;
+  if (object.tag() == tag::object || object.tag() == tag::blob) {
+   value::get<value::object>(object)[sym] = member;
+  }
+  else {
+    g_generic_members[object][sym] = member;
+  }
 }
 
-value::basic_function* vv::get_method(value::type& type, vv::symbol name)
+void vv::mark_members(gc::managed_ptr object)
 {
-  for (auto i = &type; true; i = &i->parent) {
-    const auto iter = i->methods.find(name);
-    if (iter != std::end(i->methods))
+  if (object.tag() == tag::object || object.tag() == tag::blob) {
+    for (auto i : value::get<value::object>(object))
+      gc::mark(i.second);
+  }
+  else if (g_generic_members.count(object)) {
+    for (auto i : g_generic_members[object])
+      gc::mark(i.second);
+  }
+}
+
+gc::managed_ptr vv::get_method(gc::managed_ptr type, vv::symbol name)
+{
+  for (auto i = type; true; i = value::get<value::type>(i).parent) {
+    const auto iter = value::get<value::type>(i).methods.find(name);
+    if (iter != std::end(value::get<value::type>(i).methods))
       return iter->second;
-    if (i == &i->parent)
-      return nullptr;
+    if (i == value::get<value::type>(i).parent)
+      return {};
   }
 }
 

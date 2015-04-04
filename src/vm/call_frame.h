@@ -23,21 +23,25 @@ namespace vm {
 // memory management is basically impossible, and even my simplistic garbage
 // collector is significantly faster than reference counting via shared_ptr.
 struct environment : public value::basic_object {
-  environment(environment* enclosing    = nullptr,
-              value::basic_object* self = nullptr);
+  environment(gc::managed_ptr enclosing = gc::alloc<value::nil>( ),
+              gc::managed_ptr self      = gc::alloc<value::nil>( ));
 
-  // Frame in which current function (i.e. closure) was defined.
-  environment* enclosing;
-  // self, if this is a method call.
-  value::basic_object* self;
-  hash_map<symbol, value::basic_object*> members;
+  struct value_type {
+    // Frame in which current function (i.e. closure) was defined.
+    gc::managed_ptr enclosing;
+    // self, if this is a method call.
+    gc::managed_ptr self;
+    hash_map<symbol, gc::managed_ptr> members;
+  };
+
+  value_type value;
 };
 
 // A single call frame. The VM's call stack is implemented as a vector of these
 // in vm::machine. Each one represents a single function call.
 struct call_frame {
   call_frame(vector_ref<vm::command> instr_ptr = {},
-             environment* env                  = nullptr,
+             gc::managed_ptr env               = {},
              size_t argc                       = 0,
              size_t frame_ptr                  = 0);
 
@@ -49,13 +53,13 @@ struct call_frame {
 
   // The outermost environment. Given lexical scoping, this will of course be
   // different for each call frame.
-  environment* env;
+  gc::managed_ptr env;
 
   // The calling function, if there is one; stored here only for GC purposes.
-  value::basic_object* caller;
+  gc::managed_ptr caller;
 
   // The local catch function, if we're in a try...catch block.
-  value::basic_object* catcher;
+  gc::managed_ptr catcher;
 
   // Pointer to the current VM instruction we're executing.
   vector_ref<vm::command> instr_ptr;

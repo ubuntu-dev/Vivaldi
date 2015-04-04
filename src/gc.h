@@ -3,9 +3,6 @@
 
 #include "value.h"
 #include "utils/dynamic_library.h"
-#include "value/boolean.h"
-#include "value/integer.h"
-#include "value/nil.h"
 #include "vm.h"
 
 #include <array>
@@ -19,10 +16,7 @@ vm::machine& get_running_vm();
 
 dynamic_library& load_dynamic_library(const std::string& filename);
 
-// Called in main at the start of the program
-void init();
-
-void mark(value::basic_object& basic_object);
+void mark(gc::managed_ptr basic_object);
 
 }
 

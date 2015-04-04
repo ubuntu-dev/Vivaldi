@@ -1,67 +1,83 @@
-#include "builtins.h"
+#include "builtins/floating_point.h"
 
 #include "gc/alloc.h"
 #include "messages.h"
 #include "utils/lang.h"
-#include "value/boolean.h"
 #include "value/floating_point.h"
-#include "value/integer.h"
-#include "value/opt_functions.h"
 #include "value/type.h"
 
 using namespace vv;
 using namespace builtin;
-using value::opt_monop;
-using value::opt_binop;
+
+// Helper functions {{{
 
 namespace {
 
-bool is_float(value::basic_object* boxed) noexcept
+bool is_float(gc::managed_ptr boxed) noexcept
 {
-  return boxed->type == &type::floating_point || boxed->type == &type::integer;
+  return boxed.tag() == tag::floating_point || boxed.tag() == tag::integer;
 }
 
-double to_float(value::basic_object* boxed) noexcept
+double to_float(gc::managed_ptr boxed) noexcept
 {
-  if (boxed->type == &type::floating_point)
-    return static_cast<const value::floating_point&>(*boxed).val;
-  return static_cast<double>(static_cast<value::integer&>(*boxed).val);
+  if (boxed.tag() == tag::floating_point)
+    return value::get<value::floating_point>(boxed);
+  return static_cast<double>(value::get<value::integer>(boxed));
 }
 
 template <typename F>
-auto fn_floating_point_op(const F& op)
+auto fn_float_op(const F& op)
 {
-  return [=](value::basic_object* self, value::basic_object* arg)
+  return [=](gc::managed_ptr self, gc::managed_ptr arg)
   {
     if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::floating_point>(op(to_float(self), to_float(arg)));
-    return static_cast<value::basic_object*>(res);
+    return static_cast<gc::managed_ptr>(res);
   };
 }
 
 template <typename F>
 auto fn_float_bool_op(const F& op)
 {
-  return [=](value::basic_object* self, value::basic_object* arg)
+  return [=](gc::managed_ptr self, gc::managed_ptr arg)
   {
     if (!is_float(arg))
       return throw_exception("Right-hand argument is not a Float");
     auto res = gc::alloc<value::boolean>( op(to_float(self), to_float(arg)) );
-    return static_cast<value::basic_object*>(res);
+    return static_cast<gc::managed_ptr>(res);
   };
 }
 
 template <typename F>
-auto fn_floating_point_monop(const F& op)
+auto fn_float_monop(const F& op)
 {
-  return [=](value::basic_object* self)
+  return [=](gc::managed_ptr self)
   {
     return gc::alloc<value::floating_point>( op(to_float(self)) );
   };
 }
 
-value::basic_object* fn_floating_point_divides(value::basic_object* self, value::basic_object* arg)
+}
+
+// }}}
+
+gc::managed_ptr floating_point::add(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_float_op([](auto a, auto b) { return a + b; })(self, arg);
+}
+
+gc::managed_ptr floating_point::subtract(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_float_op([](auto a, auto b) { return a - b; })(self, arg);
+}
+
+gc::managed_ptr floating_point::times(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_float_op([](auto a, auto b) { return a * b; })(self, arg);
+}
+
+gc::managed_ptr floating_point::divides(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (!is_float(arg))
     return throw_exception("Right-hand argument is not a Float");
@@ -70,38 +86,68 @@ value::basic_object* fn_floating_point_divides(value::basic_object* self, value:
   return gc::alloc<value::floating_point>( to_float(self) / to_float(arg) );
 }
 
-opt_binop flt_add      {fn_floating_point_op(std::plus<double>{})      };
-opt_binop flt_subtract {fn_floating_point_op(std::minus<double>{})     };
-opt_binop flt_times    {fn_floating_point_op(std::multiplies<double>{})};
-opt_binop flt_divides  {fn_floating_point_divides                      };
-opt_binop flt_pow      {fn_floating_point_op(pow)                      };
-opt_binop flt_eq       {fn_float_bool_op(std::equal_to<double>{})      };
-opt_binop flt_neq      {fn_float_bool_op(std::not_equal_to<double>{})  };
-opt_binop flt_lt       {fn_float_bool_op(std::less<double>{})          };
-opt_binop flt_gt       {fn_float_bool_op(std::greater<double>{})       };
-opt_binop flt_le       {fn_float_bool_op(std::less_equal<double>{})    };
-opt_binop flt_ge       {fn_float_bool_op(std::greater_equal<double>{}) };
-opt_monop flt_negative {fn_floating_point_monop(std::negate<double>{}) };
-opt_monop flt_sqrt     {fn_floating_point_monop(sqrt)                  };
-opt_monop flt_sin      {fn_floating_point_monop(sin)                   };
-opt_monop flt_cos      {fn_floating_point_monop(cos)                   };
-opt_monop flt_tan      {fn_floating_point_monop(tan)                   };
+gc::managed_ptr floating_point::pow(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_float_op([](auto a, auto b) { return std::pow(a, b); })(self, arg);
 }
-value::type type::floating_point{[]{ return nullptr; }, {
-  { {"add"},            &flt_add      },
-  { {"subtract"},       &flt_subtract },
-  { {"times"},          &flt_times    },
-  { {"divides"},        &flt_divides  },
-  { {"pow"},            &flt_pow      },
-  { {"equals"},         &flt_eq       },
-  { {"unequal"},        &flt_neq      },
-  { {"less"},           &flt_lt       },
-  { {"greater"},        &flt_gt       },
-  { {"less_equals"},    &flt_le       },
-  { {"greater_equals"}, &flt_ge       },
-  { {"negative"},       &flt_negative },
-  { {"sqrt"},           &flt_sqrt     },
-  { {"sin"},            &flt_sin      },
-  { {"cos"},            &flt_cos      },
-  { {"tan"},            &flt_tan      }
-}, builtin::type::object, {"Float"}};
+
+gc::managed_ptr floating_point::equals(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  if (!is_float(arg))
+    return gc::alloc<value::boolean>( false );
+
+  return fn_float_bool_op([](auto a, auto b) { return a == b; })(self, arg);
+}
+
+gc::managed_ptr floating_point::unequal(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  if (!is_float(arg))
+    return gc::alloc<value::boolean>( true );
+
+  return fn_float_bool_op([](auto a, auto b) { return a != b; })(self, arg);
+}
+
+gc::managed_ptr floating_point::less(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_float_bool_op([](auto a, auto b) { return a < b; })(self, arg);
+}
+
+gc::managed_ptr floating_point::greater(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_float_bool_op([](auto a, auto b) { return a > b; })(self, arg);
+}
+
+gc::managed_ptr floating_point::less_equals(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_float_bool_op([](auto a, auto b) { return a <= b; })(self, arg);
+}
+
+gc::managed_ptr floating_point::greater_equals(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_float_bool_op([](auto a, auto b) { return a >= b; })(self, arg);
+}
+
+gc::managed_ptr floating_point::negative(gc::managed_ptr self)
+{
+  return fn_float_monop([](auto a) { return -a; })(self);
+}
+
+gc::managed_ptr floating_point::sqrt(gc::managed_ptr self)
+{
+  return fn_float_monop([](auto a) { return std::sqrt(a); })(self);
+}
+
+gc::managed_ptr floating_point::sin(gc::managed_ptr self)
+{
+  return fn_float_monop([](auto a) { return std::sin(a); })(self);
+}
+
+gc::managed_ptr floating_point::cos(gc::managed_ptr self)
+{
+  return fn_float_monop([](auto a) { return std::cos(a); })(self);
+}
+
+gc::managed_ptr floating_point::tan(gc::managed_ptr self)
+{
+  return fn_float_monop([](auto a) { return std::tan(a); })(self);
+}

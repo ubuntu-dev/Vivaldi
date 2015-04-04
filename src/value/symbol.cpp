@@ -4,7 +4,7 @@
 
 using namespace vv;
 
-value::symbol::symbol(vv::symbol new_val)
-  : basic_object {&builtin::type::symbol, tag::symbol},
-    val          {new_val}
+value::symbol::symbol(vv::symbol val)
+  : basic_object {builtin::type::symbol},
+    value        {val}
 { }

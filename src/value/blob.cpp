@@ -5,30 +5,27 @@
 using namespace vv;
 using namespace value;
 
-blob::blob(void* val, const std::function<void(basic_object*)>& dtor)
-  : basic_object {&builtin::type::object, tag::blob},
-    val          {val},
-    c_dtor       {dtor}
+blob::blob(void* val, const std::function<void(blob*)>& dtor)
+  : basic_object {builtin::type::object},
+    value        {val, dtor}
 { }
 
 blob::blob(blob&& other)
-  : basic_object {&builtin::type::object, tag::blob},
-    val          {other.val},
-    c_dtor       {std::move(other.c_dtor)}
+  : basic_object {builtin::type::object},
+    value        ( std::move(other.value) )
 {
-  other.val = nullptr;
-  other.c_dtor = nullptr;
+  other.value.val = nullptr;
+  other.value.c_dtor = nullptr;
 }
 
 blob& blob::operator=(blob&& other)
 {
-  std::swap(val, other.val);
-  std::swap(c_dtor, other.c_dtor);
+  std::swap(value, other.value);
   return *this;
 }
 
 blob::~blob()
 {
-  if (c_dtor)
-    c_dtor(reinterpret_cast<basic_object*>(this));
+  if (value.c_dtor)
+    value.c_dtor(this);
 }

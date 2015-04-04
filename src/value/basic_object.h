@@ -9,11 +9,9 @@ namespace value {
 
 // Basic class from which all object types are derived.
 struct basic_object {
-  basic_object(type* type, tag tag);
-
-  tag tag;
-  // Pointer to type (this should never be null. TODO: make reference)
-  type* type;
+  basic_object(gc::managed_ptr type);
+  // Pointer to type
+  gc::managed_ptr type;
 };
 
 }

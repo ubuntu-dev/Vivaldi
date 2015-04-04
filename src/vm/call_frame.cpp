@@ -4,20 +4,22 @@
 
 using namespace vv;
 
-vm::environment::environment(environment* new_enclosing, value::basic_object* new_self)
-  : basic_object    {&builtin::type::object, tag::environment},
-    enclosing       {new_enclosing},
-    self            {new_self || !enclosing ? new_self : enclosing->self}
+vm::environment::environment(gc::managed_ptr enclosing, gc::managed_ptr self)
+  : basic_object {builtin::type::object},
+    value        { enclosing,
+                   (self || !enclosing) ? self
+                                        : value::get<environment>(enclosing).self,
+                   {}}
 { }
 
 vm::call_frame::call_frame(vector_ref<vm::command> instr_ptr,
-                           environment* env,
+                           gc::managed_ptr env,
                            size_t argc,
                            size_t frame_ptr)
   : argc       {argc},
     frame_ptr  {frame_ptr},
     env        {env},
-    caller     {nullptr},
-    catcher    {nullptr},
+    caller     {},
+    catcher    {},
     instr_ptr  {instr_ptr}
 { }

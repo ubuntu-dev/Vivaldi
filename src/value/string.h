@@ -12,7 +12,8 @@ namespace value {
 struct string : public basic_object {
   string(const std::string& val = "");
 
-  std::string val;
+  using value_type = std::string;
+  value_type value;
 };
 
 }

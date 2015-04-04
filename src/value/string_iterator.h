@@ -10,11 +10,14 @@ namespace value {
 
 struct string_iterator : public basic_object {
 public:
-  string_iterator(string& str);
+  string_iterator(gc::managed_ptr str);
   string_iterator();
 
-  string& str;
-  size_t idx;
+  struct value_type {
+    gc::managed_ptr str;
+    size_t idx;
+  };
+  value_type value;
 };
 
 }

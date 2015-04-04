@@ -5,8 +5,7 @@
 
 using namespace vv;
 
-value::dictionary::dictionary(const std::unordered_map<basic_object*, basic_object*,
-                                                       hasher, key_equal>& mems)
-  : basic_object {&builtin::type::dictionary, tag::dictionary},
-    val          {mems}
+value::dictionary::dictionary(const value_type& mems)
+  : basic_object {builtin::type::dictionary},
+    value        {mems}
 { }

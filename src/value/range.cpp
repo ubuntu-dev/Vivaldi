@@ -5,14 +5,12 @@
 
 using namespace vv;
 
-value::range::range(basic_object* new_start, basic_object* new_end)
-  : basic_object {&builtin::type::range, tag::range},
-    start        {new_start},
-    end          {new_end}
+value::range::range(gc::managed_ptr start, gc::managed_ptr end)
+  : basic_object {builtin::type::range},
+    value        {start, end}
 { }
 
 value::range::range()
-  : basic_object {&builtin::type::range, tag::range},
-    start        {nullptr},
-    end          {nullptr}
+  : basic_object {builtin::type::range},
+    value        {}
 { }

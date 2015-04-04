@@ -12,13 +12,17 @@ namespace value {
 struct array_iterator : public basic_object {
 public:
   // Constructs an array_iterator pointing to the start of arr.
-  array_iterator(array& arr);
+  array_iterator(gc::managed_ptr arr);
 
-  // Owning array.
-  array& arr;
-  // Position within arr. Implemented as size_t, and not as an std::vector
-  // iterator, so as to persist through vector resizes.
-  size_t idx;
+  struct value_type {
+    // Owning array.
+    gc::managed_ptr arr;
+    // Position within arr. Implemented as size_t, and not as an std::vector
+    // iterator, so as to persist through vector resizes.
+    size_t idx;
+  };
+
+  value_type value;
 };
 
 }

@@ -1,44 +1,41 @@
-#include "builtins.h"
+#include "builtins/file.h"
 
+#include "builtins.h"
 #include "gc/alloc.h"
 #include "messages.h"
-#include "vm.h"
 #include "utils/lang.h"
-#include "value/boolean.h"
-#include "value/builtin_function.h"
 #include "value/file.h"
-#include "value/opt_functions.h"
 #include "value/string.h"
-#include "value/type.h"
 
 #include <sstream>
 
 using namespace vv;
 using namespace builtin;
 
-namespace {
-
-value::basic_object* fn_file_init(vm::machine& vm)
+gc::managed_ptr file::init(vm::machine& vm)
 {
   vm.arg(0);
   auto arg = vm.top();
-  if (arg->type != &type::string) {
+  if (arg.tag() != tag::string) {
     return throw_exception(message::init_type_error(type::file,
                                                     type::string,
-                                                    *arg->type));
+                                                    arg.type()));
   }
+
   vm.self();
-  auto self = static_cast<value::file*>(vm.top());
-  const auto& filename = static_cast<value::string&>(*arg).val;
-  self->val = std::fstream{filename};
-  self->name = filename;
-  std::getline(self->val, self->cur_line);
+  const auto self = vm.top();
+  const auto& filename = value::get<value::string>(arg);
+
+  value::get<value::file>(self).val = std::fstream{filename};
+  value::get<value::file>(self).name = filename;
+  std::getline(value::get<value::file>(self).val,
+               value::get<value::file>(self).cur_line);
   return self;
 }
 
-value::basic_object* fn_file_contents(value::basic_object* self)
+gc::managed_ptr file::contents(gc::managed_ptr self)
 {
-  auto& file = static_cast<value::file&>(*self);
+  auto& file = value::get<value::file>(self);
   std::ostringstream str_stream;
   str_stream << file.cur_line;
   str_stream << file.val.rdbuf();
@@ -46,20 +43,20 @@ value::basic_object* fn_file_contents(value::basic_object* self)
   return gc::alloc<value::string>( str_stream.str() );
 }
 
-value::basic_object* fn_file_start(value::basic_object* self)
+gc::managed_ptr file::start(gc::managed_ptr self)
 {
   return self;
 }
 
-value::basic_object* fn_file_get(value::basic_object* self)
+gc::managed_ptr file::get(gc::managed_ptr self)
 {
-  const auto& file = static_cast<value::file&>(*self);
+  const auto& file = value::get<value::file>(self);
   return gc::alloc<value::string>( file.cur_line );
 }
 
-value::basic_object* fn_file_increment(value::basic_object* self)
+gc::managed_ptr file::increment(gc::managed_ptr self)
 {
-  auto& file = static_cast<value::file&>(*self);
+  auto& file = value::get<value::file>(self);
   if (file.val.peek() == EOF) {
     if (!file.cur_line.size())
       return throw_exception(message::iterator_at_end(type::file));
@@ -70,26 +67,8 @@ value::basic_object* fn_file_increment(value::basic_object* self)
   return self;
 }
 
-value::basic_object* fn_file_at_end(value::basic_object* self)
+gc::managed_ptr file::at_end(gc::managed_ptr self)
 {
-  auto& file = static_cast<value::file&>(*self);
+  auto& file = value::get<value::file>(self);
   return gc::alloc<value::boolean>(file.val.peek() == EOF && !file.cur_line.size());
 }
-
-value::builtin_function file_init {fn_file_init, 1};
-value::opt_monop file_contents  {fn_file_contents };
-value::opt_monop file_start     {fn_file_start    };
-value::opt_monop file_get       {fn_file_get      };
-value::opt_monop file_increment {fn_file_increment};
-value::opt_monop file_at_end    {fn_file_at_end   };
-
-}
-
-vv::value::type vv::builtin::type::file {gc::alloc<value::file>, {
-  { {"init"},      &file_init      },
-  { {"contents"},  &file_contents  },
-  { {"start"},     &file_start     },
-  { {"get"},       &file_get       },
-  { {"increment"}, &file_increment },
-  { {"at_end"},    &file_at_end    }
-}, vv::builtin::type::object, {"File"}};

@@ -15,9 +15,13 @@ public:
   file();
   file(file&& other);
 
-  std::string name;
-  std::string cur_line;
-  std::fstream val;
+  struct value_type {
+    std::string name;
+    std::string cur_line;
+    std::fstream val;
+  };
+
+  value_type value;
 };
 
 }

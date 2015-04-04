@@ -24,12 +24,6 @@
 #include "ast/variable_declaration.h"
 #include "ast/while_loop.h"
 #include "utils/string_helpers.h"
-#include "value/boolean.h"
-#include "value/floating_point.h"
-#include "value/integer.h"
-#include "value/nil.h"
-#include "value/string.h"
-#include "value/symbol.h"
 
 // Implements a fairly simple recursive-descent parser
 

@@ -36,15 +36,15 @@ std::string message::already_exists(vv::symbol var)
   return "Variable " + to_string(var) += " already exists";
 }
 
-std::string message::has_no_member(const value::basic_object& obj, vv::symbol mem)
+std::string message::has_no_member(gc::managed_ptr obj, vv::symbol mem)
 {
   return value_for(obj) += " has no member " + to_string(mem);
 }
 
-std::string message::not_callable(const value::basic_object& callee)
+std::string message::not_callable(gc::managed_ptr callee)
 {
   return "Object " + value_for(callee) += " of type " +
-         value_for(*callee.type) += " cannot be called";
+         value_for(callee.type()) += " cannot be called";
 }
 
 std::string message::wrong_argc(int expected, int recieved)
@@ -53,64 +53,64 @@ std::string message::wrong_argc(int expected, int recieved)
          ", got " + std::to_string(recieved);
 }
 
-std::string message::nonconstructible(const value::type& type)
+std::string message::nonconstructible(gc::managed_ptr type)
 {
   return "Objects of type " + value_for(type) += " cannot be directly construced";
 }
 
-std::string message::init_type_error(const value::type& self,
-                                     const value::type& expected,
-                                     const value::type& recieved)
+std::string message::init_type_error(gc::managed_ptr self,
+                                     gc::managed_ptr expected,
+                                     gc::managed_ptr recieved)
 {
   return "objects of type " + value_for(self) +=
          " can only be constructed from objects of type " +
          value_for(expected) += ", not " + value_for(recieved);
 }
 
-std::string message::init_multi_type_error(const value::type& self,
-                                           const value::type& recieved)
+std::string message::init_multi_type_error(gc::managed_ptr self,
+                                           gc::managed_ptr recieved)
 {
   return "Objects of type " + value_for(self) +=
          " cannot be constructed from objects of type " + value_for(recieved);
 }
 
-std::string message::add_type_error(const value::type& self,
-                                    const value::type& expected)
+std::string message::add_type_error(gc::managed_ptr self,
+                                    gc::managed_ptr expected)
 {
   return "Only objects of type " + value_for(expected) +=
          " can be added to objects of type " + value_for(self);
 }
 
-std::string message::at_type_error(const value::type& self,
-                                   const value::type& expected)
+std::string message::at_type_error(gc::managed_ptr self,
+                                   gc::managed_ptr expected)
 {
   return "Only objects of type " + value_for(expected) +=
          " can index into objects of type " + value_for(self);
 }
 
-std::string message::type_error(const value::type& expected,
-                                const value::type& recieved)
+std::string message::type_error(gc::managed_ptr expected,
+                                gc::managed_ptr recieved)
 {
   return "Function expected " + value_for(expected) += ", but recieved " +
          value_for(recieved);
 }
 
-std::string message::iterator_owner_error(const value::type& owner)
+std::string message::iterator_owner_error(gc::managed_ptr owner)
 {
   return "Expected iterators from the same " + value_for(owner);
 }
 
-std::string message::iterator_past_start(const value::type& self)
+std::string message::iterator_past_start(gc::managed_ptr self)
 {
   return value_for(self) += " cannot be decremented past start";
 }
 
-std::string message::iterator_past_end(const value::type& self)
+std::string message::iterator_past_end(gc::managed_ptr self)
 {
   return value_for(self) += " cannot be decremented past end";
 }
 
-std::string message::iterator_at_end(const value::type& self)
+std::string message::iterator_at_end(gc::managed_ptr self)
 {
   return value_for(self) += " cannot be accessed at end";
 }
@@ -123,7 +123,7 @@ std::string message::out_of_range(size_t lower, size_t upper, int recieved)
   return sstm.str();
 }
 
-std::string message::caught_exception(const value::basic_object& err)
+std::string message::caught_exception(gc::managed_ptr err)
 {
   return "Caught execption: " + value_for(err);
 }

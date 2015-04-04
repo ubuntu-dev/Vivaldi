@@ -17,20 +17,11 @@
 #include "value/type.h"
 #include "vm/call_frame.h"
 
-#include <list>
+#include <iostream>
 
 using namespace vv;
 using namespace gc;
 using namespace internal;
-
-// Constants {{{
-
-value::nil gc::internal::g_nil{};
-value::boolean gc::internal::g_true{true};
-value::boolean gc::internal::g_false{false};
-std::array<value::integer, 1024> gc::internal::g_ints;
-
-// }}}
 
 // Internals {{{
 
@@ -48,26 +39,32 @@ std::vector<dynamic_library> g_libs;
 // them separate.
 vm::machine* g_vm;
 
-// Allocated blocks of memory.
-gc::block_list g_blocks;
 // List of allocated basic_objects.
 gc::object_list g_allocated;
+
+}
+
+// Allocated blocks of memory.
+gc::block_list internal::g_blocks;
+
+namespace {
 
 // Performs actual marking and sweeping, along with expanding available memory
 // if we've genuinely run out.
 void mark_sweep()
 {
   const auto old_sz = g_allocated.size();
+  std::cerr << "mark_sweep - " << old_sz << '\n';
 
   g_vm->mark();
 
   const auto last = remove_if(std::begin(g_allocated), std::end(g_allocated),
-                              [](auto* i)
+                              [](auto i)
   {
     if (g_blocks.is_marked(i))
       return false;
-    g_blocks.reclaim(i, size_for(i->tag));
-    destruct(*i);
+    g_blocks.reclaim(i, size_for(i.tag()));
+    destruct(i);
     return true;
   });
 
@@ -86,7 +83,7 @@ void mark_sweep()
 // }}}
 // External functions {{{
 
-value::basic_object* gc::internal::get_next_empty(const tag type)
+gc::managed_ptr gc::internal::get_next_empty(const tag type)
 {
   auto ptr = g_blocks.allocate(size_for(type));
   if (!ptr) {
@@ -94,9 +91,9 @@ value::basic_object* gc::internal::get_next_empty(const tag type)
     ptr = g_blocks.allocate(size_for(type));
   }
 
-  const auto obj = reinterpret_cast<value::basic_object*>(ptr);
-  g_allocated.push_back(obj);
-  return obj;
+  //const auto obj = reinterpret_cast<value::basic_object*>(ptr);
+  g_allocated.push_back(ptr);
+  return ptr;
 }
 
 void gc::set_running_vm(vm::machine& vm)
@@ -115,85 +112,74 @@ dynamic_library& gc::load_dynamic_library(const std::string& filename)
   return g_libs.back();
 }
 
-void gc::init()
-{
-  int value = 0;
-  for (auto& i : internal::g_ints)
-    i.val = value++;
-}
-
 namespace {
 
-void mark_array(value::array& array)
+void mark_array(gc::managed_ptr array)
 {
-  for (auto i : array.val)
-    mark(*i);
+  for (auto i : value::get<value::array>(array))
+    mark(i);
 }
 
-void mark_dictionary(value::dictionary& dictionary)
+void mark_dictionary(gc::managed_ptr dictionary)
 {
-  for (auto i : dictionary.val) {
-    mark(*i.first);
-    mark(*i.second);
+  for (auto i : value::get<value::dictionary>(dictionary)) {
+    mark(i.first);
+    mark(i.second);
   }
 }
 
-void mark_range(value::range& rng)
+void mark_range(gc::managed_ptr rng)
 {
-  if (rng.start)
-    mark(*rng.start);
-  if (rng.end)
-    mark(*rng.end);
+  mark(value::get<value::range>(rng).start);
+  mark(value::get<value::range>(rng).end);
 }
 
-void mark_type(value::type& type)
+void mark_type(gc::managed_ptr type)
 {
-  mark(type.parent);
-  for (auto i : type.methods)
-    mark(*i.second);
+  mark(value::get<value::type>(type).parent);
+  for (auto i : value::get<value::type>(type).methods)
+    mark(i.second);
 }
 
-void mark_environment(vm::environment& env)
+void mark_environment(gc::managed_ptr env)
 {
-  if (env.enclosing)
-    mark(*env.enclosing);
-  if (env.self)
-    mark(*env.self);
-  for (auto i : env.members)
-    gc::mark(*i.second);
-}
-
-void mark_object(value::object& obj)
-{
-  for (auto i : obj.members)
-    gc::mark(*i.second);
+  mark(value::get<vm::environment>(env).enclosing);
+  mark(value::get<vm::environment>(env).self);
+  for (auto i : value::get<vm::environment>(env).members)
+    gc::mark(i.second);
 }
 
 }
 
-void gc::mark(value::basic_object& obj)
+void gc::mark(managed_ptr obj)
 {
   using namespace value;
 
-  // Either already marked or stack-allocated
-  if (!g_blocks.contains(&obj) || g_blocks.is_marked(&obj))
+  if (obj.tag() == tag::nil || obj.tag() == tag::integer || obj.tag() == tag::boolean) {
+    mark(obj.type());
+    mark_members(obj);
     return;
-  g_blocks.mark(&obj);
+  }
 
-  mark(*obj.type);
+  // Either already marked or stack-allocated
+  if (g_blocks.is_marked(obj))
+    return;
 
-  switch (obj.tag) {
-  case tag::array:           return mark_array(static_cast<array&>(obj));
-  case tag::array_iterator:  return mark(static_cast<array_iterator&>(obj).arr);
-  case tag::dictionary:      return mark_dictionary(static_cast<dictionary&>(obj));
-  case tag::function:        return mark(*static_cast<function&>(obj).enclosing);
-  case tag::range:           return mark_range(static_cast<range&>(obj));
-  case tag::regex_result:    return mark(static_cast<regex_result&>(obj).owning_str);
-  case tag::string_iterator: return mark(static_cast<string_iterator&>(obj).str);
-  case tag::type:            return mark_type(static_cast<type&>(obj));
-  case tag::environment:     return mark_environment(static_cast<vm::environment&>(obj));
-  case tag::blob:
-  case tag::object:          return mark_object(static_cast<object&>(obj));
+  g_blocks.mark(obj);
+
+  mark(obj.type());
+  mark_members(obj);
+
+  switch (obj.tag()) {
+  case tag::array:           return mark_array(obj);
+  case tag::array_iterator:  return mark(get<array_iterator>(obj).arr);
+  case tag::dictionary:      return mark_dictionary(obj);
+  case tag::function:        return mark(get<function>(obj).enclosure);
+  case tag::range:           return mark_range(obj);
+  case tag::regex_result:    return mark(get<regex_result>(obj).owning_str);
+  case tag::string_iterator: return mark(get<string_iterator>(obj).str);
+  case tag::type:            return mark_type(obj);
+  case tag::environment:     return mark_environment(obj);
   default:                   return;
   }
 }

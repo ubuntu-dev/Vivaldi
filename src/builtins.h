@@ -41,20 +41,20 @@ namespace function {
 
 // Defined in builtins.cpp
 
-extern value::builtin_function print;
-extern value::builtin_function puts;
-extern value::builtin_function gets;
+extern gc::managed_ptr print;
+extern gc::managed_ptr puts;
+extern gc::managed_ptr gets;
 
-extern value::builtin_function filter;
-extern value::builtin_function map;
-extern value::builtin_function reduce;
-extern value::builtin_function sort;
-extern value::builtin_function all;
-extern value::builtin_function any;
-extern value::builtin_function count;
+extern gc::managed_ptr filter;
+extern gc::managed_ptr map;
+extern gc::managed_ptr reduce;
+extern gc::managed_ptr sort;
+extern gc::managed_ptr all;
+extern gc::managed_ptr any;
+extern gc::managed_ptr count;
 
-extern value::builtin_function quit;
-extern value::builtin_function reverse;
+extern gc::managed_ptr quit;
+extern gc::managed_ptr reverse;
 
 }
 
@@ -63,28 +63,30 @@ namespace type {
 
 // Each class has its own file in the builtins/ directory
 
-extern value::type array;
-extern value::type array_iterator;
-extern value::type boolean;
-extern value::type dictionary;
-extern value::type custom_type;
-extern value::type file;
-extern value::type floating_point;
-extern value::type function;
-extern value::type integer;
-extern value::type object;
-extern value::type nil;
-extern value::type range;
-extern value::type regex;
-extern value::type regex_result;
-extern value::type string;
-extern value::type string_iterator;
-extern value::type symbol;
+extern gc::managed_ptr array;
+extern gc::managed_ptr array_iterator;
+extern gc::managed_ptr boolean;
+extern gc::managed_ptr dictionary;
+extern gc::managed_ptr custom_type;
+extern gc::managed_ptr file;
+extern gc::managed_ptr floating_point;
+extern gc::managed_ptr function;
+extern gc::managed_ptr integer;
+extern gc::managed_ptr object;
+extern gc::managed_ptr nil;
+extern gc::managed_ptr range;
+extern gc::managed_ptr regex;
+extern gc::managed_ptr regex_result;
+extern gc::managed_ptr string;
+extern gc::managed_ptr string_iterator;
+extern gc::managed_ptr symbol;
 
 }
 
+void init();
+
 // Populate the provided environment with standard library types and functions.
-void make_base_env(vm::environment& base);
+void make_base_env(gc::managed_ptr base);
 
 }
 

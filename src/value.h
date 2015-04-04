@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "symbol.h"
+#include "gc/managed_ptr.h"
 
 namespace vv {
 
@@ -12,20 +13,16 @@ namespace vv {
 namespace value {
 
 struct basic_object;
-struct basic_function;
 
 struct array;
 struct array_iterator;
 struct blob;
-struct boolean;
 struct builtin_function;
 struct dictionary;
 struct object;
 struct file;
 struct floating_point;
 struct function;
-struct integer;
-struct nil;
 struct object;
 struct opt_monop;
 struct opt_binop;
@@ -36,6 +33,42 @@ struct string;
 struct string_iterator;
 struct symbol;
 struct type;
+using integer = int32_t;
+using boolean = bool;
+using nil = void;
+
+template <typename T>
+struct result_type {
+  using type = typename T::value_type&;
+};
+
+template <>
+struct result_type<integer> {
+  using type = integer;
+};
+
+template <>
+struct result_type<boolean> {
+  using type = boolean;
+};
+
+template <typename T>
+inline typename result_type<T>::type get(gc::managed_ptr ptr)
+{
+  return static_cast<T*>(ptr.get())->value;
+}
+
+template <>
+inline result_type<int>::type get<int>(gc::managed_ptr ptr)
+{
+  return static_cast<int>(ptr.m_block);
+}
+
+template <>
+inline result_type<bool>::type get<bool>(gc::managed_ptr ptr)
+{
+  return static_cast<bool>(ptr.m_block);
+}
 
 }
 
@@ -48,44 +81,18 @@ struct environment;
 
 }
 
-std::string value_for(const value::basic_object& object);
-size_t hash_for(const value::basic_object& object);
-bool equals(const value::basic_object& lhs, const value::basic_object& rhs);
-void destruct(value::basic_object& object);
+std::string value_for(gc::managed_ptr object);
+size_t hash_for(gc::managed_ptr object);
+bool equals(gc::managed_ptr lhs, gc::managed_ptr rhs);
+void destruct(gc::managed_ptr object);
 
-bool has_member(value::basic_object& object, vv::symbol mem_name);
-value::basic_object& get_member(value::basic_object& object,
-                                vv::symbol mem_name);
-void set_member(value::basic_object& object,
-                vv::symbol mem_name,
-                value::basic_object& member);
+bool has_member(gc::managed_ptr object, vv::symbol name);
+gc::managed_ptr get_member(gc::managed_ptr object, vv::symbol name);
+void set_member(gc::managed_ptr object, vv::symbol name, gc::managed_ptr mem);
 
-value::basic_function* get_method(value::type& type, vv::symbol name);
+void mark_members(gc::managed_ptr object);
 
-enum class tag {
-  object,
-  array,
-  array_iterator,
-  blob,
-  boolean,
-  builtin_function,
-  dictionary,
-  file,
-  floating_point,
-  function,
-  integer,
-  nil,
-  opt_monop,
-  opt_binop,
-  range,
-  regex,
-  regex_result,
-  string,
-  string_iterator,
-  symbol,
-  type,
-  environment
-};
+gc::managed_ptr get_method(gc::managed_ptr type, vv::symbol name);
 
 size_t size_for(tag type);
 
@@ -115,11 +122,11 @@ struct tag_for<value::function> : std::integral_constant<tag, tag::function> {};
 template <>
 struct tag_for<value::integer> : std::integral_constant<tag, tag::integer> {};
 template <>
-struct tag_for<value::nil> : std::integral_constant<tag, tag::nil> {};
-template <>
 struct tag_for<value::opt_monop> : std::integral_constant<tag, tag::opt_monop> {};
 template <>
 struct tag_for<value::opt_binop> : std::integral_constant<tag, tag::opt_binop> {};
+template <>
+struct tag_for<value::nil> : std::integral_constant<tag, tag::nil> {};
 template <>
 struct tag_for<value::range> : std::integral_constant<tag, tag::range> {};
 template <>

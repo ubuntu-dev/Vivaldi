@@ -3,12 +3,14 @@
 
 #include <array>
 #include <bitset>
-#include <map>
 #include <vector>
+#include <deque>
 
 namespace vv {
 
 namespace gc {
+
+class managed_ptr;
 
 // This class serves a dual purpose. On one hand, it keeps track of all
 // available free space, and provides interfaces for allocating and freeing
@@ -22,27 +24,23 @@ class block_list {
 public:
   block_list();
 
-  // Marking interface:
-  // Returns true if ptr is heap-allocated (i.e. contained in this class), and
-  // false otherwise.
-  bool contains(void* ptr) const;
   // Returns true if heap-allocated pointer ptr is marked, and false otherwise.
   // Behavior is undefined if ptr wasn't allocated by this class.
-  bool is_marked(void* ptr) const;
+  bool is_marked(gc::managed_ptr ptr) const;
 
   // After calling this function, is_marked(ptr) will return true. As above, ptr
   // *must* be allocated by this class (i.e. contains(ptr) must return true).
-  void mark(void* ptr);
+  void mark(gc::managed_ptr ptr);
   // Unmarks all allocated objects.
   void unmark_all();
 
   // Provides a pointer to a block of memory of the given size, or nullptr if
   // none can be found (in that case, destruct and call reclaim on unused
   // objects, or expand).
-  void* allocate(size_t size);
+  gc::managed_ptr allocate(size_t size);
   // Re-adds the given block of memory to the free list. The provided memory
   // *must* have originallly been obtained via allocate.
-  void reclaim(void* ptr, size_t size);
+  void reclaim(gc::managed_ptr ptr, size_t size);
 
   // Expands available memory by ~50% (including currently allocated memory),
   // providing free space if none exists.
@@ -65,8 +63,10 @@ private:
     std::vector<free_block>::iterator free_pos;
   };
 
-  std::map<char*, std::unique_ptr<block>> m_list;
-  std::map<char*, std::unique_ptr<block>>::iterator m_cur_pos;
+  std::deque<std::unique_ptr<block>> m_list;
+  std::deque<std::unique_ptr<block>>::iterator m_cur_pos;
+
+  friend class gc::managed_ptr;
 };
 
 }

@@ -1,5 +1,9 @@
 #include "block_list.h"
 
+#include "gc/managed_ptr.h"
+
+#include <boost/optional/optional.hpp>
+
 using namespace vv;
 using namespace gc;
 
@@ -11,44 +15,27 @@ block_list::block_list()
     add_new_block();
 }
 
-bool block_list::contains(void* ptr) const
+bool block_list::is_marked(gc::managed_ptr ptr) const
 {
-  const auto ch_ptr = static_cast<char*>(ptr);
-  auto iter = m_list.upper_bound(ch_ptr);
-  if (iter == begin(m_list))
-    return false;
-
-  --iter;
-  if (iter->first + iter->second->block.size() <= ptr)
-    return false;
-  return true;
+  const auto& blk = m_list[ptr.m_block];
+  return blk->markings[ptr.m_offset / 8];
 }
 
-bool block_list::is_marked(void* ptr) const
+void block_list::mark(gc::managed_ptr ptr)
 {
-  const auto ch_ptr = static_cast<char*>(ptr);
-  const auto iter = --m_list.upper_bound(ch_ptr);
-  const auto dist = ch_ptr - iter->first;
-  return iter->second->markings[dist / 8];
-}
-
-void block_list::mark(void* ptr)
-{
-  const auto ch_ptr = static_cast<char*>(ptr);
-  const auto iter = --m_list.upper_bound(ch_ptr);
-  const auto dist = ch_ptr - iter->first;
-  iter->second->markings.set(dist / 8);
+  const auto& blk = m_list[ptr.m_block];
+  blk->markings.set(ptr.m_offset / 8);
 }
 
 void block_list::unmark_all()
 {
   for (auto& i : m_list)
-    i.second->markings.reset();
+    i->markings.reset();
 }
 
 // }}}
 // Allocation functions {{{
-//
+
 namespace {
 
 template <typename I, typename P>
@@ -64,13 +51,15 @@ I circular_find(const I& begin, const I& start, const I& end, const P& pred)
 }
 
 template <typename V>
-void* get_allocated_space(V& blk, typename V::iterator& cur_pos, const size_t sz)
+boost::optional<char*> get_allocated_space(V& blk,
+                                            typename V::iterator& cur_pos,
+                                            const size_t sz)
 {
   auto it = circular_find(begin(blk), cur_pos, end(blk),
                           [sz](auto blk) { return blk.size >= sz; });
 
   if (it != end(blk)) {
-    auto ptr = it->data;
+    const auto ptr = it->data;
 
     if (it->size > sz) {
       it->data += sz;
@@ -84,43 +73,52 @@ void* get_allocated_space(V& blk, typename V::iterator& cur_pos, const size_t sz
     cur_pos = it;
     return ptr;
   }
-  return nullptr;
+  return {};
 }
 
 }
 
-void* block_list::allocate(const size_t size)
+gc::managed_ptr block_list::allocate(const size_t size)
 {
   for (auto i = m_cur_pos; i != end(m_list); ++i) {
-    const auto ptr = get_allocated_space(i->second->free_list,
-                                         i->second->free_pos,
+    const auto ptr = get_allocated_space((*i)->free_list,
+                                         (*i)->free_pos,
                                          size);
     if (ptr) {
       m_cur_pos = i;
-      return ptr;
+      const auto block_idx = i - begin(m_list);
+      const auto block_os = *ptr - (*i)->block.data();
+      return { static_cast<uint32_t>(block_idx),
+               static_cast<uint16_t>(block_os),
+               {}, 1 };
     }
   }
   for (auto i = begin(m_list); i != m_cur_pos; ++i) {
-    const auto ptr = get_allocated_space(i->second->free_list,
-                                         i->second->free_pos,
+    const auto ptr = get_allocated_space((*i)->free_list,
+                                         (*i)->free_pos,
                                          size);
     if (ptr) {
       m_cur_pos = i;
-      return ptr;
+      const auto block_idx = i - begin(m_list);
+      const auto block_os = *ptr - (*i)->block.data();
+      return { static_cast<uint32_t>(block_idx),
+               static_cast<uint16_t>(block_os),
+               {}, 1 };
     }
   }
 
-  return nullptr;
+  return {};
 }
 
-void block_list::reclaim(void* ptr, const size_t size)
+void block_list::reclaim(gc::managed_ptr ptr, const size_t size)
 {
-  const auto ch_ptr = static_cast<char*>(ptr);
-  const auto it = --m_list.upper_bound(ch_ptr);
-  auto& list = it->second->free_list;
+  const auto it = begin(m_list) + ptr.m_offset;
+  auto& list = (*it)->free_list;
 
-  const auto pos = upper_bound(begin(list), end(list), ptr,
-                               [](auto* ptr, auto blk) { return ptr < blk.data; });
+  const auto ch_ptr = ptr.m_offset + (*it)->block.data();
+
+  const auto pos = upper_bound(begin(list), end(list), ch_ptr,
+                               [](auto* ch_ptr, auto blk) { return ch_ptr < blk.data; });
 
   if (pos != begin(list)) {
     const auto prev = pos - 1;
@@ -128,7 +126,7 @@ void block_list::reclaim(void* ptr, const size_t size)
       prev->size += size;
       if (pos != end(list) && pos->data == prev->data + prev->size) {
         prev->size += pos->size;
-        it->second->free_pos = list.erase(pos);
+        (*it)->free_pos = list.erase(pos);
       }
       return;
     }
@@ -139,7 +137,7 @@ void block_list::reclaim(void* ptr, const size_t size)
     pos->data = ch_ptr;
   }
   else {
-    it->second->free_pos = list.insert(pos, {size, ch_ptr});
+    (*it)->free_pos = list.insert(pos, {size, ch_ptr});
   }
 }
 
@@ -155,7 +153,8 @@ void block_list::add_new_block()
   block->free_list.push_back({block->block.size(), block->block.data()});
   block->free_pos = begin(block->free_list);
 
-  m_cur_pos = m_list.emplace(block->block.data(), move(block)).first;
+  m_list.emplace_back(move(block));
+  m_cur_pos = --end(m_list);
 }
 
 // }}}

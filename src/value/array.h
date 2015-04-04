@@ -11,9 +11,10 @@ namespace value {
 struct array : public basic_object {
 public:
   // Creates an Array containing a copy of the provided vector.
-  array(const std::vector<basic_object*>& mems = {});
+  array(const std::vector<gc::managed_ptr>& mems = {});
 
-  std::vector<basic_object*> val;
+  using value_type = std::vector<gc::managed_ptr>;
+  value_type value;
 };
 
 }

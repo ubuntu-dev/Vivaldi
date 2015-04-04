@@ -12,7 +12,8 @@ struct symbol : public basic_object {
 public:
   symbol(vv::symbol val = {});
 
-  vv::symbol val;
+  using value_type = vv::symbol;
+  value_type value;
 };
 
 }

@@ -1,6 +1,5 @@
 #include "cond_statement.h"
 
-#include "value/nil.h"
 #include "vm/instruction.h"
 
 using namespace vv;

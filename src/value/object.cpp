@@ -5,6 +5,6 @@
 using namespace vv;
 
 value::object::object()
-  : basic_object {&builtin::type::object, tag::object},
-    members      {}
+  : basic_object {builtin::type::object},
+    value        {}
 { }

@@ -13,8 +13,7 @@
 
 int main(int argc, char** argv)
 {
-  vv::gc::init();
-
+  vv::builtin::init();
   // Run REPL if run with no arguments; otherwise, run Vivaldi file
   if (argc == 1) {
     vv::run_repl();
@@ -29,7 +28,7 @@ int main(int argc, char** argv)
 
     // Populate base environment with builtin classes and functions
     const auto env = vv::gc::alloc<vv::vm::environment>( );
-    vv::builtin::make_base_env(*env);
+    vv::builtin::make_base_env(env);
     vv::vm::call_frame frame{tok_res.result(), env};
 
     // Initiate VM
@@ -40,14 +39,13 @@ int main(int argc, char** argv)
     // or so objects have been allocated, but this is probably more future-proof
     // or something. Besides, you never know; someone might have passed a *lot*
     // of arguments...)
-    vv::builtin::make_base_env(*env);
     const auto arg_array = vv::gc::alloc<vv::value::array>( );
-    env->members[{"argv"}] = arg_array;
+    vv::value::get<vv::vm::environment>(env).members[{"argv"}] = arg_array;
 
     // Fill 'argv' with command-line arguments, chopping off 'vivaldi' and the
     // filename
-    auto& cast_argv = static_cast<vv::value::array&>(*arg_array);
-    transform(argv + 2, argv + argc, back_inserter(cast_argv.val),
+    transform(argv + 2, argv + argc,
+              back_inserter(vv::value::get<vv::value::array>(arg_array)),
               vv::gc::alloc<vv::value::string, std::string>);
 
     // Actuall run the VM; if an uncaught Vivaldi exception is thrown, print the
@@ -55,7 +53,7 @@ int main(int argc, char** argv)
     try {
       vm.run();
     } catch (vv::vm_error& err) {
-      std::cerr << vv::message::caught_exception(*err.error()) << '\n';
+      std::cerr << vv::message::caught_exception(err.error()) << '\n';
       return 65; // data err
     }
   }

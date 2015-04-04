@@ -25,46 +25,46 @@ std::string no_such_variable(vv::symbol var);
 // Attempted to declare an extant variable
 std::string already_exists(vv::symbol var);
 // Attempted to read an basic_object member that doesn't exist
-std::string has_no_member(const value::basic_object& obj, vv::symbol mem);
+std::string has_no_member(gc::managed_ptr obj, vv::symbol mem);
 // Attempted to call something other than a function
-std::string not_callable(const value::basic_object& callee);
+std::string not_callable(gc::managed_ptr callee);
 // Function called with the wrong number of arguments
 std::string wrong_argc(int expected, int recieved);
 // Attempt to directly construct a nonconstructible basic_object (e.g. Integer)
-std::string nonconstructible(const value::type& type);
+std::string nonconstructible(gc::managed_ptr type);
 
 // Constructor called with wrong argument type
-std::string init_type_error(const value::type& self,
-                            const value::type& expected,
-                            const value::type& recieved);
+std::string init_type_error(gc::managed_ptr self,
+                            gc::managed_ptr expected,
+                            gc::managed_ptr recieved);
 // Constructor called with wrong argument type, if more than one type is
 // permissible
-std::string init_multi_type_error(const value::type& self,
-                                  const value::type& recieved);
+std::string init_multi_type_error(gc::managed_ptr self,
+                                  gc::managed_ptr recieved);
 // Addition type error
-std::string add_type_error(const value::type& self,
-                           const value::type& expected);
+std::string add_type_error(gc::managed_ptr self,
+                           gc::managed_ptr expected);
 // Indexing type error
-std::string at_type_error(const value::type& self, const value::type& expected);
+std::string at_type_error(gc::managed_ptr self, gc::managed_ptr expected);
 // Generic type error
-std::string type_error(const value::type& expected, const value::type& recieved);
+std::string type_error(gc::managed_ptr expected, gc::managed_ptr recieved);
 
 // Use if an operation on two iterators from the same owner is called on two
 // iterators from different owners (e.g '[].start() - [].start')
-std::string iterator_owner_error(const value::type& owner);
+std::string iterator_owner_error(gc::managed_ptr owner);
 // Use if an iterator is decremented past start
-std::string iterator_past_start(const value::type& self);
+std::string iterator_past_start(gc::managed_ptr self);
 // Use if an iterator is incremented past end
-std::string iterator_past_end(const value::type& self);
+std::string iterator_past_end(gc::managed_ptr self);
 // Use if an iterator is dereferenced at end
-std::string iterator_at_end(const value::type& self);
+std::string iterator_at_end(gc::managed_ptr self);
 
 // A value (integer, generally) is of the correct type but not within the
 // correct bounds (for instance, 11894530.chr(), or ['foo][1024])
 std::string out_of_range(size_t lower, size_t upper, int recieved);
 
 // Error message for unhandled exception
-std::string caught_exception(const value::basic_object& error);
+std::string caught_exception(gc::managed_ptr error);
 
 }
 

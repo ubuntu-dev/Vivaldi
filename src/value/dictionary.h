@@ -12,19 +12,21 @@ namespace value {
 struct dictionary : public basic_object {
 public:
   struct hasher {
-    size_t operator()(basic_object* obj) const { return hash_for(*obj); }
+    size_t operator()(gc::managed_ptr obj) const { return hash_for(obj); }
   };
   struct key_equal {
-    size_t operator()(basic_object* lhs, basic_object* rhs) const
+    size_t operator()(gc::managed_ptr lhs, gc::managed_ptr rhs) const
     {
-      return equals(*lhs, *rhs);
+      return equals(lhs, rhs);
     }
   };
 
-  dictionary(const std::unordered_map<basic_object*, basic_object*,
-                                      hasher, key_equal>& mems = {});
+  using value_type = std::unordered_map<gc::managed_ptr, gc::managed_ptr,
+                                        hasher, key_equal>;
 
-  std::unordered_map<basic_object*, basic_object*, hasher, key_equal> val;
+  dictionary(const value_type& val = {});
+
+  value_type value;
 };
 
 }

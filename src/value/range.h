@@ -8,11 +8,15 @@ namespace vv {
 namespace value {
 
 struct range : public basic_object {
-  range(basic_object* start, basic_object* end);
+  range(gc::managed_ptr start, gc::managed_ptr end);
   range();
 
-  basic_object* start;
-  basic_object* end;
+  struct value_type {
+    gc::managed_ptr start;
+    gc::managed_ptr end;
+  };
+
+  value_type value;
 };
 
 }

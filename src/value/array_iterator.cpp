@@ -4,8 +4,7 @@
 
 using namespace vv;
 
-value::array_iterator::array_iterator(array& new_arr)
-  : basic_object {&builtin::type::array_iterator, tag::array_iterator},
-    arr          {new_arr},
-    idx          {0}
+value::array_iterator::array_iterator(gc::managed_ptr arr)
+  : basic_object {builtin::type::array_iterator},
+    value        {arr, 0}
 { }

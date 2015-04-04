@@ -9,12 +9,9 @@
 #include "utils/lang.h"
 #include "value/array.h"
 #include "value/builtin_function.h"
-#include "value/boolean.h"
 #include "value/dictionary.h"
-#include "value/integer.h"
 #include "value/floating_point.h"
 #include "value/function.h"
-#include "value/nil.h"
 #include "value/opt_functions.h"
 #include "value/regex.h"
 #include "value/string.h"
@@ -25,7 +22,7 @@ using namespace vv;
 
 vm::machine::machine(call_frame&& frame)
   : m_call_stack     {frame},
-    m_transient_self {nullptr},
+    m_transient_self {},
     m_req_path       {""}
 {
   // TODO: Merge VM and GC so they don't have to interact so weirdly
@@ -68,12 +65,12 @@ void vm::machine::run_cur_scope()
   }
 }
 
-value::basic_object* vm::machine::top()
+gc::managed_ptr vm::machine::top()
 {
   return m_stack.back();
 }
 
-void vm::machine::push(value::basic_object* val)
+void vm::machine::push(gc::managed_ptr val)
 {
   m_stack.push_back(val);
 }
@@ -81,18 +78,14 @@ void vm::machine::push(value::basic_object* val)
 void vm::machine::mark()
 {
   for (auto i : m_stack)
-    gc::mark(*i);
+    gc::mark(i);
 
-  if (m_transient_self)
-    gc::mark(*m_transient_self);
+  gc::mark(m_transient_self);
 
   for (auto& i : m_call_stack) {
-    if (i.caller)
-      gc::mark(*i.caller);
-    if (i.catcher)
-      gc::mark(*i.catcher);
-    if (i.env)
-      gc::mark(*i.env);
+    gc::mark(i.caller);
+    gc::mark(i.catcher);
+    gc::mark(i.env);
   }
 }
 
@@ -137,20 +130,19 @@ void vm::machine::ptype(const type_t& type)
 {
   read(type.parent);
   const auto parent_arg = top();
-  if (parent_arg->type != &builtin::type::custom_type) {
+  if (parent_arg.type() != builtin::type::custom_type) {
     pstr(message::inheritance_type_err);
     exc();
     return;
   }
-  const auto parent = static_cast<value::type*>(parent_arg);
+  const auto parent = parent_arg;
 
-  hash_map<symbol, value::basic_function*> methods;
+  hash_map<symbol, gc::managed_ptr> methods;
   for (const auto& i : type.methods) {
     pfn(i.second);
-    const auto fn = static_cast<value::basic_function*>(top());
-    methods.insert(i.first, fn);
+    methods.insert(i.first, top());
   }
-  const auto newtype = gc::alloc<value::type>(nullptr, methods, *parent, type.name);
+  const auto newtype = gc::alloc<value::type>(nullptr, methods, parent, type.name);
 
   pop(methods.size() + 1); // methods and parent
   push(newtype);
@@ -169,7 +161,7 @@ void vm::machine::pre(const std::string& val)
 
 void vm::machine::parr(const int size)
 {
-  std::vector<value::basic_object*> vec{end(m_stack) - size, end(m_stack)};
+  std::vector<gc::managed_ptr> vec{end(m_stack) - size, end(m_stack)};
   const auto val = gc::alloc<value::array>( move(vec) );
   pop(size);
   push(val);
@@ -177,7 +169,7 @@ void vm::machine::parr(const int size)
 
 void vm::machine::pdict(const int size)
 {
-  std::unordered_map<value::basic_object*, value::basic_object*,
+  std::unordered_map<gc::managed_ptr, gc::managed_ptr,
                      value::dictionary::hasher, value::dictionary::key_equal> dict;
   for (auto i = end(m_stack) - size; i != end(m_stack); i += 2)
     dict[i[0]] = i[1];
@@ -189,9 +181,9 @@ void vm::machine::pdict(const int size)
 
 void vm::machine::read(const symbol sym)
 {
-  for (auto i = frame().env; i; i = i->enclosing) {
-    const auto iter = i->members.find(sym);
-    if (iter != std::end(i->members)) {
+  for (auto i = frame().env; i; i = value::get<environment>(i).enclosing) {
+    const auto iter = value::get<environment>(i).members.find(sym);
+    if (iter != std::end(value::get<environment>(i).members)) {
       push(iter->second);
       return;
     }
@@ -202,9 +194,9 @@ void vm::machine::read(const symbol sym)
 
 void vm::machine::write(const symbol sym)
 {
-  for (auto i = frame().env; i; i = i->enclosing) {
-    const auto iter = i->members.find(sym);
-    if (iter != std::end(i->members)) {
+  for (auto i = frame().env; i; i = value::get<environment>(i).enclosing) {
+    const auto iter = value::get<environment>(i).members.find(sym);
+    if (iter != std::end(value::get<environment>(i).members)) {
       iter->second = top();
       return;
     }
@@ -215,19 +207,19 @@ void vm::machine::write(const symbol sym)
 
 void vm::machine::let(const symbol sym)
 {
-  if (frame().env->members.count(sym)) {
+  if (value::get<environment>(frame().env).members.count(sym)) {
     pstr(message::already_exists(sym));
     exc();
   }
   else {
-    frame().env->members.insert(sym, top());
+    value::get<environment>(frame().env).members.insert(sym, top());
   }
 }
 
 void vm::machine::self()
 {
-  if (frame().env->self) {
-    push(frame().env->self);
+  if (value::get<environment>(frame().env).self) {
+    push(value::get<environment>(frame().env).self);
   }
   else {
     pstr(message::invalid_self_access);
@@ -246,14 +238,14 @@ void vm::machine::readm(const symbol sym)
   pop(1);
 
   // First check local members, then methods
-  if (has_member(*m_transient_self, sym)) {
-    push(&get_member(*m_transient_self, sym));
+  if (has_member(m_transient_self, sym)) {
+    push(get_member(m_transient_self, sym));
   }
-  else if (auto method = get_method(*m_transient_self->type, sym)) {
+  else if (auto method = get_method(m_transient_self.type(), sym)) {
     push(method);
   }
   else {
-    pstr(message::has_no_member(*m_transient_self, sym));
+    pstr(message::has_no_member(m_transient_self, sym));
     exc();
   }
 }
@@ -262,52 +254,79 @@ void vm::machine::writem(const symbol sym)
 {
   const auto obj = top();
   m_stack.pop_back();
-  set_member(*obj, sym, *top());
+  set_member(obj, sym, top());
 }
 
 void vm::machine::call(const int argc)
 {
-  if (top()->type != &builtin::type::function) {
-    pstr(message::not_callable(*top()));
+  const static std::array<vm::command, 1> body_shim{{
+    { instruction::ret, false }
+  }};
+
+  if (top().type() != builtin::type::function) {
+    pstr(message::not_callable(top()));
     exc();
     return;
   }
 
-  const auto func = static_cast<value::basic_function*>(top());
+  const auto func = top();
   pop(1);
-  if (func->argc != argc) {
-    pstr(message::wrong_argc(func->argc, argc));
-    exc();
-    return;
-  }
-  m_call_stack.emplace_back(func->body,
-                            nullptr,
-                            func->argc,
-                            m_stack.size() - 1);
-  frame().caller = func;
 
   try {
-    if (func->tag == tag::opt_monop) {
-      const auto monop = static_cast<value::opt_monop*>(func);
-      const auto ret = monop->fn_body(m_transient_self);
+    if (func.tag() == tag::opt_monop) {
+      if (argc != 0) {
+        pstr(message::wrong_argc(0, argc));
+        exc();
+        return;
+      }
+
+      m_call_stack.push_back({body_shim, {}, 0, m_stack.size() - 1});
+      frame().caller = func;
+      const auto ret = value::get<value::opt_monop>(func).body(m_transient_self);
       push(ret);
 
     }
-    else if (func->tag == tag::opt_binop) {
-      const auto binop = static_cast<value::opt_binop*>(func);
-      const auto ret = binop->fn_body(m_transient_self, top());
+    else if (func.tag() == tag::opt_binop) {
+      if (argc != 1) {
+        pstr(message::wrong_argc(1, argc));
+        exc();
+        return;
+      }
+      m_call_stack.push_back({body_shim, {}, 1, m_stack.size() - 1});
+      frame().caller = func;
+      const auto ret = value::get<value::opt_binop>(func).body(m_transient_self,
+                                                               top());
       push(ret);
 
     }
-    else if (func->tag == tag::builtin_function) {
-      const auto builtin = static_cast<value::builtin_function*>(func);
-      if (m_transient_self)
-        frame().env = gc::alloc<environment>( nullptr, m_transient_self );
-      push(builtin->fn_body(*this));
+    else if (func.tag() == tag::builtin_function) {
+      const auto expected = value::get<value::builtin_function>(func).argc;
+      if (expected != static_cast<unsigned>(argc)) {
+        pstr(message::wrong_argc(expected, argc));
+        exc();
+        return;
+      }
+      m_call_stack.push_back({body_shim, {}, expected, m_stack.size() - 1});
+      frame().caller = func;
+      if (m_transient_self) {
+        frame().env = gc::alloc<environment>( gc::managed_ptr{}, m_transient_self );
+      }
+      push(value::get<value::builtin_function>(func).body(*this));
 
     }
     else {
-      frame().env = gc::alloc<environment>(func->enclosing, m_transient_self);
+      const auto expected = value::get<value::function>(func).argc;
+      if (expected != argc) {
+        pstr(message::wrong_argc(expected, argc));
+        exc();
+        return;
+      }
+      m_call_stack.emplace_back(value::get<value::function>(func).body,
+                                gc::alloc<environment>( value::get<value::function>(func).enclosure,
+                                                        m_transient_self ),
+                                expected,
+                                m_stack.size() - 1);
+      frame().caller = func;
     }
   } catch (const vm_error& err) {
     push(err.error());
@@ -317,31 +336,31 @@ void vm::machine::call(const int argc)
 
 void vm::machine::pobj(const int argc)
 {
-  if (top()->type != &builtin::type::custom_type) {
+  if (top().tag() != tag::type) {
     pstr(message::construction_type_err);
     exc();
     return;
   }
 
-  const auto type = static_cast<value::type*>(top());
+  const auto type = top();
 
   auto ctor_type = type;
-  while (!ctor_type->constructor)
-    ctor_type = &ctor_type->parent;
+  while (!value::get<value::type>(ctor_type).constructor)
+    ctor_type = value::get<value::type>(ctor_type).parent;
   pop(1);
-  push(ctor_type->constructor());
+  push(value::get<value::type>(ctor_type).constructor());
   // Hack--- nonconstructible types (e.g. Integer) have constructors that return
   // nullptr
   if (!top()) {
     pop(1);
-    pstr(message::nonconstructible(*ctor_type));
+    pstr(message::nonconstructible(ctor_type));
     exc();
     return;
   }
-  top()->type = type;
+  static_cast<value::basic_object*>(top().get())->type = type;
   m_transient_self = top();
   pop(1);
-  pfn(type->init_shim);
+  pfn(value::get<value::type>(type).init_shim);
   call(argc);
 }
 
@@ -362,7 +381,7 @@ void vm::machine::eblk()
 
 void vm::machine::lblk()
 {
-  frame().env = frame().env->enclosing;
+  frame().env = value::get<environment>(frame().env).enclosing;
 }
 
 void vm::machine::ret(const bool copy)
@@ -374,8 +393,8 @@ void vm::machine::ret(const bool copy)
   const auto cur_env = frame().env;
   m_call_stack.pop_back();
   if (copy)
-    for (const auto& i : cur_env->members)
-      frame().env->members[i.first] = i.second;
+    for (const auto& i : value::get<environment>(cur_env).members)
+      value::get<environment>(frame().env).members[i.first] = i.second;
 }
 
 void vm::machine::req(const std::string& filename)
@@ -386,7 +405,7 @@ void vm::machine::req(const std::string& filename)
     // Place in separate environment (along with environment) so as to avoid any
     // weirdnesses with adding things to the stack or declaring new variables
     m_call_stack.emplace_back(vector_ref<command>{},
-                              gc::alloc<environment>( nullptr ),
+                              gc::alloc<environment>( gc::managed_ptr{} ),
                               0,
                               m_stack.size() - 1);
     // TODO: Support actual error handling for C extensions
@@ -421,13 +440,13 @@ void vm::machine::jmp(const int offset)
 
 void vm::machine::jf(const int offset)
 {
-  if (!truthy(*top()))
+  if (!truthy(top()))
     jmp(offset);
 }
 
 void vm::machine::jt(const int offset)
 {
-  if (truthy(*top()))
+  if (truthy(top()))
     jmp(offset);
 }
 
@@ -439,7 +458,7 @@ void vm::machine::pushc()
 
 void vm::machine::popc()
 {
-  frame().catcher = nullptr;
+  frame().catcher = {};
 }
 
 void vm::machine::exc()
@@ -466,11 +485,11 @@ void int_optimization(vm::machine& vm, const F& fn, const vv::symbol sym)
   vm.pop(1);
   const auto second = vm.top();
 
-  if (first->type == &builtin::type::integer && !has_member(*first, sym)) {
-    if (second->type == &builtin::type::integer) {
+  if (first.tag() == tag::integer && !has_member(first, sym)) {
+    if (second.tag() == tag::integer) {
       vm.pop(1);
-      const auto left = static_cast<value::integer&>(*first).val;
-      const auto right = static_cast<value::integer&>(*second).val;
+      const auto left = value::get<value::integer>(first);
+      const auto right = value::get<value::integer>(second);
       vm.pint(fn(left, right));
       return;
     }
@@ -508,9 +527,10 @@ void vm::machine::opt_not()
   const static symbol sym{"not"};
 
   const auto val = top();
-  if (!has_member(*val, sym)) {
-    if (get_method(*val->type, sym) == builtin::type::object.methods.at(sym)) {
-      const auto res = !truthy(*val);
+  if (!has_member(val, sym)) {
+    if (get_method(val.type(), sym) ==
+        value::get<value::type>(builtin::type::object).methods.at(sym)) {
+      const auto res = !truthy(val);
       pop(1);
       pbool(res);
       return;
@@ -537,7 +557,7 @@ void vm::machine::run_single_command(const vm::command& command)
   //   5 + 1           // self is now 5
   //   add(2)          // => 7
   if (instr != instruction::call)
-    m_transient_self = nullptr;
+    m_transient_self = {};
 
   switch (instr) {
   case instruction::pbool: pbool(arg.as_bool());  break;

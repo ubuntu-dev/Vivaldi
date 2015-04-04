@@ -11,21 +11,21 @@ namespace gc {
 
 class object_list {
 public:
-  using iterator = std::vector<value::basic_object*>::iterator;
+  using iterator = std::vector<gc::managed_ptr>::iterator;
 
   size_t size() const { return m_list.size(); }
 
-  void push_back(value::basic_object* obj) { m_list.push_back(obj); }
+  void push_back(gc::managed_ptr obj) { m_list.push_back(obj); }
 
   void erase(iterator first, iterator second) { m_list.erase(first, second); }
 
   iterator begin() { return std::begin(m_list); }
   iterator end()   { return std::end(m_list); }
 
-  ~object_list() { for (auto i : m_list) destruct(*i); }
+  ~object_list() { for (auto i : m_list) destruct(i); }
 
 private:
-  std::vector<value::basic_object*> m_list;
+  std::vector<gc::managed_ptr> m_list;
 };
 
 }

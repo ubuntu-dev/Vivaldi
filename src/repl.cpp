@@ -81,10 +81,8 @@ std::vector<std::unique_ptr<ast::expression>> vv::get_valid_line()
 
 void vv::run_repl()
 {
-  gc::init();
-
   const auto env = gc::alloc<vm::environment>( );
-  builtin::make_base_env(*env);
+  builtin::make_base_env(env);
 
   while (!std::cin.eof()) {
     for (const auto& expr : get_valid_line()) {
@@ -95,7 +93,7 @@ void vv::run_repl()
         machine.run();
         std::cout << "=> " << pretty_print(machine.top(), machine) << '\n';
       } catch (const vm_error& err) {
-        write_error(message::caught_exception(*err.error()));
+        write_error(message::caught_exception(err.error()));
       }
     }
   }

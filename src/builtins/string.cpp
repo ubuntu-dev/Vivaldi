@@ -1,181 +1,194 @@
-#include "builtins.h"
+#include "builtins/string.h"
 
-#include "gc/alloc.h"
+#include "builtins.h"
 #include "messages.h"
+#include "gc/alloc.h"
 #include "utils/lang.h"
 #include "utils/string_helpers.h"
-#include "value/boolean.h"
-#include "value/builtin_function.h"
-#include "value/opt_functions.h"
 #include "value/regex.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
 #include "value/symbol.h"
-#include "value/type.h"
 
 using namespace vv;
 using namespace builtin;
 
+// Generic helper functions {{{
+
 namespace {
-
-int to_int(value::basic_object* boxed)
-{
-  return static_cast<value::integer&>(*boxed).val;
-}
-
-const std::string& to_string(value::basic_object* boxed)
-{
-  return static_cast<const value::string&>(*boxed).val;
-}
-
-vv::symbol to_symbol(value::basic_object* boxed)
-{
-  return static_cast<const value::symbol&>(*boxed).val;
-}
-
-// string {{{
-
-value::basic_object* fn_string_init(vm::machine& vm)
-{
-  vm.self();
-  auto str = static_cast<value::string*>(vm.top());
-  vm.arg(0);
-  auto arg = vm.top();
-  if (arg->type == &type::string)
-    str->val = to_string(arg);
-  else if (arg->type == &type::symbol)
-    str->val = to_string(to_symbol(arg));
-  else
-     str->val = value_for(*arg);
-  return str;
-}
-
-value::basic_object* fn_string_size(value::basic_object* self)
-{
-  auto sz = static_cast<value::string&>(*self).val.size();
-  return gc::alloc<value::integer>( static_cast<int>(sz) );
-}
-
-value::basic_object* fn_string_equals(value::basic_object* self, value::basic_object* arg)
-{
-  if (arg->type != &type::string)
-    return gc::alloc<value::boolean>( false );
-  return gc::alloc<value::boolean>( to_string(self) == to_string(arg) );
-}
-
-value::basic_object* fn_string_unequal(value::basic_object* self, value::basic_object* arg)
-{
-  if (arg->type != &type::string)
-    return gc::alloc<value::boolean>( false );
-  return gc::alloc<value::boolean>( to_string(self) != to_string(arg) );
-}
 
 template <typename F>
 auto fn_string_cmp(const F& cmp)
 {
-  return [cmp](value::basic_object* self, value::basic_object* arg) -> value::basic_object*
+  return [cmp](gc::managed_ptr self, gc::managed_ptr arg) -> gc::managed_ptr
   {
-    if (arg->type != &type::string)
+    if (arg.tag() != tag::string)
       return throw_exception("Strings can only be compared to other Strings");
-    return gc::alloc<value::boolean>( cmp(to_string(self), to_string(arg)) );
+    return gc::alloc<value::boolean>( cmp(value::get<value::string>(self),
+                                          value::get<value::string>(arg)) );
   };
 }
 
-value::basic_object* fn_string_add(value::basic_object* self, value::basic_object* arg)
-{
-  if (arg->type != &type::string)
-    return throw_exception(message::add_type_error(type::string, type::string));
-
-  auto str = to_string(arg);
-  auto new_str = static_cast<value::string&>(*self).val + str;
-  return gc::alloc<value::string>( new_str );
 }
 
-value::basic_object* fn_string_times(value::basic_object* self, value::basic_object* arg)
+// }}}
+
+// string
+
+gc::managed_ptr string::init(vm::machine& vm)
 {
-  if (arg->type != &type::integer)
+  vm.self();
+  auto str = vm.top();
+  vm.arg(0);
+  auto arg = vm.top();
+  if (arg.tag() == tag::string)
+    value::get<value::string>(str) = value::get<value::string>(arg);
+  else if (arg.tag() == tag::symbol)
+    value::get<value::string>(str) = to_string(value::get<value::symbol>(arg));
+  else
+     value::get<value::string>(str) = value_for(arg);
+  return str;
+}
+
+gc::managed_ptr string::size(gc::managed_ptr self)
+{
+  const auto sz = value::get<value::string>(self).size();
+  return gc::alloc<value::integer>( static_cast<int>(sz) );
+}
+
+gc::managed_ptr string::equals(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  if (arg.tag() != tag::string)
+    return gc::alloc<value::boolean>( false );
+
+  return gc::alloc<value::boolean>( value::get<value::string>(self) ==
+                                    value::get<value::string>(arg) );
+}
+
+gc::managed_ptr string::unequal(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  if (arg.tag() != tag::string)
+    return gc::alloc<value::boolean>( true );
+
+  return gc::alloc<value::boolean>( value::get<value::string>(self) !=
+                                    value::get<value::string>(arg) );
+}
+
+gc::managed_ptr string::less(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_string_cmp(std::less<std::string>{})(self, arg);
+}
+
+gc::managed_ptr string::greater(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_string_cmp(std::greater<std::string>{})(self, arg);
+}
+
+gc::managed_ptr string::less_equals(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_string_cmp(std::less_equal<std::string>{})(self, arg);
+}
+
+gc::managed_ptr string::greater_equals(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  return fn_string_cmp(std::greater_equal<std::string>{})(self, arg);
+}
+
+gc::managed_ptr string::add(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  if (arg.tag() != tag::string)
+    return throw_exception(message::add_type_error(type::string, type::string));
+
+  const auto str = value::get<value::string>(arg);
+  return gc::alloc<value::string>( value::get<value::string>(self) + str );
+}
+
+gc::managed_ptr string::times(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  if (arg.tag() != tag::integer)
     return throw_exception("Strings can only be multiplied by Integers");
 
-  auto val = static_cast<value::string&>(*self).val;
+  const auto& val = value::get<value::string>(self);
   std::string new_str{};
-  for (auto i = to_int(self); i--;)
+  for (auto i = value::get<value::integer>(arg); i--;)
     new_str += val;
   return gc::alloc<value::string>( new_str );
 }
 
-value::basic_object* fn_string_to_int(value::basic_object* self)
+gc::managed_ptr string::to_int(gc::managed_ptr self)
 {
-  return gc::alloc<value::integer>(vv::to_int(to_string(self)));
+  return gc::alloc<value::integer>(vv::to_int(value::get<value::string>(self)));
 }
 
-value::basic_object* fn_string_at(value::basic_object* self, value::basic_object* arg)
+gc::managed_ptr string::at(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  if (arg->type != &type::integer)
+  if (arg.tag() != tag::integer)
     return throw_exception(message::at_type_error(type::string, type::integer));
-  auto val = static_cast<value::integer&>(*arg).val;
-  const auto& str = static_cast<value::string&>(*self).val;
+
+  const auto val = value::get<value::integer>(arg);
+  const auto& str = value::get<value::string>(self);
+
   if (str.size() <= static_cast<unsigned>(val) || val < 0)
     return throw_exception(message::out_of_range(0, str.size(), val));
+
   return gc::alloc<value::string>( std::string{str[static_cast<unsigned>(val)]} );
 }
 
-value::basic_object* fn_string_start(value::basic_object* self)
+gc::managed_ptr string::start(gc::managed_ptr self)
 {
-  auto str = static_cast<value::string*>(self);
-  return gc::alloc<value::string_iterator>(*str);
+  return gc::alloc<value::string_iterator>(self);
 }
 
-value::basic_object* fn_string_stop(value::basic_object* self)
+gc::managed_ptr string::stop(gc::managed_ptr self)
 {
-  auto str = static_cast<value::string*>(self);
-  auto end = gc::alloc<value::string_iterator>(*str);
-  static_cast<value::string_iterator&>(*end).idx = str->val.size();
+  const auto end = gc::alloc<value::string_iterator>(self);
+  value::get<value::string_iterator>(end).idx = value::get<value::string>(self).size();
   return end;
 }
 
-value::basic_object* fn_string_to_upper(value::basic_object* self)
+gc::managed_ptr string::to_upper(gc::managed_ptr self)
 {
-  auto str = static_cast<value::string&>(*self).val;
+  auto str = value::get<value::string>(self);
   transform(begin(str), end(str), begin(str), toupper);
   return gc::alloc<value::string>( str );
 }
 
-value::basic_object* fn_string_to_lower(value::basic_object* self)
+gc::managed_ptr string::to_lower(gc::managed_ptr self)
 {
-  auto str = static_cast<value::string&>(*self).val;
+  auto str = value::get<value::string>(self);
   transform(begin(str), end(str), begin(str), tolower);
   return gc::alloc<value::string>( str );
 }
 
-value::basic_object* fn_string_starts_with(value::basic_object* self, value::basic_object* arg)
+gc::managed_ptr string::starts_with(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  if (arg->type != &type::string)
+  if (arg.tag() != tag::string)
     return throw_exception("Strings can only start with other Strings");
 
-  const auto& str = static_cast<value::string&>(*self).val;
-  const auto& other = to_string(arg);
+  const auto& str = value::get<value::string>(self);
+  const auto& other = value::get<value::string>(arg);
 
   if (other.size() > str.size() || !equal(begin(other), end(other), begin(str)))
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>( true );
 }
 
-value::basic_object* fn_string_ord(value::basic_object* self)
+gc::managed_ptr string::ord(gc::managed_ptr self)
 {
-  auto str = static_cast<value::string&>(*self).val;
+  const auto& str = value::get<value::string>(self);
   if (!str.size())
     return throw_exception("Cannot call ord on an empty string");
   return gc::alloc<value::integer, int>( str[0] );
 }
 
-value::basic_object* fn_string_split(vm::machine& vm)
+gc::managed_ptr string::split(vm::machine& vm)
 {
   vm.self();
-  boost::string_ref str{static_cast<value::string&>(*vm.top()).val};
+  boost::string_ref str{value::get<value::string>(vm.top())};
   vm.arg(0);
-  if (vm.top()->type != &type::string)
+  if (vm.top().tag() != tag::string)
     return throw_exception("Strings can only be split by other Strings");
-  const auto& sep = static_cast<value::string&>(*vm.top()).val;
+  const auto& sep = value::get<value::string>(vm.top());
 
   size_t substrs{};
 
@@ -185,12 +198,12 @@ value::basic_object* fn_string_split(vm::machine& vm)
       vm.pstr("");
       break;
     }
-    auto next_sep = str.find(sep);
+    const auto next_sep = str.find(sep);
     if (next_sep == boost::string_ref::npos) {
       vm.pstr({begin(str), end(str)});
       break;
     }
-    auto substr = str.substr(0, next_sep);
+    const auto substr = str.substr(0, next_sep);
     vm.pstr({begin(substr), end(substr)});
     str = str.substr(next_sep + sep.size());
   }
@@ -198,186 +211,119 @@ value::basic_object* fn_string_split(vm::machine& vm)
   return vm.top();
 }
 
-value::basic_object* fn_string_replace(vm::machine& vm)
+gc::managed_ptr string::replace(vm::machine& vm)
 {
   vm.arg(1);
-  if (vm.top()->type != &type::string)
+  if (vm.top().tag() != tag::string)
     return throw_exception("Replacements must be other Strings");
-  const auto& replacement = to_string(vm.top());
+  const auto& replacement = value::get<value::string>(vm.top());
 
   vm.arg(0);
-  if (vm.top()->type != &type::regex)
+  if (vm.top().tag() != tag::regex)
     return throw_exception("Strings can only be replaced by RegExes");
-  const auto& re = static_cast<value::regex&>(*vm.top()).val;
+  const auto& re = value::get<value::regex>(vm.top()).val;
 
   vm.self();
-  const auto& str = to_string(vm.top());
+  const auto& str = value::get<value::string>(vm.top());
 
   vm.pop(3);
 
   return gc::alloc<value::string>( regex_replace(str, re, replacement) );
 }
 
-// }}}
-// string_iterator {{{
+// string_iterator
 
-value::basic_object* fn_string_iterator_at_start(value::basic_object* self)
+gc::managed_ptr string_iterator::at_start(gc::managed_ptr self)
 {
-  auto& iter = static_cast<value::string_iterator&>(*self);
+  const auto& iter = value::get<value::string_iterator>(self);
   return gc::alloc<value::boolean>( iter.idx == 0 );
 }
 
-value::basic_object* fn_string_iterator_at_end(value::basic_object* self)
+gc::managed_ptr string_iterator::at_end(gc::managed_ptr self)
 {
-  auto& iter = static_cast<value::string_iterator&>(*self);
-  return gc::alloc<value::boolean>( iter.idx == iter.str.val.size() );
+  const auto& iter = value::get<value::string_iterator>(self);
+  return gc::alloc<value::boolean>(iter.idx ==
+                                   value::get<value::string>(iter.str).size());
 }
 
-value::basic_object* fn_string_iterator_get(value::basic_object* self)
+gc::managed_ptr string_iterator::get(gc::managed_ptr self)
 {
-  auto& iter = static_cast<value::string_iterator&>(*self);
-  if (iter.idx == iter.str.val.size())
+  const auto& iter = value::get<value::string_iterator>(self);
+  if (iter.idx == value::get<value::string>(iter.str).size())
     return throw_exception(message::iterator_at_end(type::string_iterator));
-  return gc::alloc<value::string>( std::string{iter.str.val[iter.idx]} );
+
+  const auto chr = value::get<value::string>(iter.str)[iter.idx];
+  return gc::alloc<value::string>( std::string{chr} );
 }
 
-value::basic_object* fn_string_iterator_increment(value::basic_object* self)
+gc::managed_ptr string_iterator::increment(gc::managed_ptr self)
 {
-  auto iter = static_cast<value::string_iterator*>(self);
-  if (iter->idx == iter->str.val.size())
+  auto& iter = value::get<value::string_iterator>(self);
+  if (iter.idx == value::get<value::string>(iter.str).size())
     return throw_exception(message::iterator_past_end(type::string_iterator));
-  iter->idx += 1;
-  return iter;
+
+  ++iter.idx;
+  return self;
 }
 
-value::basic_object* fn_string_iterator_decrement(value::basic_object* self)
+gc::managed_ptr string_iterator::decrement(gc::managed_ptr self)
 {
-  auto iter = static_cast<value::string_iterator*>(self);
-  if (iter->idx == 0)
+  auto& iter = value::get<value::string_iterator>(self);
+  if (iter.idx == 0)
     return throw_exception(message::iterator_past_start(type::string_iterator));
-  iter->idx -= 1;
-  return iter;
+
+  --iter.idx;
+  return self;
 }
 
-value::basic_object* fn_string_iterator_add(value::basic_object* self, value::basic_object* arg)
+gc::managed_ptr string_iterator::add(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  auto& iter = static_cast<value::string_iterator&>(*self);
+  const auto& iter = value::get<value::string_iterator>(self);
 
-  if (arg->type != &type::integer)
+  if (arg.tag() != tag::integer)
     return throw_exception(message::add_type_error(type::string_iterator,
                                                    type::integer));
-  auto offset = to_int(arg);
+  const auto offset = value::get<value::integer>(arg);
 
   if (static_cast<int>(iter.idx) + offset < 0)
     return throw_exception(message::iterator_past_start(type::string_iterator));
-  if (iter.idx + offset > iter.str.val.size())
+  if (iter.idx + offset > value::get<value::string>(iter.str).size())
     return throw_exception(message::iterator_past_end(type::string_iterator));
 
-  auto other = gc::alloc<value::string_iterator>( iter );
-  static_cast<value::string_iterator&>(*other).idx = iter.idx + offset;
+  const auto other = gc::alloc<value::string_iterator>( iter.str );
+  value::get<value::string_iterator>(other).idx = iter.idx + offset;
   return other;
 }
 
-value::basic_object* fn_string_iterator_subtract(value::basic_object* self, value::basic_object* arg)
+gc::managed_ptr string_iterator::subtract(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  auto& iter = static_cast<value::string_iterator&>(*self);
+  const auto& iter = value::get<value::string_iterator>(self);
 
-  if (arg->type != &type::integer)
+  if (arg.tag() != tag::integer)
     return throw_exception("Only Integers can be subtracted from StringIterators");
-  auto offset = to_int(arg);
+  const auto offset = value::get<value::integer>(arg);
 
   if (static_cast<int>(iter.idx) - offset < 0)
     return throw_exception(message::iterator_past_start(type::string_iterator));
-  if (static_cast<int>(iter.idx) - offset > static_cast<int>(iter.str.val.size()))
+  const auto str_sz = value::get<value::string>(iter.str).size();
+  if (static_cast<int>(iter.idx) - offset > static_cast<int>(str_sz))
     return throw_exception(message::iterator_past_end(type::string_iterator));
 
-  auto other = gc::alloc<value::string_iterator>( iter );
-  static_cast<value::string_iterator&>(*other).idx = iter.idx - offset;
+  const auto other = gc::alloc<value::string_iterator>( iter.str );
+  value::get<value::string_iterator>(other).idx = iter.idx - offset;
   return other;
 }
 
-value::basic_object* fn_string_iterator_equals(value::basic_object* self, value::basic_object* arg)
+gc::managed_ptr string_iterator::equals(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  auto& iter = static_cast<value::string_iterator&>(*self);
-  auto& other = static_cast<value::string_iterator&>(*arg);
-  return gc::alloc<value::boolean>(&iter.str == &other.str && iter.idx == other.idx);
+  const auto& iter = value::get<value::string_iterator>(self);
+  const auto& other = value::get<value::string_iterator>(arg);
+  return gc::alloc<value::boolean>(iter.str == other.str && iter.idx == other.idx);
 }
 
-value::basic_object* fn_string_iterator_unequal(value::basic_object* self, value::basic_object* arg)
+gc::managed_ptr string_iterator::unequal(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  auto& iter = static_cast<value::string_iterator&>(*self);
-  auto& other = static_cast<value::string_iterator&>(*arg);
-  return gc::alloc<value::boolean>(&iter.str != &other.str || iter.idx != other.idx);
+  auto& iter = value::get<value::string_iterator>(self);
+  auto& other = value::get<value::string_iterator>(arg);
+  return gc::alloc<value::boolean>(iter.str != other.str || iter.idx != other.idx);
 }
-
-// }}}
-
-value::builtin_function string_init {fn_string_init, 1};
-value::opt_monop string_size        {fn_string_size   };
-
-value::opt_binop string_equals  {fn_string_equals                                };
-value::opt_binop string_unequal {fn_string_unequal                               };
-value::opt_binop string_greater {fn_string_cmp(std::greater<std::string>{})      };
-value::opt_binop string_less    {fn_string_cmp(std::less<std::string>{})         };
-value::opt_binop string_ge      {fn_string_cmp(std::greater_equal<std::string>{})};
-value::opt_binop string_le      {fn_string_cmp(std::less_equal<std::string>{})   };
-
-value::opt_binop string_add            {fn_string_add        };
-value::opt_binop string_times          {fn_string_times      };
-value::opt_monop string_to_int         {fn_string_to_int     };
-value::opt_binop string_at             {fn_string_at         };
-value::opt_monop string_start          {fn_string_start      };
-value::opt_monop string_stop           {fn_string_stop       };
-value::opt_monop string_to_upper       {fn_string_to_upper   };
-value::opt_monop string_to_lower       {fn_string_to_lower   };
-value::opt_binop string_starts_with    {fn_string_starts_with};
-value::opt_monop string_ord            {fn_string_ord        };
-value::builtin_function string_split   {fn_string_split,    1};
-value::builtin_function string_replace {fn_string_replace,  2};
-
-value::opt_monop string_iterator_at_start  {fn_string_iterator_at_start };
-value::opt_monop string_iterator_at_end    {fn_string_iterator_at_end   };
-value::opt_monop string_iterator_get       {fn_string_iterator_get      };
-value::opt_binop string_iterator_equals    {fn_string_iterator_equals   };
-value::opt_binop string_iterator_unequal   {fn_string_iterator_unequal  };
-value::opt_monop string_iterator_increment {fn_string_iterator_increment};
-value::opt_monop string_iterator_decrement {fn_string_iterator_decrement};
-value::opt_binop string_iterator_add       {fn_string_iterator_add      };
-value::opt_binop string_iterator_subtract  {fn_string_iterator_subtract };
-
-}
-
-value::type type::string {gc::alloc<value::string>, {
-  { {"init"},           &string_init        },
-  { {"size"},           &string_size        },
-  { {"equals"},         &string_equals      },
-  { {"unequal"},        &string_unequal     },
-  { {"greater"},        &string_greater     },
-  { {"less"},           &string_less        },
-  { {"greater_equals"}, &string_ge          },
-  { {"less_equals"},    &string_le          },
-  { {"add"},            &string_add         },
-  { {"times"},          &string_times       },
-  { {"to_int"},         &string_to_int      },
-  { {"at"},             &string_at          },
-  { {"start"},          &string_start       },
-  { {"stop"},           &string_stop        },
-  { {"to_upper"},       &string_to_upper    },
-  { {"to_lower"},       &string_to_lower    },
-  { {"starts_with"},    &string_starts_with },
-  { {"ord"},            &string_ord         },
-  { {"split"},          &string_split       },
-  { {"replace"},        &string_replace     }
-}, builtin::type::object, {"String"}};
-
-value::type type::string_iterator {[]{ return nullptr; }, {
-  { {"at_start"},  &string_iterator_at_start  },
-  { {"at_end"},    &string_iterator_at_end    },
-  { {"get"},       &string_iterator_get       },
-  { {"equals"},    &string_iterator_equals    },
-  { {"unequal"},   &string_iterator_unequal   },
-  { {"increment"}, &string_iterator_increment },
-  { {"decrement"}, &string_iterator_decrement },
-  { {"add"},       &string_iterator_add       },
-  { {"subtract"},  &string_iterator_subtract  },
-}, builtin::type::object, {"StringIterator"}};

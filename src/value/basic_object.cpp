@@ -3,7 +3,6 @@
 using namespace vv;
 using namespace value;
 
-basic_object::basic_object(value::type* type, const vv::tag tag)
-  : tag  {tag},
-    type {type}
+basic_object::basic_object(const gc::managed_ptr type)
+  : type {type}
 { }

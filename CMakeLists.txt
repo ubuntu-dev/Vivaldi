@@ -27,7 +27,6 @@ add_executable(vivaldi
   src/builtins/file.cpp
   src/builtins/floating_point.cpp
   src/builtins/integer.cpp
-  src/builtins/nil.cpp
   src/builtins/range.cpp
   src/builtins/regex.cpp
   src/builtins/string.cpp
@@ -70,6 +69,7 @@ add_executable(vivaldi
   src/ast/variable_declaration.cpp
   src/ast/while_loop.cpp
 
+  src/gc/managed_ptr.cpp
   src/gc/block_list.cpp
 
   src/utils/lang.cpp
@@ -77,17 +77,13 @@ add_executable(vivaldi
 
   src/value/array.cpp
   src/value/array_iterator.cpp
-  src/value/basic_function.cpp
   src/value/basic_object.cpp
   src/value/blob.cpp
-  src/value/boolean.cpp
   src/value/builtin_function.cpp
   src/value/dictionary.cpp
   src/value/file.cpp
   src/value/floating_point.cpp
   src/value/function.cpp
-  src/value/integer.cpp
-  src/value/nil.cpp
   src/value/object.cpp
   src/value/opt_functions.cpp
   src/value/range.cpp
