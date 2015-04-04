@@ -13,6 +13,7 @@ block_list::block_list()
 {
   for (auto i = 4; i--;)
     add_new_block();
+  m_cur_pos = begin(m_list);
 }
 
 bool block_list::is_marked(gc::managed_ptr ptr) const
@@ -143,8 +144,10 @@ void block_list::reclaim(gc::managed_ptr ptr, const size_t size)
 
 void block_list::expand()
 {
-  for (auto i = m_list.size() / 2; i--;)
+  const auto size = m_list.size();
+  for (auto i = size / 2; i--;)
     add_new_block();
+  m_cur_pos = begin(m_list) + size;
 }
 
 void block_list::add_new_block()
@@ -154,7 +157,6 @@ void block_list::add_new_block()
   block->free_pos = begin(block->free_list);
 
   m_list.emplace_back(move(block));
-  m_cur_pos = --end(m_list);
 }
 
 // }}}
