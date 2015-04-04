@@ -1,6 +1,8 @@
 #ifndef VV_GC_MANAGED_PTR_H
 #define VV_GC_MANAGED_PTR_H
 
+#include "block_list.h"
+
 #include <cstdint>
 #include <memory>
 
@@ -68,7 +70,11 @@ class managed_ptr {
 public:
   managed_ptr();
 
-  value::basic_object* get() const;
+  value::basic_object* get() const
+  {
+    const auto char_ptr = internal::g_blocks.m_list[m_block]->block.data() + m_offset;
+    return reinterpret_cast<value::basic_object*>(char_ptr);
+  }
 
   vv::tag tag() const { return m_tag; }
   gc::managed_ptr type() const;

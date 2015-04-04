@@ -13,12 +13,6 @@ managed_ptr::managed_ptr()
     m_flags  {0}
 { }
 
-value::basic_object* managed_ptr::get() const
-{
-  const auto char_ptr = internal::g_blocks.m_list[m_block]->block.data() + m_offset;
-  return reinterpret_cast<value::basic_object*>(char_ptr);
-}
-
 managed_ptr managed_ptr::type() const
 {
   switch (m_tag) {
