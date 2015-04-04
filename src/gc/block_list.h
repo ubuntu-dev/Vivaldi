@@ -4,7 +4,6 @@
 #include <array>
 #include <bitset>
 #include <vector>
-#include <deque>
 
 namespace vv {
 
@@ -63,8 +62,8 @@ private:
     std::vector<free_block>::iterator free_pos;
   };
 
-  std::deque<std::unique_ptr<block>> m_list;
-  std::deque<std::unique_ptr<block>>::iterator m_cur_pos;
+  std::vector<std::unique_ptr<block>> m_list;
+  std::vector<std::unique_ptr<block>>::iterator m_cur_pos;
 
   friend class gc::managed_ptr;
 };
