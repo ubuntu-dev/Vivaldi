@@ -166,7 +166,7 @@ bool vv::equals(gc::managed_ptr lhs, gc::managed_ptr rhs)
 {
   if (lhs == rhs)
     return true;
-  if (lhs.tag() != lhs.tag())
+  if (lhs.tag() != rhs.tag())
     return false;
 
   switch (lhs.tag()) {
