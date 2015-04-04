@@ -19,11 +19,6 @@ value::basic_object* managed_ptr::get() const
   return reinterpret_cast<value::basic_object*>(char_ptr);
 }
 
-vv::tag managed_ptr::tag() const
-{
-  return m_tag;
-}
-
 managed_ptr managed_ptr::type() const
 {
   switch (m_tag) {
@@ -32,11 +27,6 @@ managed_ptr managed_ptr::type() const
   case tag::boolean: return builtin::type::boolean;
   default:           return get()->type;
   }
-}
-
-managed_ptr::operator bool() const
-{
-  return m_flags != 0;
 }
 
 bool gc::operator==(managed_ptr lhs, managed_ptr rhs)

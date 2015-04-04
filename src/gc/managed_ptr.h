@@ -70,10 +70,10 @@ public:
 
   value::basic_object* get() const;
 
-  vv::tag tag() const;
+  vv::tag tag() const { return m_tag; }
   gc::managed_ptr type() const;
 
-  operator bool() const;
+  operator bool() const { return m_flags; }
 
 private:
   managed_ptr(uint32_t blk, uint16_t os, vv::tag tag, int flags)
