@@ -68,7 +68,12 @@ gc::managed_ptr get_next_empty(tag type);
 
 class managed_ptr {
 public:
-  managed_ptr();
+  managed_ptr()
+    : m_block  {0},
+      m_offset {0},
+      m_tag    {tag::nil},
+      m_flags  {0}
+  { }
 
   value::basic_object* get() const
   {

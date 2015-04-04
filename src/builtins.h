@@ -1,10 +1,16 @@
 #ifndef VV_BUILTINS_H
 #define VV_BUILTINS_H
 
-#include "value.h"
-#include "vm/call_frame.h"
 
 namespace vv {
+
+class symbol;
+
+namespace gc {
+
+class managed_ptr;
+
+}
 
 namespace builtin {
 

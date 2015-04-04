@@ -2,16 +2,10 @@
 
 #include "builtins.h"
 #include "gc/block_list.h"
+#include "value/basic_object.h"
 
 using namespace vv;
 using namespace gc;
-
-managed_ptr::managed_ptr()
-  : m_block  {0},
-    m_offset {0},
-    m_tag    {tag::nil},
-    m_flags  {0}
-{ }
 
 managed_ptr managed_ptr::type() const
 {
