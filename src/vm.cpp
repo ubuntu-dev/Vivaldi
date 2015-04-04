@@ -130,7 +130,7 @@ void vm::machine::ptype(const type_t& type)
 {
   read(type.parent);
   const auto parent_arg = top();
-  if (parent_arg.type() != builtin::type::custom_type) {
+  if (parent_arg.tag() != tag::type) {
     pstr(message::inheritance_type_err);
     exc();
     return;
@@ -262,7 +262,8 @@ void vm::machine::call(const int argc)
     { instruction::ret, false }
   }};
 
-  if (top().type() != builtin::type::function) {
+  if (top().tag() != tag::function && top().tag() != tag::builtin_function &&
+      top().tag() != tag::opt_monop && top().tag() != tag::opt_binop) {
     pstr(message::not_callable(top()));
     exc();
     return;
