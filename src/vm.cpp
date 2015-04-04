@@ -169,8 +169,7 @@ void vm::machine::parr(const int size)
 
 void vm::machine::pdict(const int size)
 {
-  std::unordered_map<gc::managed_ptr, gc::managed_ptr,
-                     value::dictionary::hasher, value::dictionary::key_equal> dict;
+  value::dictionary::value_type dict;
   for (auto i = end(m_stack) - size; i != end(m_stack); i += 2)
     dict[i[0]] = i[1];
 

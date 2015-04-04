@@ -30,7 +30,6 @@ gc::managed_ptr alloc(Args&&... args)
   static_assert(!std::is_same<T, value::integer>(), "unspecialized for integer");
 
   auto ptr = internal::emplace(T{std::forward<Args>(args)...});
-  ptr.m_tag = tag_for<T>();
   return ptr;
 }
 

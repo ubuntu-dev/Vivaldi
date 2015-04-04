@@ -17,13 +17,13 @@
 #include "value/type.h"
 #include "vm/call_frame.h"
 
-#include <iostream>
-
 using namespace vv;
 using namespace gc;
-using namespace internal;
 
 // Internals {{{
+
+// Allocated blocks of memory.
+gc::block_list internal::g_blocks;
 
 namespace {
 
@@ -44,9 +44,6 @@ gc::object_list g_allocated;
 
 }
 
-// Allocated blocks of memory.
-gc::block_list internal::g_blocks;
-
 namespace {
 
 // Performs actual marking and sweeping, along with expanding available memory
@@ -54,28 +51,27 @@ namespace {
 void mark_sweep()
 {
   const auto old_sz = g_allocated.size();
-  std::cerr << "mark_sweep - " << old_sz << '\n';
 
   g_vm->mark();
 
   const auto last = remove_if(std::begin(g_allocated), std::end(g_allocated),
                               [](auto i)
   {
-    if (g_blocks.is_marked(i))
+    if (internal::g_blocks.is_marked(i))
       return false;
-    g_blocks.reclaim(i, size_for(i.tag()));
+    internal::g_blocks.reclaim(i, size_for(i.tag()));
     destruct(i);
     return true;
   });
 
   g_allocated.erase(last, std::end(g_allocated));
-  g_blocks.unmark_all();
+  internal::g_blocks.unmark_all();
 
   // Expand memory if less than half was reclaimed (to avoid cases if, e.g.,
   // 50000 objects are marked and only 4 are swept, over and over again every
   // 4 allocations).
   if (old_sz - g_allocated.size() < g_allocated.size())
-    g_blocks.expand();
+    internal::g_blocks.expand();
 }
 
 }
@@ -91,7 +87,7 @@ gc::managed_ptr gc::internal::get_next_empty(const tag type)
     ptr = g_blocks.allocate(size_for(type));
   }
 
-  //const auto obj = reinterpret_cast<value::basic_object*>(ptr);
+  ptr.m_tag = type;
   g_allocated.push_back(ptr);
   return ptr;
 }
@@ -162,10 +158,10 @@ void gc::mark(managed_ptr obj)
   }
 
   // Either already marked or stack-allocated
-  if (g_blocks.is_marked(obj))
+  if (internal::g_blocks.is_marked(obj))
     return;
 
-  g_blocks.mark(obj);
+  internal::g_blocks.mark(obj);
 
   mark(obj.type());
   mark_members(obj);

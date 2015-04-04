@@ -8,17 +8,7 @@ namespace vv {
 
 namespace gc {
 
-class block_list;
-
-namespace internal {
-
-extern block_list g_blocks;
-
-}
-
 class managed_ptr;
-template <typename T, typename... Args>
-gc::managed_ptr alloc(Args&&... args);
 
 }
 
@@ -62,6 +52,18 @@ enum class tag {
 
 namespace gc {
 
+class block_list;
+
+template <typename T, typename... Args>
+gc::managed_ptr alloc(Args&&... args);
+
+namespace internal {
+
+extern block_list g_blocks;
+gc::managed_ptr get_next_empty(tag type);
+
+}
+
 class managed_ptr {
 public:
   managed_ptr();
@@ -88,14 +90,12 @@ private:
 
   template <typename T>
   friend typename value::result_type<T>::type value::get(managed_ptr);
-
   template <typename T, typename... Args>
   friend managed_ptr gc::alloc(Args&&... args);
-
+  friend managed_ptr internal::get_next_empty(vv::tag);
   friend class gc::block_list;
 
   friend bool operator==(managed_ptr, managed_ptr);
-
   friend struct std::hash<managed_ptr>;
 };
 

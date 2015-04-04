@@ -90,7 +90,7 @@ gc::managed_ptr block_list::allocate(const size_t size)
       const auto block_os = *ptr - (*i)->block.data();
       return { static_cast<uint32_t>(block_idx),
                static_cast<uint16_t>(block_os),
-               {}, 1 };
+               tag::nil, 1 };
     }
   }
   for (auto i = begin(m_list); i != m_cur_pos; ++i) {
@@ -103,7 +103,7 @@ gc::managed_ptr block_list::allocate(const size_t size)
       const auto block_os = *ptr - (*i)->block.data();
       return { static_cast<uint32_t>(block_idx),
                static_cast<uint16_t>(block_os),
-               {}, 1 };
+               tag::nil, 1 };
     }
   }
 
@@ -112,7 +112,7 @@ gc::managed_ptr block_list::allocate(const size_t size)
 
 void block_list::reclaim(gc::managed_ptr ptr, const size_t size)
 {
-  const auto it = begin(m_list) + ptr.m_offset;
+  const auto it = begin(m_list) + ptr.m_block;
   auto& list = (*it)->free_list;
 
   const auto ch_ptr = ptr.m_offset + (*it)->block.data();

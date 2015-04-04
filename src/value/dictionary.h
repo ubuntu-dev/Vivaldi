@@ -15,7 +15,7 @@ public:
     size_t operator()(gc::managed_ptr obj) const { return hash_for(obj); }
   };
   struct key_equal {
-    size_t operator()(gc::managed_ptr lhs, gc::managed_ptr rhs) const
+    bool operator()(gc::managed_ptr lhs, gc::managed_ptr rhs) const
     {
       return equals(lhs, rhs);
     }

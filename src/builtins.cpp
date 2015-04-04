@@ -585,9 +585,9 @@ void init_integer()
 
         { {"lshift"}, lshift },
         { {"rshift"}, rshift },
-        { {"bit_and"}, bit_and },
-        { {"bit_or"}, bit_or },
-        { {"x_or"}, x_or },
+        { {"bitand"}, bit_and },
+        { {"bitor"}, bit_or },
+        { {"xor"}, x_or },
 
         { {"equals"}, equals },
         { {"unequal"}, unequal },
@@ -883,7 +883,7 @@ void builtin::init()
   function::filter = gc::alloc<value::builtin_function>( fn_filter, size_t{2} );
   function::map = gc::alloc<value::builtin_function>( fn_map, size_t{2} );
   function::reduce = gc::alloc<value::builtin_function>( fn_reduce, size_t{3} );
-  function::sort = gc::alloc<value::builtin_function>( fn_sort, size_t{2} );
+  function::sort = gc::alloc<value::builtin_function>( fn_sort, size_t{1} );
   function::all = gc::alloc<value::builtin_function>( fn_all, size_t{2} );
   function::any = gc::alloc<value::builtin_function>( fn_any, size_t{2} );
   function::count = gc::alloc<value::builtin_function>( fn_count, size_t{2} );
