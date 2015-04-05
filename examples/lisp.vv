@@ -10,12 +10,15 @@
 
 class ConsCell
   fn init(car, cdr): do
-    self._car = car
-    self._cdr = cdr
+    @car = car
+    @cdr = cdr
   end
 
-  fn car(): self._car
-  fn cdr(): self._cdr
+  fn car(): @car
+  fn cdr(): @cdr
+
+  fn set_car(car): @car = car
+  fn set_cdr(cdr): @cdr = cdr
 
   fn length(): do
     let len = 0
@@ -30,21 +33,21 @@ end
 
 class Lambda
   fn init(args, body): do
-    self._args = args
-    self._body = body
+    @args = args
+    @body = body
   end
 
   fn eval(args, env): do
     let nenv = new Dictionary(env)
-    if args.length() != self._args.length(): except "wrong number of arguments"
+    if args.length() != @args.length(): except "wrong number of arguments"
 
-    let argnames = self._args
+    let argnames = @args
     while argnames: do
       nenv[argnames.car()] = args.car()
       argnames = argnames.cdr()
       args = args.cdr()
     end
-    eval(self._body, nenv)
+    eval(@body, nenv)
   end
 end
 
@@ -71,8 +74,8 @@ fn parse(tokens): do
     let list = new ConsCell(nil, nil)
     let cur = list
     while tokens.get() != ")": do
-      cur._cdr = new ConsCell(parse(tokens), nil)
-      cur = cur._cdr
+      cur.set_cdr(new ConsCell(parse(tokens), nil))
+      cur = cur.cdr()
     end
     tokens.increment() // ')'
     return list.cdr()
