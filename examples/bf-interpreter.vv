@@ -4,42 +4,42 @@
 class Brainfuck
 
   fn init(code): do
-    self.code     = code
-    self.tape     = []
-    self.code_pos = 0
-    self.tape_pos = 0
+    @code     = code
+    @tape     = []
+    @code_pos = 0
+    @tape_pos = 0
   end
 
   fn run(skip): do
-    while (self.tape_pos >= 0 && self.code_pos < self.code.size()): do
-      if (self.tape_pos >= self.tape.size()): self.tape.append(0)
+    while (@tape_pos >= 0 && @code_pos < @code.size()): do
+      if (@tape_pos >= @tape.size()): @tape.append(0)
 
       cond
-        self.code.at(self.code_pos) == "[": self.do_inc(),
-        self.code.at(self.code_pos) == "]": return self.tape.at(self.tape_pos) != 0,
-        !skip:                              self.do_code()
+        @code[@code_pos] == "[": self.do_inc(),
+        @code[@code_pos] == "]": return @tape[@tape_pos] != 0,
+        !skip:                      self.do_code()
 
-      self.code_pos = self.code_pos + 1
+      @code_pos = @code_pos + 1
     end
   end
 
   fn do_inc(): do
-    self.code_pos = self.code_pos + 1
-    let old_pos   = self.code_pos
-    while self.run(self.tape.at(self.tape_pos) == 0): do
-      self.code_pos = old_pos
+    @code_pos = @code_pos + 1
+    let old_pos   = @code_pos
+    while self.run(@tape[@tape_pos] == 0): do
+      @code_pos = old_pos
     end
   end
 
   fn do_code(): do
-    let code_char = self.code.at(self.code_pos)
+    let code_char = @code[@code_pos]
     cond
-      code_char == "+": self.tape.set_at(self.tape_pos, self.tape.at(self.tape_pos) + 1),
-      code_char == "-": self.tape.set_at(self.tape_pos, self.tape.at(self.tape_pos) - 1),
-      code_char == ">": self.tape_pos = self.tape_pos + 1,
-      code_char == "<": self.tape_pos = self.tape_pos - 1,
-      code_char == ".": self.print_char(self.tape.at(self.tape_pos)),
-      code_char == ",": self.tape.set_at(self.tape_pos, next_char_ord)
+      code_char == "+": @tape[@tape_pos] = @tape[@tape_pos] + 1,
+      code_char == "-": @tape[@tape_pos] = @tape[@tape_pos] - 1,
+      code_char == ">": @tape_pos = @tape_pos + 1,
+      code_char == "<": @tape_pos = @tape_pos - 1,
+      code_char == ".": self.print_char(@tape[@tape_pos]),
+      code_char == ",": @tape[@tape_pos] = next_char_ord
   end
 
   fn print_char(char): do
