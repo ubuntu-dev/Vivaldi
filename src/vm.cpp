@@ -270,7 +270,6 @@ void vm::machine::call(const int argc)
   }
 
   const auto func = top();
-  pop(1);
 
   try {
     if (func.tag() == tag::opt_monop) {
@@ -280,8 +279,9 @@ void vm::machine::call(const int argc)
         return;
       }
 
-      m_call_stack.push_back({body_shim, {}, 0, m_stack.size() - 1});
+      m_call_stack.push_back({body_shim, {}, 0, m_stack.size() - 2});
       frame().caller = func;
+      pop(1); // func
       const auto ret = value::get<value::opt_monop>(func).body(m_transient_self);
       push(ret);
 
@@ -292,8 +292,9 @@ void vm::machine::call(const int argc)
         exc();
         return;
       }
-      m_call_stack.push_back({body_shim, {}, 1, m_stack.size() - 1});
+      m_call_stack.push_back({body_shim, {}, 1, m_stack.size() - 2});
       frame().caller = func;
+      pop(1); // func
       const auto ret = value::get<value::opt_binop>(func).body(m_transient_self,
                                                                top());
       push(ret);
@@ -306,8 +307,9 @@ void vm::machine::call(const int argc)
         exc();
         return;
       }
-      m_call_stack.push_back({body_shim, {}, expected, m_stack.size() - 1});
+      m_call_stack.push_back({body_shim, {}, expected, m_stack.size() - 2});
       frame().caller = func;
+      pop(1); // func
       if (m_transient_self) {
         frame().env = gc::alloc<environment>( gc::managed_ptr{}, m_transient_self );
       }
@@ -325,8 +327,9 @@ void vm::machine::call(const int argc)
                                 gc::alloc<environment>( value::get<value::function>(func).enclosure,
                                                         m_transient_self ),
                                 expected,
-                                m_stack.size() - 1);
+                                m_stack.size() - 2);
       frame().caller = func;
+      pop(1); // func
     }
   } catch (const vm_error& err) {
     push(err.error());
