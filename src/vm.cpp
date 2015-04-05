@@ -231,20 +231,30 @@ void vm::machine::arg(const int idx)
   push(*(begin(m_stack) + frame().frame_ptr - idx));
 }
 
-void vm::machine::readm(const symbol sym)
+void vm::machine::method(const symbol sym)
 {
   m_transient_self = top();
   pop(1);
-
-  // First check local members, then methods
-  if (has_member(m_transient_self, sym)) {
-    push(get_member(m_transient_self, sym));
-  }
-  else if (auto method = get_method(m_transient_self.type(), sym)) {
+  const auto method = get_method(m_transient_self, sym);
+  if (method) {
     push(method);
   }
   else {
     pstr(message::has_no_member(m_transient_self, sym));
+    exc();
+  }
+}
+
+void vm::machine::readm(const symbol sym)
+{
+  const auto self = top();
+  pop(1);
+
+  if (has_member(self, sym)) {
+    push(get_member(self, sym));
+  }
+  else {
+    pstr(message::has_no_member(self, sym));
     exc();
   }
 }
@@ -488,17 +498,15 @@ void int_optimization(vm::machine& vm, const F& fn, const vv::symbol sym)
   vm.pop(1);
   const auto second = vm.top();
 
-  if (first.tag() == tag::integer && !has_member(first, sym)) {
-    if (second.tag() == tag::integer) {
-      vm.pop(1);
-      const auto left = value::get<value::integer>(first);
-      const auto right = value::get<value::integer>(second);
-      vm.pint(fn(left, right));
-      return;
-    }
+  if (first.tag() == tag::integer && second.tag() == tag::integer) {
+    vm.pop(1);
+    const auto left = value::get<value::integer>(first);
+    const auto right = value::get<value::integer>(second);
+    vm.pint(fn(left, right));
+    return;
   }
   vm.push(first);
-  vm.readm(sym);
+  vm.method(sym);
   vm.call(1);
   vm.run_cur_scope();
 }
@@ -530,16 +538,13 @@ void vm::machine::opt_not()
   const static symbol sym{"not"};
 
   const auto val = top();
-  if (!has_member(val, sym)) {
-    if (get_method(val.type(), sym) ==
-        value::get<value::type>(builtin::type::object).methods.at(sym)) {
-      const auto res = !truthy(val);
-      pop(1);
-      pbool(res);
-      return;
-    }
+  if (get_method(val.type(), sym) == get_method(builtin::type::object, sym)) {
+    const auto res = !truthy(val);
+    pop(1);
+    pbool(res);
+    return;
   }
-  readm(sym);
+  method(sym);
   call(0);
   run_cur_scope();
 }
@@ -583,6 +588,7 @@ void vm::machine::run_single_command(const vm::command& command)
 
   case instruction::self:   self();                  break;
   case instruction::arg:    this->arg(arg.as_int()); break;
+  case instruction::method: method(arg.as_sym());    break;
   case instruction::readm:  readm(arg.as_sym());     break;
   case instruction::writem: writem(arg.as_sym());    break;
   case instruction::call:   call(arg.as_int());      break;

@@ -63,7 +63,9 @@ enum class instruction {
   self,
   // retrieves the nth passed argument, where n is the provided integer.
   arg,
-  // reads a member onto the stack.
+  // reads a method onto the stock, replacing the current top value.
+  method,
+  // reads a member onto the stack, replacing the current top value.
   readm,
   // pops the top off the stack, and pushes its member with the provided name.
   writem,
