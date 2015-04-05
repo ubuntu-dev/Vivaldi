@@ -406,6 +406,7 @@ parse_res<> parse_nonop_expression(token_string tokens)
 
   parse_res<> res;
   if ((res = parse_array_literal(tokens)))        return res;
+  if ((res = parse_member(tokens)))               return res;
   if ((res = parse_assignment(tokens)))           return res;
   if ((res = parse_block(tokens)))                return res;
   if ((res = parse_cond_statement(tokens)))       return res;
@@ -414,7 +415,6 @@ parse_res<> parse_nonop_expression(token_string tokens)
   if ((res = parse_for_loop(tokens)))             return res;
   if ((res = parse_function_definition(tokens)))  return res;
   if ((res = parse_literal(tokens)))              return res;
-  if ((res = parse_member(tokens)))               return res;
   if ((res = parse_new_obj(tokens)))              return res;
   if ((res = parse_require(tokens)))              return res;
   if ((res = parse_return(tokens)))               return res;
