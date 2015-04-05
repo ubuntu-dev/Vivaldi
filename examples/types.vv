@@ -1,5 +1,6 @@
 class Foo
-  fn bar(x): self.b = x
+  fn bar(x): @b = x
+  fn b(): @b
 end
 
 class Bar : Foo
@@ -8,4 +9,4 @@ end
 
 let i = new Bar()
 i.baz(2)
-puts(i.b)
+puts(i.b())
