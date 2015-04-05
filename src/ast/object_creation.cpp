@@ -15,10 +15,11 @@ std::vector<vm::command> ast::object_creation::generate() const
 {
   std::vector<vm::command> vec;
 
-  for (const auto& i : m_args) {
+  for_each(rbegin(m_args), rend(m_args), [&](const auto& i)
+  {
     auto arg = i->code();
     copy(begin(arg), end(arg), back_inserter(vec));
-  }
+  });
 
   auto type = m_type->code();
   copy(begin(type), end(type), back_inserter(vec));

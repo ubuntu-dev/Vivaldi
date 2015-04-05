@@ -379,10 +379,27 @@ void vm::machine::pobj(const int argc)
     return;
   }
   static_cast<value::basic_object*>(top().get())->type = type;
-  m_transient_self = top();
-  pop(1);
-  pfn(value::get<value::type>(type).init_shim);
-  call(argc);
+
+  const auto init = get_method(type, {"init"});
+  if (init) {
+    const auto self = m_transient_self = top();
+    pop(1);
+    push(init);
+    try {
+      call(argc);
+      run_cur_scope();
+    } catch (const vm_error& err) {
+      pstr(value_for(err.error()));
+      exc();
+      return;
+    }
+    pop(1);
+    push(self);
+  }
+  else if (argc != 0) {
+    pstr(message::wrong_argc(0, argc));
+    exc();
+  }
 }
 
 void vm::machine::dup()
