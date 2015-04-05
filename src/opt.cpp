@@ -26,7 +26,7 @@ bool affects_env(const vm::command& com)
 
 bool is_opt_fn(const vm::command& com)
 {
-  if (com.instr != vm::instruction::readm)
+  if (com.instr != vm::instruction::method)
     return false;
   auto sym = com.arg.as_sym();
   return sym == builtin::sym::add   || sym == builtin::sym::subtract

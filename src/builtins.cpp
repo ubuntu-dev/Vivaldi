@@ -71,7 +71,7 @@ call_result call_method(vm::machine& vm,
                         const vv::symbol method)
 {
   vm.push(self);
-  vm.readm(method);
+  vm.method(method);
   vm.call(0);
   vm.run_cur_scope();
   const auto val = vm.top();
@@ -277,7 +277,7 @@ gc::managed_ptr fn_sort(vm::machine& vm)
   {
     vm.push(right);
     vm.push(left);
-    vm.readm({"less"});
+    vm.method(sym::less);
     vm.call(1);
     vm.run_cur_scope();
     const auto res = vm.top();

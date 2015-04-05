@@ -16,7 +16,7 @@ ast::for_loop::for_loop(symbol iterator,
 std::vector<vm::command> ast::for_loop::generate() const
 {
   auto vec = m_range->code();
-  vec.emplace_back(vm::instruction::readm, symbol{"start"});
+  vec.emplace_back(vm::instruction::method, symbol{"start"});
   vec.emplace_back(vm::instruction::call, 0);
 
   vec.emplace_back(vm::instruction::eblk);
@@ -26,13 +26,13 @@ std::vector<vm::command> ast::for_loop::generate() const
 
   auto test_idx = vec.size() - 1;
   vec.emplace_back(vm::instruction::dup);
-  vec.emplace_back(vm::instruction::readm, symbol{"at_end"});
+  vec.emplace_back(vm::instruction::method, symbol{"at_end"});
   vec.emplace_back(vm::instruction::call, 0);
   vec.emplace_back(vm::instruction::jt);
   auto jmp_to_end_idx = vec.size() - 1;
   vec.emplace_back(vm::instruction::pop, 1);
   vec.emplace_back(vm::instruction::dup);
-  vec.emplace_back(vm::instruction::readm, symbol{"get"});
+  vec.emplace_back(vm::instruction::method, symbol{"get"});
   vec.emplace_back(vm::instruction::call, 0);
   vec.emplace_back(vm::instruction::write, m_iterator);
   vec.emplace_back(vm::instruction::pop, 1);
@@ -41,7 +41,7 @@ std::vector<vm::command> ast::for_loop::generate() const
   copy(begin(body), end(body), back_inserter(vec));
 
   vec.emplace_back(vm::instruction::pop, 1);
-  vec.emplace_back(vm::instruction::readm, symbol{"increment"});
+  vec.emplace_back(vm::instruction::method, symbol{"increment"});
   vec.emplace_back(vm::instruction::call, 0);
   vec.emplace_back(vm::instruction::jmp);
   auto vec_sz = static_cast<int>(vec.size() - 1);

@@ -44,7 +44,7 @@ gc::managed_ptr range::at_end(vm::machine& vm)
   auto& rng = value::get<value::range>(vm.top());
   vm.push(rng.start);
   vm.push(rng.end);
-  vm.readm(sym::greater);
+  vm.method(sym::greater);
   vm.call(1);
   vm.run_cur_scope();
   vm.opt_not();
@@ -77,7 +77,7 @@ gc::managed_ptr range::to_arr(vm::machine& vm)
   for (;;) {
     vm.dup();
     vm.push(rng.end);
-    vm.readm(sym::greater);
+    vm.method(sym::greater);
     vm.call(1);
     vm.run_cur_scope();
     if (!truthy(vm.top()))

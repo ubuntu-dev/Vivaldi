@@ -36,7 +36,7 @@ value::type::type(const std::function<gc::managed_ptr()>& constructor,
     }
 
     value.init_shim.body.emplace_back( vm::instruction::self );
-    value.init_shim.body.emplace_back( vm::instruction::readm, vv::symbol{"init"} );
+    value.init_shim.body.emplace_back( vm::instruction::method, vv::symbol{"init"} );
     value.init_shim.body.emplace_back( vm::instruction::call, value.init_shim.argc );
     value.init_shim.body.emplace_back( vm::instruction::self );
     value.init_shim.body.emplace_back( vm::instruction::ret, false );

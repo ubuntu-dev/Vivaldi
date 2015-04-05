@@ -27,9 +27,9 @@ vv::gc::managed_ptr vv::throw_exception(gc::managed_ptr value)
 
 std::string vv::pretty_print(gc::managed_ptr object, vm::machine& vm)
 {
-  if (has_member(object, {"str"}) || get_method(object.type(), {"str"})) {
+  if (get_method(object.type(), {"str"})) {
     vm.push(object);
-    vm.readm({"str"});
+    vm.method({"str"});
     vm.call(0);
     vm.run_cur_scope();
     const auto str = vm.top();
