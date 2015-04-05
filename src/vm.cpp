@@ -247,8 +247,11 @@ void vm::machine::method(const symbol sym)
 
 void vm::machine::readm(const symbol sym)
 {
-  const auto self = top();
-  pop(1);
+  const auto self = value::get<environment>(frame().env).self;
+  if (!self) {
+    pstr(message::invalid_self_access);
+    exc();
+  }
 
   if (has_member(self, sym)) {
     push(get_member(self, sym));
@@ -261,9 +264,12 @@ void vm::machine::readm(const symbol sym)
 
 void vm::machine::writem(const symbol sym)
 {
-  const auto obj = top();
-  m_stack.pop_back();
-  set_member(obj, sym, top());
+  const auto self = value::get<environment>(frame().env).self;
+  if (!self) {
+    pstr(message::invalid_self_access);
+    exc();
+  }
+  set_member(self, sym, top());
 }
 
 void vm::machine::call(const int argc)
