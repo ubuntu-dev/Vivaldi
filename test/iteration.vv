@@ -1,23 +1,26 @@
 require "assert"
 
 class Decrementer
-  fn init(x): self._x = x
+  fn init(x): @x = x
 
   fn start(): self
-  fn get(): self._x
-  fn at_end(): self._x == 0
+  fn get(): @x
+  fn at_end(): @x == 0
   fn increment(): do
-    self._x = self._x - 1
+    @x = @x - 1
     self
   end
 end
 
 class Inverted
-  fn init(x): self._x = x
+  fn init(x): @x = x
 
   fn greater(y): try: except "hello"
-    catch e: self._x < y._x
-  fn add(x): new Inverted(self._x - x)
+    catch e: @x < y.get_x()
+
+  fn add(x): new Inverted(@x - x)
+
+  fn get_x(): @x
 end
 
 fn for_loop(): do
@@ -32,7 +35,7 @@ end
 
 fn range_test(): do
   let inv_arr = []
-  try: for i in new Inverted(10) to new Inverted(5): inv_arr.append(i._x)
+  try: for i in new Inverted(10) to new Inverted(5): inv_arr.append(i.get_x())
   catch e: assert(false, "failed to catch exception inside of Range")
   assert(inv_arr[0] == 10, "inv_arr[0] == 10")
   assert(inv_arr[1] == 9, "inv_arr[1] == 9")

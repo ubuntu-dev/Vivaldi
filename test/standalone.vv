@@ -73,9 +73,9 @@ fn test_sort(): do
   assert(sort_empty == [], "sort([]) == []")
 
   class Sortable
-    fn init(x): self._x = x
-    fn less(other): self._x > other._x
-    fn x(): self._x
+    fn init(x): @x = x
+    fn less(other): @x > other.x()
+    fn x(): @x
   end
 
   let arr = map(1 to 5, fn (i): new Sortable(i))
