@@ -15,6 +15,7 @@
 #include "ast/logical_or.h"
 #include "ast/member.h"
 #include "ast/member_assignment.h"
+#include "ast/method.h"
 #include "ast/object_creation.h"
 #include "ast/require.h"
 #include "ast/return_statement.h"
@@ -79,6 +80,7 @@ parse_res<> parse_except(token_string tokens);
 parse_res<> parse_for_loop(token_string tokens);
 parse_res<> parse_function_definition(token_string tokens);
 parse_res<> parse_literal(token_string tokens);
+parse_res<> parse_member(token_string tokens);
 parse_res<> parse_new_obj(token_string tokens);
 parse_res<> parse_require(token_string tokens);
 parse_res<> parse_return(token_string tokens);
@@ -135,17 +137,17 @@ parse_res<> parse_operator_expr(token_string tokens,
   while (tokens.size() && test(tokens.front().which)) {
     auto left = move(left_res->first);
 
-    symbol method{convert(tokens.front().which)};
+    const symbol name{convert(tokens.front().which)};
 
     auto right_res = lower_pred(tokens.subvec(1)); // method (i.e. binop)
     auto right = move(right_res->first);
     tokens = right_res->second;
 
-    auto member = std::make_unique<ast::member>( move(left), method );
+    auto method = std::make_unique<ast::method>( move(left), name );
     arg_t arg{};
     arg.emplace_back(move(right));
 
-    left_res = {{std::make_unique<function_call>(move(member), move(arg)), tokens}};
+    left_res = {{std::make_unique<function_call>(move(method), move(arg)), tokens}};
   }
   return left_res;
 }
@@ -322,15 +324,15 @@ parse_res<> parse_prec1(token_string tokens)
                      || tokens.front().which == token::type::dash)) {
 
 
-    symbol method{(tokens.front().which == token::type::bang)  ? "not" :
-                  (tokens.front().which == token::type::tilde) ? "negate" :
-                                                                 "negative"};
+    symbol name{(tokens.front().which == token::type::bang)  ? "not" :
+                (tokens.front().which == token::type::tilde) ? "negate" :
+                                                               "negative"};
     auto expr_res = parse_prec1(tokens.subvec(1)); // monop
     tokens = expr_res->second;
     auto expr = move(expr_res->first);
-    auto member = std::make_unique<ast::member>( move(expr), method );
+    auto method = std::make_unique<ast::method>( move(expr), name );
 
-    return {{ std::make_unique<function_call>( move(member), arg_t{} ),
+    return {{ std::make_unique<function_call>( move(method), arg_t{} ),
               tokens }};
   }
   return parse_prec0(tokens);
@@ -369,35 +371,25 @@ parse_res<> parse_prec0(token_string tokens)
         auto value = move(value_res->first);
         tokens = value_res->second;
 
-        auto member = std::make_unique<ast::member>( move(expr), symbol{"set_at"} );
+        auto method = std::make_unique<ast::method>( move(expr), symbol{"set_at"} );
         arg_t args{};
         args.emplace_back(move(idx));
         args.emplace_back(move(value));
 
-        return {{ std::make_unique<function_call>( move(member), move(args) ),
+        return {{ std::make_unique<function_call>( move(method), move(args) ),
                   tokens }};
       }
 
-      auto member = std::make_unique<ast::member>( move(expr), symbol{"at"} );
+      auto method = std::make_unique<ast::method>( move(expr), symbol{"at"} );
       arg_t arg{};
       arg.emplace_back(move(idx));
-      expr = std::make_unique<function_call>(move(member), move(arg));
+      expr = std::make_unique<function_call>(move(method), move(arg));
     }
     else {
       tokens = tokens.subvec(1); // '.'
       symbol name{tokens.front().str};
       tokens = tokens.subvec(1); // name
-
-      if (tokens.size() && tokens.front().which == token::type::assignment) {
-        auto value_res = parse_expression(tokens.subvec(1)); // '='
-        auto value = move(value_res->first);
-        tokens = value_res->second;
-        return {{ std::make_unique<member_assignment>( move(expr),
-                                                       name,
-                                                       move(value) ),
-                  tokens }};
-      }
-      expr = std::make_unique<member>( move(expr), name );
+      expr = std::make_unique<method>( move(expr), name );
     }
   }
   return {{ move(expr), tokens }};
@@ -422,6 +414,7 @@ parse_res<> parse_nonop_expression(token_string tokens)
   if ((res = parse_for_loop(tokens)))             return res;
   if ((res = parse_function_definition(tokens)))  return res;
   if ((res = parse_literal(tokens)))              return res;
+  if ((res = parse_member(tokens)))               return res;
   if ((res = parse_new_obj(tokens)))              return res;
   if ((res = parse_require(tokens)))              return res;
   if ((res = parse_return(tokens)))               return res;
@@ -591,6 +584,21 @@ parse_res<> parse_literal(token_string tokens)
   if ((res = parse_string(tokens)))  return res;
   if ((res = parse_symbol(tokens)))  return res;
   return res;
+}
+
+parse_res<> parse_member(token_string tokens)
+{
+  if (!tokens.size() || tokens.front().which != token::type::member)
+    return {};
+  const symbol mem_name{tokens.front().str};
+  tokens = tokens.subvec(1); // member
+  if (tokens.size() && tokens.front().which == token::type::assignment) {
+    tokens = tokens.subvec(1); // '='
+    auto res = parse_expression(tokens);
+    return {{ std::make_unique<member_assignment>( mem_name, std::move(res->first) ),
+              res->second }};
+  }
+  return {{ std::make_unique<member>( mem_name ), tokens }};
 }
 
 parse_res<> parse_new_obj(token_string tokens)
@@ -905,3 +913,4 @@ std::vector<std::unique_ptr<expression>> parser::parse(token_string tokens)
 }
 
 // }}}
+

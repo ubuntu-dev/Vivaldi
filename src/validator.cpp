@@ -36,6 +36,7 @@ val_res val_except(vector_ref<token> tokens);
 val_res val_for_loop(vector_ref<token> tokens);
 val_res val_function_definition(vector_ref<token> tokens);
 val_res val_literal(vector_ref<token> tokens);
+val_res val_member(vector_ref<token> tokens);
 val_res val_new_obj(vector_ref<token> tokens);
 val_res val_require(vector_ref<token> tokens);
 val_res val_return(vector_ref<token> tokens);
@@ -149,30 +150,32 @@ val_res val_accessor(vector_ref<token> tokens)
       tokens = *args;
     }
     else {
-      val_res res;
       if (tokens.front().which == token::type::open_bracket) {
-         res = val_bracketed_subexpr(tokens,
-                                     val_expression,
-                                     token::type::open_bracket,
-                                     token::type::close_bracket);
+         const auto res = val_bracketed_subexpr(tokens,
+                                                val_expression,
+                                                token::type::open_bracket,
+                                                token::type::close_bracket);
         if (res.invalid())
           return res;
         if (!res)
           return {tokens.subvec(1), "expected index expression"}; // '['
+        tokens = *res;
+        if (tokens.size() && tokens.front().which == token::type::assignment) {
+          const auto expr = val_expression(tokens.subvec(1)); // '='
+          if (expr.invalid())
+            return expr;
+          if (!expr)
+            return {tokens.subvec(1), "expected assignment expression"};
+          tokens = *expr;
+        }
       }
       else { // dot
-        res = val_variable(tokens.subvec(1)); // '.'
+        const auto res = val_variable(tokens.subvec(1)); // '.'
         if (res.invalid())
           return res;
         if (!res)
           return {tokens.subvec(1), "expected member name"}; // '.'
-      }
-      tokens = *res;
-      if (tokens.size() && tokens.front().which == token::type::assignment) {
-        auto expr = val_expression(tokens.subvec(1)); // '='
-        if (expr || expr.invalid())
-          return expr;
-        return {tokens.subvec(1), "expected assignment expression"};
+        tokens = *res;
       }
     }
   }
@@ -203,6 +206,7 @@ val_res val_noop(vector_ref<token> tokens)
   if ((res = val_for_loop(tokens))             || res.invalid()) return res;
   if ((res = val_function_definition(tokens))  || res.invalid()) return res;
   if ((res = val_literal(tokens))              || res.invalid()) return res;
+  if ((res = val_member(tokens))               || res.invalid()) return res;
   if ((res = val_new_obj(tokens))              || res.invalid()) return res;
   if ((res = val_require(tokens))              || res.invalid()) return res;
   if ((res = val_return(tokens))               || res.invalid()) return res;
@@ -351,6 +355,21 @@ val_res val_function_definition(vector_ref<token> tokens)
   if (body || body.invalid())
     return body;
   return {tokens.subvec(1), "expected expression"}; // ':'
+}
+
+val_res val_member(vector_ref<token> tokens)
+{
+  if (!tokens.size() || tokens.front().which != token::type::member)
+    return {};
+
+  tokens = tokens.subvec(1); // member
+  if (tokens.size() && tokens.front().which == token::type::assignment) {
+    auto expr = val_expression(tokens.subvec(1)); // '='
+    if (expr || expr.invalid())
+      return expr;
+    return {tokens.subvec(1), "expected assignment expression"};
+  }
+  return tokens;
 }
 
 val_res val_literal(vector_ref<token> tokens)

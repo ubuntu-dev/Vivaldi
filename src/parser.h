@@ -77,6 +77,7 @@ struct token {
     key_catch,
     key_except,
 
+    member,
     name,
 
     integer,

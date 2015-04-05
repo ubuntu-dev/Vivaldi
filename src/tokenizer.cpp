@@ -244,6 +244,21 @@ tok_res regex_token(boost::string_ref line)
 }
 
 // }}}
+// '@' {{{
+
+tok_res mem_token(boost::string_ref line)
+{
+  auto name = line.substr(1);
+  auto last = std::find_if_not(begin(name), end(name), isnamechar);
+  if (last == begin(name) || isdigit(name.front()))
+    return { {token::type::invalid, {begin(line), last}},
+             line.substr(last - begin(line)) };
+
+  std::string sym{begin(name), last};
+  return { {token::type::member, sym}, line.substr(last - begin(line))};
+}
+
+// }}}
 // /./ {{{
 
 token::type type_for(const std::string& name)
@@ -331,6 +346,7 @@ tok_res first_token(boost::string_ref line)
   case '>': return gt_tokens(line);
   case '"': return string_token(line);
   case '`': return regex_token(line);
+  case '@': return mem_token(line);
   default:  return name_token(line);
   }
 }
