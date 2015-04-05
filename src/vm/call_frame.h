@@ -23,8 +23,8 @@ namespace vm {
 // memory management is basically impossible, and even my simplistic garbage
 // collector is significantly faster than reference counting via shared_ptr.
 struct environment : public value::basic_object {
-  environment(gc::managed_ptr enclosing = gc::alloc<value::nil>( ),
-              gc::managed_ptr self      = gc::alloc<value::nil>( ));
+  environment(gc::managed_ptr enclosing = {},
+              gc::managed_ptr self      = {});
 
   struct value_type {
     // Frame in which current function (i.e. closure) was defined.
