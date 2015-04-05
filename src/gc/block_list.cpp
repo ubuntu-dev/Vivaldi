@@ -11,7 +11,7 @@ using namespace gc;
 
 block_list::block_list()
 {
-  for (auto i = 4; i--;)
+  for (auto i = 16; i--;)
     add_new_block();
   m_cur_pos = begin(m_list);
 }
