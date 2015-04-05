@@ -9,14 +9,11 @@ namespace ast {
 
 class member_assignment : public expression {
 public:
-  member_assignment(std::unique_ptr<ast::expression>&& object,
-                    vv::symbol name,
-                    std::unique_ptr<ast::expression>&& value);
+  member_assignment(vv::symbol name, std::unique_ptr<ast::expression>&& value);
 
   std::vector<vm::command> generate() const override;
 
 private:
-  std::unique_ptr<ast::expression> m_object;
   vv::symbol m_name;
   std::unique_ptr<ast::expression> m_value;
 };

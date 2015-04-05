@@ -4,14 +4,11 @@
 
 using namespace vv;
 
-ast::member::member(std::unique_ptr<ast::expression>&& object, vv::symbol name)
-  : m_object {move(object)},
-    m_name   {name}
+ast::member::member(vv::symbol name)
+  : m_name   {name}
 { }
 
 std::vector<vm::command> ast::member::generate() const
 {
-  auto vec = m_object->code();
-  vec.emplace_back(vm::instruction::readm, m_name);
-  return vec;
+  return { { vm::instruction::readm, m_name } };
 }

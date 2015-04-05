@@ -9,12 +9,11 @@ namespace ast {
 
 class member : public expression {
 public:
-  member(std::unique_ptr<ast::expression>&& object, vv::symbol name);
+  member(vv::symbol name);
 
   std::vector<vm::command> generate() const override;
 
 private:
-  std::unique_ptr<ast::expression> m_object;
   vv::symbol m_name;
 };
 
