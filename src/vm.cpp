@@ -85,7 +85,7 @@ void vm::machine::mark()
   for (auto& i : m_call_stack) {
     gc::mark(i.caller);
     gc::mark(i.catcher);
-    gc::mark(i.env);
+    i.mark_env();
   }
 }
 
@@ -103,7 +103,7 @@ void vm::machine::pflt(double val)
 
 void vm::machine::pfn(const function_t& val)
 {
-  push(gc::alloc<value::function>(val.argc, val.body, frame().env));
+  push(gc::alloc<value::function>(val.argc, val.body, frame().env_ptr()));
 }
 
 void vm::machine::pint(int val)
@@ -180,7 +180,12 @@ void vm::machine::pdict(const int size)
 
 void vm::machine::read(const symbol sym)
 {
-  for (auto i = frame().env; i; i = value::get<environment>(i).enclosing) {
+  const auto iter = frame().env().members.find(sym);
+  if (iter != std::end(frame().env().members)) {
+    push(iter->second);
+    return;
+  }
+  for (auto i = frame().env().enclosing; i; i = value::get<environment>(i).enclosing) {
     const auto iter = value::get<environment>(i).members.find(sym);
     if (iter != std::end(value::get<environment>(i).members)) {
       push(iter->second);
@@ -193,7 +198,12 @@ void vm::machine::read(const symbol sym)
 
 void vm::machine::write(const symbol sym)
 {
-  for (auto i = frame().env; i; i = value::get<environment>(i).enclosing) {
+  const auto iter = frame().env().members.find(sym);
+  if (iter != std::end(frame().env().members)) {
+    iter->second = top();
+    return;
+  }
+  for (auto i = frame().env().enclosing; i; i = value::get<environment>(i).enclosing) {
     const auto iter = value::get<environment>(i).members.find(sym);
     if (iter != std::end(value::get<environment>(i).members)) {
       iter->second = top();
@@ -206,19 +216,19 @@ void vm::machine::write(const symbol sym)
 
 void vm::machine::let(const symbol sym)
 {
-  if (value::get<environment>(frame().env).members.count(sym)) {
+  if (frame().env().members.count(sym)) {
     pstr(message::already_exists(sym));
     exc();
   }
   else {
-    value::get<environment>(frame().env).members.insert(sym, top());
+    frame().env().members.insert(sym, top());
   }
 }
 
 void vm::machine::self()
 {
-  if (value::get<environment>(frame().env).self) {
-    push(value::get<environment>(frame().env).self);
+  if (frame().env().self) {
+    push(frame().env().self);
   }
   else {
     pstr(message::invalid_self_access);
@@ -247,7 +257,7 @@ void vm::machine::method(const symbol sym)
 
 void vm::machine::readm(const symbol sym)
 {
-  const auto self = value::get<environment>(frame().env).self;
+  const auto self = frame().env().self;
   if (!self) {
     pstr(message::invalid_self_access);
     exc();
@@ -264,7 +274,7 @@ void vm::machine::readm(const symbol sym)
 
 void vm::machine::writem(const symbol sym)
 {
-  const auto self = value::get<environment>(frame().env).self;
+  const auto self = frame().env().self;
   if (self) {
     set_member(self, sym, top());
   }
@@ -297,7 +307,7 @@ void vm::machine::call(const int argc)
         return;
       }
 
-      m_call_stack.push_back({body_shim, {}, 0, m_stack.size() - 2});
+      m_call_stack.push_back({body_shim, {}, {}, 0, m_stack.size() - 2});
       frame().caller = func;
       pop(1); // func
       const auto ret = value::get<value::opt_monop>(func).body(m_transient_self);
@@ -310,7 +320,7 @@ void vm::machine::call(const int argc)
         exc();
         return;
       }
-      m_call_stack.push_back({body_shim, {}, 1, m_stack.size() - 2});
+      m_call_stack.push_back({body_shim, {}, {}, 1, m_stack.size() - 2});
       frame().caller = func;
       pop(1); // func
       const auto ret = value::get<value::opt_binop>(func).body(m_transient_self,
@@ -325,12 +335,9 @@ void vm::machine::call(const int argc)
         exc();
         return;
       }
-      m_call_stack.push_back({body_shim, {}, expected, m_stack.size() - 2});
+      m_call_stack.push_back({body_shim, {}, m_transient_self, expected, m_stack.size() - 2});
       frame().caller = func;
       pop(1); // func
-      if (m_transient_self) {
-        frame().env = gc::alloc<environment>( gc::managed_ptr{}, m_transient_self );
-      }
       push(value::get<value::builtin_function>(func).body(*this));
 
     }
@@ -342,8 +349,8 @@ void vm::machine::call(const int argc)
         return;
       }
       m_call_stack.emplace_back(value::get<value::function>(func).body,
-                                gc::alloc<environment>( value::get<value::function>(func).enclosure,
-                                                        m_transient_self ),
+                                value::get<value::function>(func).enclosure,
+                                m_transient_self,
                                 expected,
                                 m_stack.size() - 2);
       frame().caller = func;
@@ -414,12 +421,12 @@ void vm::machine::pop(const int quant)
 
 void vm::machine::eblk()
 {
-  frame().env = gc::alloc<environment>( frame().env );
+  frame().set_env(gc::alloc<environment>( frame().env_ptr() ));
 }
 
 void vm::machine::lblk()
 {
-  frame().env = value::get<environment>(frame().env).enclosing;
+  frame().set_env(frame().env().enclosing);
 }
 
 void vm::machine::ret(const bool copy)
@@ -428,11 +435,15 @@ void vm::machine::ret(const bool copy)
   m_stack.erase(begin(m_stack) + frame().frame_ptr - frame().argc + 1, end(m_stack));
   push(retval);
 
-  const auto cur_env = frame().env;
-  m_call_stack.pop_back();
-  if (copy)
-    for (const auto& i : value::get<environment>(cur_env).members)
-      value::get<environment>(frame().env).members[i.first] = i.second;
+  if (copy) {
+    auto& returning_to = end(m_call_stack)[-2];
+    if (copy)
+      for (const auto& i : frame().env().members)
+        returning_to.env().members[i.first] = i.second;
+  }
+  else {
+    m_call_stack.pop_back();
+  }
 }
 
 void vm::machine::req(const std::string& filename)
@@ -443,7 +454,8 @@ void vm::machine::req(const std::string& filename)
     // Place in separate environment (along with environment) so as to avoid any
     // weirdnesses with adding things to the stack or declaring new variables
     m_call_stack.emplace_back(vector_ref<command>{},
-                              gc::alloc<environment>( gc::managed_ptr{} ),
+                              gc::managed_ptr{},
+                              gc::managed_ptr{},
                               0,
                               m_stack.size() - 1);
     // TODO: Support actual error handling for C extensions

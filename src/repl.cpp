@@ -87,7 +87,8 @@ void vv::run_repl()
   while (!std::cin.eof()) {
     for (const auto& expr : get_valid_line()) {
       const auto body = expr->code();
-      vm::call_frame frame{body, env};
+      vm::call_frame frame{body};
+      frame.set_env(env);
       vm::machine machine{std::move(frame)};
       try {
         machine.run();

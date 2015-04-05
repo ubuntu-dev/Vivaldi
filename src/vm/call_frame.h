@@ -27,6 +27,8 @@ struct environment : public value::basic_object {
               gc::managed_ptr self      = {});
 
   struct value_type {
+    value_type(gc::managed_ptr enclosing, gc::managed_ptr self);
+
     // Frame in which current function (i.e. closure) was defined.
     gc::managed_ptr enclosing;
     // self, if this is a method call.
@@ -41,7 +43,8 @@ struct environment : public value::basic_object {
 // in vm::machine. Each one represents a single function call.
 struct call_frame {
   call_frame(vector_ref<vm::command> instr_ptr = {},
-             gc::managed_ptr env               = {},
+             gc::managed_ptr enclosing         = {},
+             gc::managed_ptr self              = {},
              size_t argc                       = 0,
              size_t frame_ptr                  = 0);
 
@@ -51,10 +54,6 @@ struct call_frame {
   // The position in the VM stack were local variables begin.
   size_t frame_ptr;
 
-  // The outermost environment. Given lexical scoping, this will of course be
-  // different for each call frame.
-  gc::managed_ptr env;
-
   // The calling function, if there is one; stored here only for GC purposes.
   gc::managed_ptr caller;
 
@@ -63,6 +62,21 @@ struct call_frame {
 
   // Pointer to the current VM instruction we're executing.
   vector_ref<vm::command> instr_ptr;
+
+  // The outermost environment. Given lexical scoping, this will of course be
+  // different for each call frame.
+  environment::value_type& env();
+  const environment::value_type& env() const;
+
+  void set_env(gc::managed_ptr env);
+
+  gc::managed_ptr env_ptr();
+
+  void mark_env();
+
+private:
+  environment::value_type m_env;
+  gc::managed_ptr m_heap_env;
 };
 
 }
