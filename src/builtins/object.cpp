@@ -13,7 +13,7 @@ gc::managed_ptr object::equals(gc::managed_ptr self, gc::managed_ptr arg)
 
 gc::managed_ptr object::unequal(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  return gc::alloc<value::boolean>( !equals(self, arg) );
+  return gc::alloc<value::boolean>( !vv::equals(self, arg) );
 }
 
 gc::managed_ptr object::op_not(gc::managed_ptr self)
