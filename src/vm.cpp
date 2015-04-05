@@ -235,7 +235,7 @@ void vm::machine::method(const symbol sym)
 {
   m_transient_self = top();
   pop(1);
-  const auto method = get_method(m_transient_self, sym);
+  const auto method = get_method(m_transient_self.type(), sym);
   if (method) {
     push(method);
   }
@@ -265,11 +265,13 @@ void vm::machine::readm(const symbol sym)
 void vm::machine::writem(const symbol sym)
 {
   const auto self = value::get<environment>(frame().env).self;
-  if (!self) {
+  if (self) {
+    set_member(self, sym, top());
+  }
+  else {
     pstr(message::invalid_self_access);
     exc();
   }
-  set_member(self, sym, top());
 }
 
 void vm::machine::call(const int argc)
