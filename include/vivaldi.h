@@ -21,6 +21,8 @@ typedef struct vv_symbol {
 
 typedef uint64_t vv_object_t;
 
+const extern vv_object_t vv_null;
+
 vv_symbol_t vv_make_symbol(const char* string);
 
 // Access basic types. Each returns 0 on success and -1 on failure.
