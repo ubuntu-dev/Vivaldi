@@ -440,6 +440,7 @@ void vm::machine::ret(const bool copy)
     if (copy)
       for (const auto& i : frame().env().members)
         returning_to.env().members[i.first] = i.second;
+    m_call_stack.pop_back();
   }
   else {
     m_call_stack.pop_back();
@@ -451,7 +452,7 @@ void vm::machine::req(const std::string& filename)
   // Add extension, if it was left off
   const auto name = get_real_filename(filename, m_req_path);
   if (is_c_exension(name)) {
-    // Place in separate environment (along with environment) so as to avoid any
+    // Place in separate call frame (along with environment) so as to avoid any
     // weirdnesses with adding things to the stack or declaring new variables
     m_call_stack.emplace_back(vector_ref<command>{},
                               gc::managed_ptr{},
