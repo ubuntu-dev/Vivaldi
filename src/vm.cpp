@@ -244,7 +244,7 @@ void vm::machine::arg(const int idx)
 void vm::machine::method(const symbol sym)
 {
   m_transient_self = top();
-  pop(1);
+  m_stack.pop_back();
   const auto method = get_method(m_transient_self.type(), sym);
   if (method) {
     push(method);
@@ -309,7 +309,7 @@ void vm::machine::call(const int argc)
 
       m_call_stack.push_back({body_shim, {}, {}, 0, m_stack.size() - 2});
       frame().caller = func;
-      pop(1); // func
+      m_stack.pop_back();
       const auto ret = value::get<value::opt_monop>(func).body(m_transient_self);
       push(ret);
 
@@ -322,7 +322,7 @@ void vm::machine::call(const int argc)
       }
       m_call_stack.push_back({body_shim, {}, {}, 1, m_stack.size() - 2});
       frame().caller = func;
-      pop(1); // func
+      m_stack.pop_back();
       const auto ret = value::get<value::opt_binop>(func).body(m_transient_self,
                                                                top());
       push(ret);
@@ -337,7 +337,7 @@ void vm::machine::call(const int argc)
       }
       m_call_stack.push_back({body_shim, {}, m_transient_self, expected, m_stack.size() - 2});
       frame().caller = func;
-      pop(1); // func
+      m_stack.pop_back();
       push(value::get<value::builtin_function>(func).body(*this));
 
     }
@@ -354,7 +354,7 @@ void vm::machine::call(const int argc)
                                 expected,
                                 m_stack.size() - 2);
       frame().caller = func;
-      pop(1); // func
+      m_stack.pop_back();
     }
   } catch (const vm_error& err) {
     push(err.error());
@@ -375,12 +375,12 @@ void vm::machine::pobj(const int argc)
   auto ctor_type = type;
   while (!value::get<value::type>(ctor_type).constructor)
     ctor_type = value::get<value::type>(ctor_type).parent;
-  pop(1);
+  m_stack.pop_back();
   push(value::get<value::type>(ctor_type).constructor());
   // Hack--- nonconstructible types (e.g. Integer) have constructors that return
   // nullptr
   if (!top()) {
-    pop(1);
+    m_stack.pop_back();
     pstr(message::nonconstructible(ctor_type));
     exc();
     return;
@@ -390,7 +390,7 @@ void vm::machine::pobj(const int argc)
   const auto init = get_method(type, {"init"});
   if (init) {
     const auto self = m_transient_self = top();
-    pop(1);
+    m_stack.pop_back();
     push(init);
     try {
       call(argc);
@@ -400,7 +400,7 @@ void vm::machine::pobj(const int argc)
       exc();
       return;
     }
-    pop(1);
+    m_stack.pop_back();
     push(self);
   }
   else if (argc != 0) {
@@ -504,7 +504,7 @@ void vm::machine::jt(const int offset)
 void vm::machine::pushc()
 {
   frame().catcher = top();
-  pop(1);
+  m_stack.pop_back();
 }
 
 void vm::machine::popc()
@@ -578,7 +578,7 @@ void vm::machine::opt_not()
   const auto val = top();
   if (get_method(val.type(), sym) == get_method(builtin::type::object, sym)) {
     const auto res = !truthy(val);
-    pop(1);
+    m_stack.pop_back();
     pbool(res);
     return;
   }
