@@ -437,9 +437,8 @@ void vm::machine::ret(const bool copy)
 
   if (copy) {
     auto& returning_to = end(m_call_stack)[-2];
-    if (copy)
-      for (const auto& i : frame().env().members)
-        returning_to.env().members[i.first] = i.second;
+    for (const auto& i : frame().env().members)
+      returning_to.env().members[i.first] = i.second;
     m_call_stack.pop_back();
   }
   else {
