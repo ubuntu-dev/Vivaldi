@@ -69,7 +69,7 @@ std::string array_val(const array::value_type& arr)
 {
   std::ostringstream stm{};
   stm << '[';
-  if (arr.size()) {
+  if (!arr.empty()) {
     for_each(begin(arr), end(arr) - 1,
              [&](const auto& v) { stm << vv::value_for(v) << ", "; });
     stm << vv::value_for(arr.back());
@@ -83,7 +83,7 @@ std::string dictionary_val(const dictionary::value_type& dict)
   std::string str{"{"};
   for (const auto& pair: dict)
     str += ' ' + vv::value_for(pair.first) += ": " + vv::value_for(pair.second) += ',';
-  if (dict.size())
+  if (!dict.empty())
     str.back() = ' ';
   return str += '}';
 }

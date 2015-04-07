@@ -65,6 +65,7 @@ public:
   const T& back() const { return m_data[m_sz - 1]; }
 
   size_t size() const { return m_sz; }
+  bool empty() const { return m_sz == 0; }
 
   const T& operator[](int idx) { return m_data[idx]; }
 

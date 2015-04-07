@@ -196,7 +196,7 @@ tok_res string_token(boost::string_ref line)
       token += line.front();
       line.remove_prefix(1);
     }
-    if (!line.size())
+    if (line.empty())
       return { {token::type::invalid, token}, line };
   }
   return { {token::type::string, token += '"'}, line.substr(1)};
@@ -237,7 +237,7 @@ tok_res regex_token(boost::string_ref line)
       token += line.front();
       line.remove_prefix(1);
     }
-    if (!line.size())
+    if (line.empty())
       return { {token::type::invalid, token}, line };
   }
   return { {token::type::regex, token}, line.substr(1)};

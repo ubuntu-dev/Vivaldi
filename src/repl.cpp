@@ -52,7 +52,7 @@ std::vector<std::unique_ptr<ast::expression>> vv::get_valid_line()
     // token, it's not really 'invalid' (just incomplete), so instead of
     // printing an error, keep the current tokens and just grab some more until
     // we've got a complete expression (or a genuinely invalid one).
-    if (validator.invalid() && validator->size()) {
+    if (validator.invalid() && !validator->empty()) {
       // Genuine error--- print and clear invalid tokens
       std::ostringstream error;
       error << "Invalid syntax";

@@ -176,7 +176,7 @@ gc::managed_ptr string::starts_with(gc::managed_ptr self, gc::managed_ptr arg)
 gc::managed_ptr string::ord(gc::managed_ptr self)
 {
   const auto& str = value::get<value::string>(self);
-  if (!str.size())
+  if (str.empty())
     return throw_exception("Cannot call ord on an empty string");
   return gc::alloc<value::integer, int>( str[0] );
 }
@@ -194,7 +194,7 @@ gc::managed_ptr string::split(vm::machine& vm)
 
   for (;;) {
     ++substrs;
-    if (!str.size()) {
+    if (str.empty()) {
       vm.pstr("");
       break;
     }

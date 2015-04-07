@@ -58,7 +58,7 @@ gc::managed_ptr file::increment(gc::managed_ptr self)
 {
   auto& file = value::get<value::file>(self);
   if (file.val.peek() == EOF) {
-    if (!file.cur_line.size())
+    if (file.cur_line.empty())
       return throw_exception(message::iterator_at_end(type::file));
     file.cur_line.clear();
     return self;

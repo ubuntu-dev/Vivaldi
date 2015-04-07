@@ -134,7 +134,7 @@ parse_res<> parse_operator_expr(token_string tokens,
     return left_res;
   tokens = left_res->second;
 
-  while (tokens.size() && test(tokens.front().which)) {
+  while (!tokens.empty() && test(tokens.front().which)) {
     auto left = move(left_res->first);
 
     const symbol name{convert(tokens.front().which)};
@@ -159,7 +159,7 @@ parse_res<> parse_prec13(token_string tokens)
     return left_res;
   tokens = left_res->second;
 
-  while (tokens.size() && tokens.front().which == token::type::or_sign) {
+  while (!tokens.empty() && tokens.front().which == token::type::or_sign) {
     auto left = move(left_res->first);
 
     auto right_res = parse_prec13(tokens.subvec(1)); // '||'
@@ -178,7 +178,7 @@ parse_res<> parse_prec12(token_string tokens)
     return left_res;
   tokens = left_res->second;
 
-  while (tokens.size() && tokens.front().which == token::type::and_sign) {
+  while (!tokens.empty() && tokens.front().which == token::type::and_sign) {
     auto left = move(left_res->first);
     auto right_res = parse_prec12(tokens.subvec(1)); // '&&'
     auto right = move(right_res->first);
@@ -230,7 +230,7 @@ parse_res<> parse_prec9(token_string tokens)
     return left_res;
   tokens = left_res->second;
 
-  while (tokens.size() && tokens.front().which == token::type::to) {
+  while (!tokens.empty() && tokens.front().which == token::type::to) {
     auto left = move(left_res->first);
     auto right_res = parse_prec9(tokens.subvec(1)); // 'to'
     auto right = move(right_res->first);
@@ -319,9 +319,9 @@ parse_res<> parse_prec2(token_string tokens)
 
 parse_res<> parse_prec1(token_string tokens)
 {
-  if (tokens.size() && (tokens.front().which == token::type::bang
-                     || tokens.front().which == token::type::tilde
-                     || tokens.front().which == token::type::dash)) {
+  if (!tokens.empty() && (tokens.front().which == token::type::bang
+                      || tokens.front().which == token::type::tilde
+                      || tokens.front().which == token::type::dash)) {
 
 
     symbol name{(tokens.front().which == token::type::bang)  ? "not" :
@@ -348,7 +348,7 @@ parse_res<> parse_prec0(token_string tokens)
   tokens = expr_res->second;
 
   auto expr = move(expr_res->first);
-  while (tokens.size() && (tokens.front().which == token::type::open_paren
+  while (!tokens.empty() && (tokens.front().which == token::type::open_paren
                         || tokens.front().which == token::type::dot
                         || tokens.front().which == token::type::open_bracket)) {
     if (tokens.front().which == token::type::open_paren) {
@@ -366,7 +366,7 @@ parse_res<> parse_prec0(token_string tokens)
       auto idx = move(idx_res->first);
       tokens = idx_res->second;
 
-      if (tokens.size() && tokens.front().which == token::type::assignment) {
+      if (!tokens.empty() && tokens.front().which == token::type::assignment) {
         auto value_res = parse_expression(tokens.subvec(1)); // '='
         auto value = move(value_res->first);
         tokens = value_res->second;
@@ -397,7 +397,7 @@ parse_res<> parse_prec0(token_string tokens)
 
 parse_res<> parse_nonop_expression(token_string tokens)
 {
-  if (tokens.size() && tokens.front().which == token::type::open_paren) {
+  if (!tokens.empty() && tokens.front().which == token::type::open_paren) {
     return parse_bracketed_subexpr(tokens,
                                    parse_expression,
                                    token::type::open_paren,
@@ -442,7 +442,7 @@ parse_res<> parse_assignment(token_string tokens)
 
 parse_res<> parse_block(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_do)
+  if (tokens.empty() || tokens.front().which != token::type::key_do)
     return {};
   tokens = tokens.subvec(1); // 'do'
 
@@ -462,7 +462,7 @@ parse_res<> parse_block(token_string tokens)
 
 parse_res<> parse_array_literal(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::open_bracket)
+  if (tokens.empty() || tokens.front().which != token::type::open_bracket)
     return {};
 
   auto vals_res = parse_bracketed_subexpr(tokens, [](auto t)
@@ -477,7 +477,7 @@ parse_res<> parse_array_literal(token_string tokens)
 
 parse_res<> parse_dict_literal(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::open_brace)
+  if (tokens.empty() || tokens.front().which != token::type::open_brace)
     return {};
 
   auto vals_res = parse_bracketed_subexpr(tokens, [](auto t)
@@ -498,7 +498,7 @@ parse_res<> parse_dict_literal(token_string tokens)
 
 parse_res<> parse_cond_statement(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_cond)
+  if (tokens.empty() || tokens.front().which != token::type::key_cond)
     return {};
   tokens = ltrim_if(tokens.subvec(1), newline_test);
 
@@ -511,7 +511,7 @@ parse_res<> parse_cond_statement(token_string tokens)
 
 parse_res<> parse_except(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_except)
+  if (tokens.empty() || tokens.front().which != token::type::key_except)
     return {};
   tokens = tokens.subvec(1); // 'except'
   auto expr_res = parse_expression(tokens);
@@ -522,7 +522,7 @@ parse_res<> parse_except(token_string tokens)
 
 parse_res<> parse_for_loop(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_for)
+  if (tokens.empty() || tokens.front().which != token::type::key_for)
     return {};
   tokens = tokens.subvec(1); // 'for'
 
@@ -543,7 +543,7 @@ parse_res<> parse_for_loop(token_string tokens)
 
 parse_res<> parse_function_definition(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_fn)
+  if (tokens.empty() || tokens.front().which != token::type::key_fn)
     return {};
   tokens = tokens.subvec(1);
 
@@ -588,11 +588,11 @@ parse_res<> parse_literal(token_string tokens)
 
 parse_res<> parse_member(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::member)
+  if (tokens.empty() || tokens.front().which != token::type::member)
     return {};
   const symbol mem_name{tokens.front().str};
   tokens = tokens.subvec(1); // member
-  if (tokens.size() && tokens.front().which == token::type::assignment) {
+  if (!tokens.empty() && tokens.front().which == token::type::assignment) {
     tokens = tokens.subvec(1); // '='
     auto res = parse_expression(tokens);
     return {{ std::make_unique<member_assignment>( mem_name, std::move(res->first) ),
@@ -603,7 +603,7 @@ parse_res<> parse_member(token_string tokens)
 
 parse_res<> parse_new_obj(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_new)
+  if (tokens.empty() || tokens.front().which != token::type::key_new)
     return {};
   tokens = tokens.subvec(1); // 'new'
 
@@ -622,7 +622,7 @@ parse_res<> parse_new_obj(token_string tokens)
 
 parse_res<> parse_require(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_require)
+  if (tokens.empty() || tokens.front().which != token::type::key_require)
     return {};
   tokens = tokens.subvec(1); // 'require'
   std::string filename{++begin(tokens.front().str), --end(tokens.front().str)};
@@ -632,7 +632,7 @@ parse_res<> parse_require(token_string tokens)
 
 parse_res<> parse_return(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_return)
+  if (tokens.empty() || tokens.front().which != token::type::key_return)
     return {};
   tokens = tokens.subvec(1); // 'except'
   auto expr_res = parse_expression(tokens);
@@ -643,7 +643,7 @@ parse_res<> parse_return(token_string tokens)
 
 parse_res<> parse_try_catch(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_try)
+  if (tokens.empty() || tokens.front().which != token::type::key_try)
     return {};
   tokens = tokens.subvec(2); // 'try' ':'
 
@@ -667,7 +667,7 @@ parse_res<> parse_try_catch(token_string tokens)
 
 parse_res<> parse_type_definition(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_class)
+  if (tokens.empty() || tokens.front().which != token::type::key_class)
     return{};
   symbol name{tokens[1].str};
   tokens = tokens.subvec(2); // 'class' name
@@ -694,7 +694,7 @@ parse_res<> parse_type_definition(token_string tokens)
 
 parse_res<> parse_variable_declaration(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_let)
+  if (tokens.empty() || tokens.front().which != token::type::key_let)
     return {};
   symbol name{tokens[1].str};
   auto expr_res = parse_expression(tokens.subvec(3)); // 'let' name '='
@@ -705,7 +705,7 @@ parse_res<> parse_variable_declaration(token_string tokens)
 
 parse_res<> parse_variable(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::name)
+  if (tokens.empty() || tokens.front().which != token::type::name)
     return {};
   symbol name{tokens.front().str};
   tokens = tokens.subvec(1); // name
@@ -714,7 +714,7 @@ parse_res<> parse_variable(token_string tokens)
 
 parse_res<> parse_while_loop(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_while)
+  if (tokens.empty() || tokens.front().which != token::type::key_while)
     return {};
 
   auto test_res = parse_expression(tokens.subvec(1)); // 'while'
@@ -733,7 +733,7 @@ parse_res<> parse_while_loop(token_string tokens)
 
 parse_res<> parse_integer(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::integer)
+  if (tokens.empty() || tokens.front().which != token::type::integer)
     return {};
   auto str = tokens.front().str;
   tokens = tokens.subvec(1); // number
@@ -743,7 +743,7 @@ parse_res<> parse_integer(token_string tokens)
 
 parse_res<> parse_float(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::floating_point)
+  if (tokens.empty() || tokens.front().which != token::type::floating_point)
     return {};
   auto str = tokens.front().str;
   tokens = tokens.subvec(1); // number
@@ -753,7 +753,7 @@ parse_res<> parse_float(token_string tokens)
 
 parse_res<> parse_bool(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::boolean)
+  if (tokens.empty() || tokens.front().which != token::type::boolean)
     return {};
   bool value{tokens.front().str == "true"};
   tokens = tokens.subvec(1); // value
@@ -762,7 +762,7 @@ parse_res<> parse_bool(token_string tokens)
 
 parse_res<> parse_nil(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::nil)
+  if (tokens.empty() || tokens.front().which != token::type::nil)
     return {};
   tokens = tokens.subvec(1); // 'nil'
   return {{ std::make_unique<literal::nil>( ), tokens }};
@@ -770,7 +770,7 @@ parse_res<> parse_nil(token_string tokens)
 
 parse_res<> parse_regex(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::regex)
+  if (tokens.empty() || tokens.front().which != token::type::regex)
     return {};
   // inc/decrement to remove quotes
   std::string val{tokens.front().str};
@@ -780,7 +780,7 @@ parse_res<> parse_regex(token_string tokens)
 
 parse_res<> parse_string(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::string)
+  if (tokens.empty() || tokens.front().which != token::type::string)
     return {};
   // inc/decrement to remove quotes
   std::string val{++begin(tokens.front().str), --end(tokens.front().str)};
@@ -790,7 +790,7 @@ parse_res<> parse_string(token_string tokens)
 
 parse_res<> parse_symbol(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::symbol)
+  if (tokens.empty() || tokens.front().which != token::type::symbol)
     return {};
   symbol name{tokens[0].str};
   tokens = tokens.subvec(1); // symbol
@@ -813,7 +813,7 @@ auto parse_comma_separated_list(token_string tokens,
   while (item_res) {
     items.push_back(std::move(item_res->first));
     tokens = item_res->second;
-    if (!tokens.size() || tokens.front().which != token::type::comma)
+    if (tokens.empty() || tokens.front().which != token::type::comma)
       return {{ move(items), tokens }};
     tokens = ltrim_if(tokens.subvec(1), newline_test); // ','
     item_res = parse_item(tokens);
@@ -828,7 +828,7 @@ auto parse_bracketed_subexpr(token_string tokens,
                              token::type)
     -> decltype(parse_item(tokens))
 {
-  if (!tokens.size() || tokens.front().which != opening)
+  if (tokens.empty() || tokens.front().which != opening)
     return {};
   tokens = ltrim_if(tokens.subvec(1), newline_test); // opening
   auto res = parse_item(tokens);
@@ -865,7 +865,7 @@ parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
 parse_res<std::pair<symbol, function_definition>>
   parse_method_definition(token_string tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_fn)
+  if (tokens.empty() || tokens.front().which != token::type::key_fn)
     return {};
   tokens = tokens.subvec(1); // 'fn'
 
@@ -903,7 +903,7 @@ std::vector<std::unique_ptr<expression>> parser::parse(token_string tokens)
   std::vector<std::unique_ptr<expression>> expressions;
   tokens = ltrim_if(tokens, trim_test);
 
-  while (tokens.size()) {
+  while (!tokens.empty()) {
     auto res = parse_expression(tokens);
     expressions.push_back(move(res->first));
     tokens = res->second;

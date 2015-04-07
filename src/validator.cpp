@@ -73,7 +73,7 @@ val_res val_toplevel(parser::token_string tokens)
 {
   tokens = ltrim_if(tokens, trim_test);
 
-  while (tokens.size()) {
+  while (!tokens.empty()) {
     auto res = val_expression(tokens);
     if (!res)
       return res.invalid() ? res : tokens;
@@ -88,7 +88,7 @@ val_res val_expression(vector_ref<token> tokens)
   if (!res)
     return res;
   tokens = *res;
-  if (!tokens.size())
+  if (tokens.empty())
     return tokens;
   switch (tokens.front().which) {
   case token::type::or_sign:
@@ -117,7 +117,7 @@ val_res val_expression(vector_ref<token> tokens)
 
 val_res val_monop(vector_ref<token> tokens)
 {
-  if (!tokens.size())
+  if (tokens.empty())
     return {};
   switch (tokens.front().which) {
   case token::type::bang:
@@ -130,12 +130,12 @@ val_res val_monop(vector_ref<token> tokens)
 val_res val_accessor(vector_ref<token> tokens)
 {
   auto base = val_noop(tokens);
-  if (!base || !base->size())
+  if (!base || base->empty())
     return base;
   tokens = *base;
-  while (tokens.size() && (tokens.front().which == token::type::open_paren
-                        || tokens.front().which == token::type::open_bracket
-                        || tokens.front().which == token::type::dot)) {
+  while (!tokens.empty() && (tokens.front().which == token::type::open_paren
+                         || tokens.front().which == token::type::open_bracket
+                         || tokens.front().which == token::type::dot)) {
 
     if (tokens.front().which == token::type::open_paren) {
       auto args = val_bracketed_subexpr(tokens, [](auto t)
@@ -160,7 +160,7 @@ val_res val_accessor(vector_ref<token> tokens)
         if (!res)
           return {tokens.subvec(1), "expected index expression"}; // '['
         tokens = *res;
-        if (tokens.size() && tokens.front().which == token::type::assignment) {
+        if (!tokens.empty() && tokens.front().which == token::type::assignment) {
           const auto expr = val_expression(tokens.subvec(1)); // '='
           if (expr.invalid())
             return expr;
@@ -184,7 +184,7 @@ val_res val_accessor(vector_ref<token> tokens)
 
 val_res val_noop(vector_ref<token> tokens)
 {
-  if (!tokens.size())
+  if (tokens.empty())
     return {};
   if (tokens.front().which == token::type::open_paren) {
     auto expr = val_bracketed_subexpr(tokens,
@@ -220,7 +220,7 @@ val_res val_noop(vector_ref<token> tokens)
 
 val_res val_array_literal(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::open_bracket)
+  if (tokens.empty() || tokens.front().which != token::type::open_bracket)
     return {};
   auto body = val_bracketed_subexpr(tokens, [](auto t)
   {
@@ -233,7 +233,7 @@ val_res val_array_literal(vector_ref<token> tokens)
 
 val_res val_dict_literal(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::open_brace)
+  if (tokens.empty() || tokens.front().which != token::type::open_brace)
     return {};
   auto body = val_bracketed_subexpr(tokens, [](auto t)
   {
@@ -247,7 +247,7 @@ val_res val_dict_literal(vector_ref<token> tokens)
 val_res val_assignment(vector_ref<token> tokens)
 {
   auto expr = val_variable(tokens);
-  if (!expr || !expr->size() || expr->front().which != token::type::assignment)
+  if (!expr || expr->empty() || expr->front().which != token::type::assignment)
     return !expr ? expr : val_res{};
   tokens = expr->subvec(1); // '='
   auto val = val_expression(tokens);
@@ -257,12 +257,12 @@ val_res val_assignment(vector_ref<token> tokens)
 }
 val_res val_block(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_do)
+  if (tokens.empty() || tokens.front().which != token::type::key_do)
     return {};
   tokens = tokens.subvec(1); // 'do'
   tokens = ltrim_if(tokens, trim_test);
 
-  while (tokens.size() && tokens.front().which != token::type::key_end) {
+  while (!tokens.empty() && tokens.front().which != token::type::key_end) {
     auto res = val_expression(tokens);
     if (res.invalid())
       return res;
@@ -270,14 +270,14 @@ val_res val_block(vector_ref<token> tokens)
       return {tokens, "expected expression or 'end'"};
     tokens = ltrim_if(*res, trim_test);
   }
-  if (!tokens.size())
+  if (tokens.empty())
     return {tokens, "expected 'end'"};
   return tokens.subvec(1); // 'end'
 }
 
 val_res val_cond_statement(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_cond)
+  if (tokens.empty() || tokens.front().which != token::type::key_cond)
     return {};
   tokens = ltrim_if(tokens.subvec(1), newline_test); // 'cond'
   auto body = val_comma_separated_list(tokens, val_pair);
@@ -288,7 +288,7 @@ val_res val_cond_statement(vector_ref<token> tokens)
 
 val_res val_except(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_except)
+  if (tokens.empty() || tokens.front().which != token::type::key_except)
     return {};
   tokens = tokens.subvec(1); // 'except'
   auto body = val_expression(tokens);
@@ -299,7 +299,7 @@ val_res val_except(vector_ref<token> tokens)
 
 val_res val_for_loop(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_for)
+  if (tokens.empty() || tokens.front().which != token::type::key_for)
     return {};
 
   auto iter = val_variable(tokens.subvec(1)); // 'for'
@@ -308,7 +308,7 @@ val_res val_for_loop(vector_ref<token> tokens)
   if (!iter)
     return {tokens.subvec(1), "expected variable name"}; // 'for'
   tokens = *iter;
-  if (!tokens.size() || tokens.front().which != token::type::key_in)
+  if (tokens.empty() || tokens.front().which != token::type::key_in)
     return {tokens, "expected 'in'"};
 
   auto range = val_expression(tokens.subvec(1)); // 'in'
@@ -318,7 +318,7 @@ val_res val_for_loop(vector_ref<token> tokens)
     return {tokens.subvec(1), "expected expression"}; // 'in'
   tokens = *range;
 
-  if (!tokens.size() || tokens.front().which != token::type::colon)
+  if (tokens.empty() || tokens.front().which != token::type::colon)
     return {tokens, "expected ':'"};
   auto body = val_expression(tokens.subvec(1)); // ':'
   if (body || body.invalid())
@@ -328,7 +328,7 @@ val_res val_for_loop(vector_ref<token> tokens)
 
 val_res val_function_definition(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_fn)
+  if (tokens.empty() || tokens.front().which != token::type::key_fn)
     return {};
   tokens = tokens.subvec(1); // 'fn'
 
@@ -348,7 +348,7 @@ val_res val_function_definition(vector_ref<token> tokens)
     return {tokens, "expected argument list"};
   tokens = *arglist;
 
-  if (!tokens.size() || tokens.front().which != token::type::colon)
+  if (tokens.empty() || tokens.front().which != token::type::colon)
     return {tokens, "expected ':'"};
 
   auto body = val_expression(tokens.subvec(1)); // ':'
@@ -359,11 +359,11 @@ val_res val_function_definition(vector_ref<token> tokens)
 
 val_res val_member(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::member)
+  if (tokens.empty() || tokens.front().which != token::type::member)
     return {};
 
   tokens = tokens.subvec(1); // member
-  if (tokens.size() && tokens.front().which == token::type::assignment) {
+  if (!tokens.empty() && tokens.front().which == token::type::assignment) {
     auto expr = val_expression(tokens.subvec(1)); // '='
     if (expr || expr.invalid())
       return expr;
@@ -374,7 +374,7 @@ val_res val_member(vector_ref<token> tokens)
 
 val_res val_literal(vector_ref<token> tokens)
 {
-  if (!tokens.size())
+  if (tokens.empty())
     return {};
   val_res res;
   if ((res = val_bool(tokens))    || res.invalid()) return res;
@@ -389,7 +389,7 @@ val_res val_literal(vector_ref<token> tokens)
 
 val_res val_new_obj(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_new)
+  if (tokens.empty() || tokens.front().which != token::type::key_new)
     return {};
   tokens = tokens.subvec(1); // 'new'
 
@@ -411,7 +411,7 @@ val_res val_new_obj(vector_ref<token> tokens)
 
 val_res val_require(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_require)
+  if (tokens.empty() || tokens.front().which != token::type::key_require)
     return {};
   auto value = val_string(tokens.subvec(1)); // 'require'
   if (value || value.invalid())
@@ -421,7 +421,7 @@ val_res val_require(vector_ref<token> tokens)
 
 val_res val_return(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_return)
+  if (tokens.empty() || tokens.front().which != token::type::key_return)
     return {};
   auto value = val_expression(tokens.subvec(1)); // 'return'
   if (value || value.invalid())
@@ -431,7 +431,7 @@ val_res val_return(vector_ref<token> tokens)
 
 val_res val_try_catch(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_try)
+  if (tokens.empty() || tokens.front().which != token::type::key_try)
     return {};
   if (tokens.size() < 2 || tokens[1].which != token::type::colon)
     return {tokens.subvec(1), "expected ':'"}; // 'try'
@@ -443,7 +443,7 @@ val_res val_try_catch(vector_ref<token> tokens)
   if (!body)
     return {tokens, "expected expression"};
   tokens = ltrim_if(*body, newline_test);
-  if (!tokens.size() || tokens.front().which != token::type::key_catch)
+  if (tokens.empty() || tokens.front().which != token::type::key_catch)
     return {tokens, "expected 'catch'"};
   auto name = val_variable(tokens.subvec(1)); // 'catch'
   if (name.invalid())
@@ -452,7 +452,7 @@ val_res val_try_catch(vector_ref<token> tokens)
     return {tokens, "expected variable name"};
   tokens = *name;
 
-  if (!tokens.size() || tokens.front().which != token::type::colon)
+  if (tokens.empty() || tokens.front().which != token::type::colon)
     return {tokens, "expected ':'"};
   tokens = tokens.subvec(1); // ':'
 
@@ -464,7 +464,7 @@ val_res val_try_catch(vector_ref<token> tokens)
 
 val_res val_type_definition(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_class)
+  if (tokens.empty() || tokens.front().which != token::type::key_class)
     return {};
   auto name = val_variable(tokens.subvec(1)); // 'class'
   if (name.invalid())
@@ -473,7 +473,7 @@ val_res val_type_definition(vector_ref<token> tokens)
     return {tokens.subvec(1), "expected variable name"}; // 'class'
   tokens = *name;
 
-  if (tokens.size() && tokens.front().which == token::type::colon) {
+  if (!tokens.empty() && tokens.front().which == token::type::colon) {
     auto parent = val_variable(tokens.subvec(1)); // ':'
     if (parent.invalid())
       return parent;
@@ -483,7 +483,7 @@ val_res val_type_definition(vector_ref<token> tokens)
   }
 
   tokens = ltrim_if(tokens, trim_test);
-  while (tokens.size() && tokens.front().which != token::type::key_end) {
+  while (!tokens.empty() && tokens.front().which != token::type::key_end) {
     auto next_fn = val_function_definition(tokens);
     if (next_fn.invalid())
       return next_fn;
@@ -491,14 +491,14 @@ val_res val_type_definition(vector_ref<token> tokens)
       return {tokens, "expected method definition or 'end'"};
     tokens = ltrim_if(*next_fn, trim_test);
   }
-  if (tokens.size())
+  if (!tokens.empty())
     return tokens.subvec(1); // 'end'
   return {tokens, "expected 'end'"};
 }
 
 val_res val_variable_declaration(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_let)
+  if (tokens.empty() || tokens.front().which != token::type::key_let)
     return {};
   auto name = val_variable(tokens.subvec(1)); // 'let'
   if (name.invalid())
@@ -506,7 +506,7 @@ val_res val_variable_declaration(vector_ref<token> tokens)
   if (!name)
     return {tokens.subvec(1), "expected variable name"}; // 'let'
   tokens = *name;
-  if (!tokens.size() || tokens.front().which != token::type::assignment)
+  if (tokens.empty() || tokens.front().which != token::type::assignment)
     return {tokens, "expected '='"};
   auto value = val_expression(tokens.subvec(1)); // '='
   if (value || value.invalid())
@@ -516,7 +516,7 @@ val_res val_variable_declaration(vector_ref<token> tokens)
 
 val_res val_variable(vector_ref<token> tokens)
 {
-  if (!tokens.size())
+  if (tokens.empty())
     return {};
   if (tokens.front().which == token::type::invalid)
     return {tokens, '\'' + tokens.front().str + "': invalid token"};
@@ -527,7 +527,7 @@ val_res val_variable(vector_ref<token> tokens)
 
 val_res val_while_loop(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::key_while)
+  if (tokens.empty() || tokens.front().which != token::type::key_while)
     return {};
   tokens = tokens.subvec(1); // 'while'
   auto test = val_expression(tokens);
@@ -537,7 +537,7 @@ val_res val_while_loop(vector_ref<token> tokens)
     return {tokens, "expected expression"};
 
   tokens = *test;
-  if (!tokens.size() || tokens.front().which != token::type::colon)
+  if (tokens.empty() || tokens.front().which != token::type::colon)
     return {tokens, "expected ':'"};
   auto body = val_expression(tokens.subvec(1)); // ':'
   if (body || body.invalid())
@@ -547,21 +547,21 @@ val_res val_while_loop(vector_ref<token> tokens)
 
 val_res val_bool(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::boolean)
+  if (tokens.empty() || tokens.front().which != token::type::boolean)
     return {};
   return tokens.subvec(1); // 'true'/'false'
 }
 
 val_res val_float(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::floating_point)
+  if (tokens.empty() || tokens.front().which != token::type::floating_point)
     return {};
   return tokens.subvec(1); // number
 }
 
 val_res val_integer(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::integer)
+  if (tokens.empty() || tokens.front().which != token::type::integer)
     return {};
   const auto& str = tokens.front().str;
   if (str.front() == '0' && str.size() > 1) {
@@ -574,28 +574,28 @@ val_res val_integer(vector_ref<token> tokens)
 
 val_res val_nil(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::nil)
+  if (tokens.empty() || tokens.front().which != token::type::nil)
     return {};
   return tokens.subvec(1); // 'nil'
 }
 
 val_res val_regex(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::regex)
+  if (tokens.empty() || tokens.front().which != token::type::regex)
     return {};
   return tokens.subvec(1); // string
 }
 
 val_res val_string(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::string)
+  if (tokens.empty() || tokens.front().which != token::type::string)
     return {};
   return tokens.subvec(1); // string
 }
 
 val_res val_symbol(vector_ref<token> tokens)
 {
-  if (!tokens.size() || tokens.front().which != token::type::symbol)
+  if (tokens.empty() || tokens.front().which != token::type::symbol)
     return {};
   return tokens.subvec(1); // symbol
 }
@@ -609,7 +609,7 @@ val_res val_comma_separated_list(vector_ref<token> tokens,
     return tokens;
   while ((res = val_item(tokens))) {
     tokens = *res;
-    if (!tokens.size() || tokens.front().which != token::type::comma)
+    if (tokens.empty() || tokens.front().which != token::type::comma)
       return tokens;
     tokens = ltrim_if(tokens.subvec(1), newline_test); // ','
   }
@@ -624,14 +624,14 @@ val_res val_bracketed_subexpr(vector_ref<token> tokens,
                               token::type opening,
                               token::type closing)
 {
-  if (!tokens.size() || tokens.front().which != opening)
+  if (tokens.empty() || tokens.front().which != opening)
     return {};
   tokens = ltrim_if(tokens.subvec(1), newline_test); // opening
   auto item = val_item(tokens);
   if (!item)
     return item;
   tokens = ltrim_if(*item, newline_test);
-  if (!tokens.size() || tokens.front().which != closing)
+  if (tokens.empty() || tokens.front().which != closing)
     return {tokens, "expected closing"};
   return tokens.subvec(1); // closing
 }
@@ -642,7 +642,7 @@ val_res val_pair(vector_ref<token> tokens)
   if (!left)
     return left;
   tokens = *left;
-  if (!tokens.size() || tokens.front().which != token::type::colon)
+  if (tokens.empty() || tokens.front().which != token::type::colon)
     return {tokens, "expected ':'"};
   auto right = val_expression(tokens.subvec(1)); // ':'
   if (right || right.invalid())
@@ -655,7 +655,7 @@ val_res val_pair(vector_ref<token> tokens)
 val_res parser::is_valid(parser::token_string tokens)
 {
   auto res = val_toplevel(tokens);
-  if (res && res->size())
+  if (res && !res->empty())
     return {*res, "expected end of input"};
   return res;
 }
