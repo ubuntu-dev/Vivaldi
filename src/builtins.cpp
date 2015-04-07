@@ -624,6 +624,8 @@ void init_object()
   const auto unequal = gc::alloc<value::opt_binop>( object::unequal );
   const auto op_not = gc::alloc<value::opt_monop>( object::op_not );
   const auto type = gc::alloc<value::opt_monop>( object::type );
+  const auto member = gc::alloc<value::opt_binop>( object::member );
+  const auto set_member = gc::alloc<value::builtin_function>( object::set_member, size_t{2} );
 
   builtin::type::object = gc::alloc<value::type>(
       gc::alloc<value::object>,
@@ -631,7 +633,9 @@ void init_object()
         { {"equals"}, equals },
         { {"unequal"}, unequal },
         { {"not"}, op_not },
-        { {"type"}, type }
+        { {"type"}, type },
+        { {"member"}, member },
+        { {"set_member"}, set_member }
       },
       builtin::type::object,
       vv::symbol{"Object"} );
