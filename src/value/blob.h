@@ -11,14 +11,14 @@ namespace value {
 
 struct blob : public basic_object {
 public:
-  blob(void* val, const std::function<void(blob*)>& dtor);
+  blob(void* val, const std::function<void(void*)>& dtor);
 
   blob(blob&& other);
   blob& operator=(blob&& other);
 
   struct value_type {
     void* val;
-    std::function<void(blob*)> c_dtor;
+    std::function<void(void*)> c_dtor;
   };
 
   value_type value;

@@ -5,7 +5,7 @@
 using namespace vv;
 using namespace value;
 
-blob::blob(void* val, const std::function<void(blob*)>& dtor)
+blob::blob(void* val, const std::function<void(void*)>& dtor)
   : basic_object {builtin::type::object},
     value        {val, dtor}
 { }
@@ -27,5 +27,5 @@ blob& blob::operator=(blob&& other)
 blob::~blob()
 {
   if (value.c_dtor)
-    value.c_dtor(this);
+    value.c_dtor(value.val);
 }
