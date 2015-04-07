@@ -1,5 +1,6 @@
 #include "builtins.h"
 
+#include "c_internal.h"
 #include "builtins/array.h"
 #include "builtins/boolean.h"
 #include "builtins/dictionary.h"
@@ -890,6 +891,23 @@ void builtin::init()
 
   function::quit = gc::alloc<value::builtin_function>( fn_quit, size_t{0} );
   function::reverse = gc::alloc<value::builtin_function>( fn_reverse, size_t{1} );
+
+  // Finally, initialize the C API pointers to builtin types
+
+  vv_builtin_type_array           = cast_to(type::array);
+  vv_builtin_type_array_iterator  = cast_to(type::array_iterator);
+  vv_builtin_type_bool            = cast_to(type::boolean);
+  vv_builtin_type_dictionary      = cast_to(type::dictionary);
+  vv_builtin_type_file            = cast_to(type::file);
+  vv_builtin_type_float           = cast_to(type::floating_point);
+  vv_builtin_type_function        = cast_to(type::function);
+  vv_builtin_type_int             = cast_to(type::integer);
+  vv_builtin_type_nil             = cast_to(type::nil);
+  vv_builtin_type_range           = cast_to(type::range);
+  vv_builtin_type_regex           = cast_to(type::regex);
+  vv_builtin_type_string          = cast_to(type::string);
+  vv_builtin_type_string_iterator = cast_to(type::string_iterator);
+  vv_builtin_type_symbol          = cast_to(type::symbol);
 }
 
 // }}}

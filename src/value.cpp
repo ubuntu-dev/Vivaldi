@@ -217,7 +217,7 @@ void vv::destruct(gc::managed_ptr obj)
   default: break;
   }
 
-  if (obj.tag() != tag::object && obj.tag() != tag::blob)
+  if (obj.tag() != tag::object)
     g_generic_members.erase(obj);
 }
 
@@ -226,23 +226,21 @@ void vv::destruct(gc::managed_ptr obj)
 
 bool vv::has_member(gc::managed_ptr object, const symbol sym)
 {
-  if (object.tag() == tag::object || object.tag() == tag::blob)
+  if (object.tag() == tag::object)
     return value::get<value::object>(object).count(sym);
   return g_generic_members.count(object) && g_generic_members[object].count(sym);
 }
 
 gc::managed_ptr vv::get_member(gc::managed_ptr object, const symbol sym)
 {
-  if (object.tag() == tag::object || object.tag() == tag::blob)
+  if (object.tag() == tag::object)
     return value::get<value::object>(object)[sym];
   return g_generic_members[object][sym];
 }
 
-void vv::set_member(gc::managed_ptr object,
-                    const symbol sym,
-                    gc::managed_ptr member)
+void vv::set_member(gc::managed_ptr object, symbol sym, gc::managed_ptr member)
 {
-  if (object.tag() == tag::object || object.tag() == tag::blob) {
+  if (object.tag() == tag::object) {
    value::get<value::object>(object)[sym] = member;
   }
   else {
@@ -252,7 +250,7 @@ void vv::set_member(gc::managed_ptr object,
 
 void vv::mark_members(gc::managed_ptr object)
 {
-  if (object.tag() == tag::object || object.tag() == tag::blob) {
+  if (object.tag() == tag::object) {
     for (auto i : value::get<value::object>(object))
       gc::mark(i.second);
   }
