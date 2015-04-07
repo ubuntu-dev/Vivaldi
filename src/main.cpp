@@ -2,6 +2,7 @@
 #include "gc.h"
 #include "get_file_contents.h"
 #include "messages.h"
+#include "opt.h"
 #include "repl.h"
 #include "vm.h"
 #include "gc/alloc.h"
@@ -20,11 +21,15 @@ int main(int argc, char** argv)
   }
   else {
     // Try to parse file; if unsuccessful, exit with status 64
-    const auto tok_res = vv::get_file_contents(argv[1]);
+    auto tok_res = vv::get_file_contents(argv[1]);
     if (!tok_res.successful()) {
       std::cerr << tok_res.error() << '\n';
       return 64; // bad usage
     }
+
+    // Perform various optimizations on main code body that we couldn't perform
+    // if we didn't know it was the main body (e.g. eliminate unused variables)
+    vv::optimize_independent_block(tok_res.result());
 
     // Populate base environment with builtin classes and functions
     const auto env = vv::gc::alloc<vv::vm::environment>( );

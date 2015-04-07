@@ -1,6 +1,6 @@
 #include "function_definition.h"
 
-#include "gc.h"
+#include "opt.h"
 #include "value/function.h"
 
 using namespace vv;
@@ -26,6 +26,8 @@ std::vector<vm::command> ast::function_definition::generate() const
   auto body = m_body->code();
   copy(begin(body), end(body), back_inserter(definition));
   definition.emplace_back(vm::instruction::ret, false);
+
+  optimize_independent_block(definition);
 
   std::vector<vm::command> vec;
   vec.emplace_back( vm::instruction::pfn,
