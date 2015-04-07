@@ -15,7 +15,6 @@ public:
   symbol(const std::string& str = "");
 
   friend bool operator==(symbol first, symbol second);
-  friend bool operator!=(symbol first, symbol second);
 
   friend const std::string& to_string(symbol sym);
 
@@ -25,6 +24,16 @@ private:
 
   friend struct std::hash<vv::symbol>;
 };
+
+inline bool operator==(symbol lhs, symbol rhs)
+{
+  return lhs.m_ptr == rhs.m_ptr;
+}
+
+inline bool operator!=(symbol lhs, symbol rhs)
+{
+  return !(lhs == rhs);
+}
 
 }
 
