@@ -60,7 +60,8 @@ void mark_sweep()
     if (internal::g_blocks.is_marked(i))
       return false;
     internal::g_blocks.reclaim(i, size_for(i.tag()));
-    destruct(i);
+    clear_members(i);
+    destroy(i);
     return true;
   });
 

@@ -22,7 +22,7 @@ public:
   iterator begin() { return std::begin(m_list); }
   iterator end()   { return std::end(m_list); }
 
-  ~object_list() { for (auto i : m_list) destruct(i); }
+  ~object_list() { for (auto i : m_list) destroy(i); }
 
 private:
   std::vector<gc::managed_ptr> m_list;

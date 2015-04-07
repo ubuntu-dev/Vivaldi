@@ -84,11 +84,13 @@ struct environment;
 std::string value_for(gc::managed_ptr object);
 size_t hash_for(gc::managed_ptr object);
 bool equals(gc::managed_ptr lhs, gc::managed_ptr rhs);
-void destruct(gc::managed_ptr object);
+
+void destroy(gc::managed_ptr object);
 
 bool has_member(gc::managed_ptr object, vv::symbol name);
 gc::managed_ptr get_member(gc::managed_ptr object, vv::symbol name);
 void set_member(gc::managed_ptr object, vv::symbol name, gc::managed_ptr mem);
+void clear_members(gc::managed_ptr object);
 
 void mark_members(gc::managed_ptr object);
 

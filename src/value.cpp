@@ -180,7 +180,7 @@ bool vv::equals(gc::managed_ptr lhs, gc::managed_ptr rhs)
 }
 
 // }}}
-// destruct {{{
+// destroy {{{
 
 namespace {
 
@@ -192,7 +192,7 @@ void call_dtor(T& obj)
 
 }
 
-void vv::destruct(gc::managed_ptr obj)
+void vv::destroy(gc::managed_ptr obj)
 {
   switch (obj.tag()) {
   case tag::object:           call_dtor(*obj.get());                                 break;
@@ -216,7 +216,10 @@ void vv::destruct(gc::managed_ptr obj)
   case tag::environment:      call_dtor(static_cast<vm::environment&>(*obj.get()));  break;
   default: break;
   }
+}
 
+void vv::clear_members(gc::managed_ptr obj)
+{
   if (obj.tag() != tag::object)
     g_generic_members.erase(obj);
 }
