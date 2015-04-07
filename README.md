@@ -63,6 +63,10 @@ The root of the inheritance tree; every type in Vivaldi inherits from Object
 Objects support a few universal methods:
 
 * `type()` &mdash; Returns the type of `self`.
+* `member(x)`&mdash; Returns the member with the name `x` (where `x` is a
+Symbol), or `nil` if member `x` doesn't exist.
+* `set_member(x, y)`&mdash; Sets the member with the name `x` (where `x` is a
+  Symbol) to value `y`, overwriting member `x` if it already exists.
 * `not()` &mdash;  Returns whether or not `self` is truthy (i.e. not `false` or
   `nil`).
 * `equals(x)`, `unequal(x)` &mdash; Returns true if `self` has the same object
@@ -305,18 +309,6 @@ Once defined, functions work more or less like in Python:
     let function = id
     function(1) // 1
 
-In functions and methods, `self` works a little differently than in Python or
-Ruby. It's not explicitly passed as an argument, but rather is implicitly passed
-whenever called as a member of an object. The following is perfectly valid:
-
-    fn not_method(): return self.a
-    not_method() // throws exception
-
-    let myobj = new Object()
-    myobj.a = 5
-    myobj.yes_method = not_method
-    myobj.yes_method() // returns 5
-
 `return` can be used to exit out of a function early, but it's unnecessary for
 the last expression of a function body (or *only* expression, unless it's
 wrapped in a block):
@@ -330,18 +322,34 @@ wrapped in a block):
 #### Types ####
 Everything in Vivaldi is an object, and has
 
-* Members:
+* Members (accessible within classes with the Ruby-alike prefix '@', and outside
+  by the Object methods `member` and `set_member`)
+
+        class Foo
+          fn set_foo(x): @foo = x
+          fn get_bar(): @bar
+        end
+
+        let a = new Foo()
+        a.set_foo(5)
+        let five = a.member('foo)
+        a.set_member('bar, "hello")
+        let hello = a.get_bar()
+
+* Methods:
 
         // a is an object
-        a.foo = 5
-        let five = a.foo
+        class Foo
+          fn say_hi(): puts("Hello world!")
 
-* Methods (actually just members that happen to be functions):
+          fn say_hi_twice(): do
+            self.say_hi()
+            self.say_hi()
+          end
+        end
 
-        // a is an object
-        a.foo = 5
-        a.bar = fn(): self.foo
-        let five = a.bar()
+        let a = new Foo()
+        a.say_hi_twice()
 
 * A type:
 
@@ -351,8 +359,8 @@ Everything in Vivaldi is an object, and has
 Defining custom types is simple:
 
     class MyType
-      fn init(x): self.x = x
-      fn x_is_equal_to(y): self.x = y
+      fn init(x): @x = x
+      fn x_is_equal_to(y): @x = y
     end
 
     let my_obj = new MyType(5)
@@ -633,15 +641,16 @@ use:
 * Any function beginning `vv_new_` will instantiate a new Vivaldi object with
   the passed value. For instance, `vv_new_int(quant)` defines a new Integer with
   the int value `quant`. On success, they'll return a pointer to the
-  instantiated Vivaldi object; on failure, they'll return `NULL`.
+  instantiated Vivaldi object; on failure, they'll return `vv_null` (which is
+  equal to `0` to simplify error checking).
 
 * Like any Vivaldi functions, your C extension functions must return a value
-  (namely, a `vv_object_t*`). If your function has failed (either because of bad
-  input, or because a Vivaldi API function failed), return `NULL`, and a generic
-  exception will be thrown. At the moment, unfortunately, there's no support for
-  more fine-grained exception support.
+  (namely, a `vv_object_t`). If your function has failed (either because of bad
+  input, or because a Vivaldi API function failed), return `vv_null`, and a
+  generic exception will be thrown. At the moment, unfortunately, there's no
+  support for more fine-grained exception support.
 
-* Standalone Vivaldi functions are defined with a signature of `vv_object_t*
+* Standalone Vivaldi functions are defined with a signature of `vv_object_t
   my_C_func(void)`. Vivaldi arguments are accessed via `vv_get_arg(argnum)`. To
   expose the function to Vivaldi, call `vv_new_function(my_C_func,
   expected_number_of_args)` in `vv_init_lib`. Argument number checking is
@@ -651,18 +660,18 @@ use:
 
   * A name, passed as a `const char*`.
 
-  * A parent class, or `NULL` to inherit from object.
+  * A parent class, or `vv_null` to inherit from object.
 
   * A constructor, which allocates an uninitialized object out of the firmament.
   Typically, your types will include binary blobs of data, since there's only so
   much you can do with builtin types. To create these blobs, call
   `vv_alloc_blob(pointer_to_my_blob, destructor)` (for destructors, see below).
-  Constructors will have the signature `vv_object_t* my_ctor(void)`. DON'T call
+  Constructors will have the signature `vv_object_t my_ctor(void)`. DON'T call
   any `vv_new_` methods in your constructor, or weird side-effects could result.
 
   * (Assuming your type is created via `vv_alloc_blob`) A destructor, which
   frees any resources held in your binary blob. These functions have the
-  signature `void my_dtor(vv_object_t* self)`. They're not defined along with
+  signature `void my_dtor(vv_object_t self)`. They're not defined along with
   the type, but rather in your constructor, where they're passed to
   `vv_alloc_blob`.
 
@@ -679,16 +688,16 @@ init_or_NULL, init_argc)`.
 * Vivaldi methods are defined in one of three ways:
 
   * For methods taking no arguments (a monop), define a function with the
-  signature `vv_object_t* my_C_monop(vv_object_t* self)`. Register it in
+  signature `vv_object_t my_C_monop(vv_object_t self)`. Register it in
   `vv_init_lib` by calling `vv_add_monop(my_type, method_name, my_C_monop)`.
 
   * For methods taking one argument (a binop), define a function with the
-  signature `vv_object_t* my_C_binop(vv_object_t* self, vv_object_t* arg)`.
+  signature `vv_object_t my_C_binop(vv_object_t self, vv_object_t arg)`.
   Register it in `vv_init_lib` by calling `vv_add_binop(my_type, method_name,
   my_C_binop)`.
 
   * For methods taking two or more arguments, define a function with the
-  signature `vv_object_t* my_C_method(vv_object_t* self)`. Like with standalone
+  signature `vv_object_t my_C_method(vv_object_t self)`. Like with standalone
   functions, Vivaldi arguments are accessed via `vv_get_arg`. Register it in
   `vv_init_lib` by calling `vv_add_method(my_type, method_name, my_C_method,
   expected_arg_count)`.
@@ -718,17 +727,17 @@ Here's the code to a C extension defining a Vivaldi function `x_plus_5` that
 takes an argument `x` and returns, well, `x + 5`:
 
 ```c
-vv_object_t*
+vv_object_t
 x_plus_5(void)
 {
-  vv_object_t* arg = vv_get_arg(0);
-  if (arg == NULL)
-    return NULL;
+  vv_object_t arg = vv_get_arg(0);
+  if (arg == vv_null)
+    return vv_null;
 
   int x;
   int success = vv_get_int(arg, &x);
   if (success == -1)
-    return NULL;
+    return vv_null;
 
   return vv_new_int(x + 5);
 }
@@ -736,7 +745,7 @@ x_plus_5(void)
 void
 vv_init_lib(void)
 {
-  vv_object_t* vivaldi_function = vv_new_function(x_plus_5, 1);
+  vv_object_t vivaldi_function = vv_new_function(x_plus_5, 1);
   if (vivaldi_function) {
     vv_symbol_t function_name = vv_make_symbol("x_plus_5");
     vv_let(function_name, vivaldi_function);
