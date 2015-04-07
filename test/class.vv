@@ -48,7 +48,16 @@ fn self_wrapping(): do
   assert(five == 5, "capturing self in lambdas")
 end
 
+fn non_object_classes(): do
+  let f = "foo"
+  assert(f.member('bar) == nil, "f.member('bar) == nil")
+  f.set_member('bar, 120)
+  assert(f.member('bar) == 120, "f.member('bar) == 120")
+  assert("foo".member('bar) == nil, "\"foo\".member('bar) == nil")
+end
+
 section("Types")
 test(type_system, "basic")
 test(instantiation, "excepting from initializer")
 test(self_wrapping, "capturing self in closures")
+test(non_object_classes, "getting and setting members in non-Objects")
