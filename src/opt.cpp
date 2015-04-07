@@ -21,7 +21,7 @@ bool is_lblk(const vm::command& com)
 
 bool affects_env(const vm::command& com)
 {
-  return com.instr == vm::instruction::let;
+  return com.instr == vm::instruction::let || com.instr == vm::instruction::req;
 }
 
 bool is_opt_fn(const vm::command& com)
