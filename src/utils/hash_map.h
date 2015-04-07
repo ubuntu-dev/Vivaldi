@@ -77,6 +77,11 @@ public:
       insert(i.first, i.second);
   }
 
+  bool empty() const
+  {
+    return m_buckets.empty();
+  }
+
   size_t size() const
   {
     return accumulate(std::begin(m_buckets), std::end(m_buckets), size_t{},
@@ -86,8 +91,8 @@ public:
   // Returns 1 if hash_map contains an element with key item, and 0 otherwise.
   size_t count(const K& item) const
   {
-    if (!m_buckets.size())
-      return false;
+    if (empty())
+      return 0;
     const auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
     return any_of(std::begin(bucket.slots), std::end(bucket.slots),
                   [&item](const auto& i) { return i.first == item; });
@@ -97,7 +102,7 @@ public:
   // such element exists.
   iterator find(const K& item)
   {
-    if (!m_buckets.size())
+    if (empty())
       return end();
     auto bucket = std::begin(m_buckets) + s_hash(item) % m_buckets.size();
     auto iter = std::find_if(std::begin(bucket->slots), std::end(bucket->slots),
@@ -129,26 +134,39 @@ public:
   // invalidated by this method.
   void insert(K&& item, V&& val)
   {
-    if (m_buckets.size()) {
+    // Four cases:
+    // 1. nonempty, slot already exists; need to replace value
+    // 2. nonempty, bucket isn't full; need to append to bucket
+    // 3. nonempty, bucket is full; need to rehash
+    // 4. empty; need to allocate space
+    if (!empty()) {
       auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
       auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
                           [&](const auto& i) { return i.first == item; });
       if (slot != std::end(bucket.slots)) {
+        // Case 1
         slot->second = std::move(val);
-        return;
       }
-
-      if (bucket.size < 6) {
+      else if (bucket.size < 6) {
+        // Case 2
         ++bucket.size;
         bucket.slots.emplace_front(std::move(item), std::move(val));
-        return;
+      }
+      else {
+        // Case 3
+        rehash();
+        auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
+        ++nbucket.size;
+        nbucket.slots.emplace_front(std::move(item), std::move(val));
       }
     }
-
-    rehash();
-    auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
-    ++nbucket.size;
-    nbucket.slots.emplace_front(std::move(item), std::move(val));
+    else {
+      // Case 4
+      m_buckets.resize(3);
+      auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
+      ++nbucket.size;
+      nbucket.slots.emplace_front(std::move(item), std::move(val));
+    }
   }
 
   // Returns (and, if needed, constructs) the value at key `item`.
@@ -156,33 +174,50 @@ public:
   // all iterators.
   V& operator[](const K& item)
   {
-    if (m_buckets.size()) {
+    // Four cases:
+    // 1. nonempty, slot already exists; need to return value
+    // 2. nonempty, bucket isn't full; need to append and return V{} to bucket
+    // 3. nonempty, bucket is full; need to rehash and add V{} as appropriate
+    // 4. empty; need to allocate space for V{}
+    if (!empty()) {
       auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
 
       auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
                           [&](const auto& i) { return i.first == item; });
-      if (slot != std::end(bucket.slots))
+      if (slot != std::end(bucket.slots)) {
+        // Case 1
         return slot->second;
-
-      if (bucket.size < 6) {
+      }
+      else if (bucket.size < 6) {
+        // Case 2
         ++bucket.size;
         bucket.slots.emplace_front(item, V{});
         return bucket.slots.front().second;
       }
+      else {
+        // Case 3
+        rehash();
+        auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
+        ++nbucket.size;
+        nbucket.slots.emplace_front(item, V{});
+        return nbucket.slots.front().second;
+      }
     }
-
-    rehash();
-    auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
-    ++nbucket.size;
-    nbucket.slots.emplace_front(item, V{});
-    return nbucket.slots.front().second;
+    else {
+      // Case 4
+      m_buckets.resize(3);
+      auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
+      ++nbucket.size;
+      nbucket.slots.emplace_front(item, V{});
+      return nbucket.slots.front().second;
+    }
   }
 
   // Returns the value at key item. If no item exists at key item, an
   // std::out_of_range error is thrown.
   const V& at(const K& item) const
   {
-    if (m_buckets.size()) {
+    if (!empty()) {
       const auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
       auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
                           [&item](const auto& i) { return i.first == item; });
