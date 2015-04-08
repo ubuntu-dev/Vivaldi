@@ -50,7 +50,18 @@ fn range_persistence_test(): do
   assert(r.size() == 99, "(1 to 100).size() == 99")
 end
 
+fn subclass_iteration(): do
+  class StupidRange : Range
+    fn at_end(): self.get() >= 12
+  end
+  let to_5 = reduce(1 to 5, 0, fn (a, b): a + b)
+  let to_12 = reduce(new StupidRange(1, 5), 0, fn (a, b): a + b)
+  assert(to_5 == 10, "to_5 == 10")
+  assert(to_12 == 66, "to_12 == 66")
+end
+
 section("Iteration")
 test(for_loop, "custom type in for loop")
 test(range_test, "custom type in Range")
 test(range_persistence_test, "reusing Range")
+test(subclass_iteration, "overriding Range methods in subclass")
