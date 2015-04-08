@@ -115,7 +115,9 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
       return res;
     }
 
-    call_method(vm, iter, sym::increment);
+    vm.push(iter);
+    vm.opt_incr();
+    vm.pop(1);
   }
 }
 
@@ -261,7 +263,9 @@ gc::managed_ptr fn_reduce(vm::machine& vm)
     vm.pop(2); // new total, orig total
     vm.push(total);
 
-    call_method(vm, iter, sym::increment);
+    vm.push(iter);
+    vm.opt_incr();
+    vm.pop(1);
   }
 }
 
@@ -290,7 +294,9 @@ gc::managed_ptr fn_sort(vm::machine& vm)
     vm.pop(1);
     value::get<value::array>(array).push_back(next_item);
 
-    call_method(vm, iter, sym::increment);
+    vm.push(iter);
+    vm.opt_incr();
+    vm.pop(1);
   }
 
   std::sort(begin(value::get<value::array>(array)),
@@ -345,7 +351,9 @@ gc::managed_ptr fn_reverse(vm::machine& vm)
     vm.pop(1);
     value::get<value::array>(arr).push_back(next_item);
 
-    call_method(vm, iter, sym::increment);
+    vm.push(iter);
+    vm.opt_incr();
+    vm.pop(1);
   }
 }
 

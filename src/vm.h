@@ -94,6 +94,7 @@ public:
 
   void opt_get();
   void opt_at_end();
+  void opt_incr();
 
   void opt_size();
 

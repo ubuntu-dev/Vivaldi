@@ -39,8 +39,7 @@ std::vector<vm::command> ast::for_loop::generate() const
   copy(begin(body), end(body), back_inserter(vec));
 
   vec.emplace_back(vm::instruction::pop, 1);
-  vec.emplace_back(vm::instruction::method, symbol{"increment"});
-  vec.emplace_back(vm::instruction::call, 0);
+  vec.emplace_back(vm::instruction::opt_incr);
   vec.emplace_back(vm::instruction::jmp);
   auto vec_sz = static_cast<int>(vec.size() - 1);
   vec.back().arg = static_cast<int>(test_idx) - vec_sz;

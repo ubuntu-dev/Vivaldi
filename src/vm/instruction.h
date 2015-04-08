@@ -125,6 +125,8 @@ enum class instruction {
   opt_get,
   // Optimized 'at_end' method call.
   opt_at_end,
+  // Optimized 'increment' method call.
+  opt_incr,
 
   // Optimized 'size' method call.
   opt_size

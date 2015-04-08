@@ -604,7 +604,7 @@ void vm::machine::opt_get()
   }
   else if (val.type() == builtin::type::range) {
     m_stack.pop_back();
-    push(value::get<value::range>(val).start);
+    push(builtin::range::get(val));
   }
   else {
     method(builtin::sym::get);
@@ -626,6 +626,24 @@ void vm::machine::opt_at_end()
   }
   else {
     method(builtin::sym::at_end);
+    call(0);
+    run_cur_scope();
+  }
+}
+
+void vm::machine::opt_incr()
+{
+  const auto val = top();
+  if (val.tag() == tag::array_iterator) {
+    pop(1);
+    push(builtin::array_iterator::increment(val));
+  }
+  else if (val.tag() == tag::string_iterator) {
+    pop(1);
+    push(builtin::string_iterator::increment(val));
+  }
+  else {
+    method(builtin::sym::increment);
     call(0);
     run_cur_scope();
   }
@@ -728,6 +746,7 @@ void vm::machine::run_single_command(const vm::command& command)
 
   case instruction::opt_get:    opt_get();    break;
   case instruction::opt_at_end: opt_at_end(); break;
+  case instruction::opt_incr:   opt_incr();   break;
 
   case instruction::opt_size: opt_size(); break;
   }

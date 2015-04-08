@@ -60,6 +60,8 @@ vm::instruction instr_for_monop(symbol sym)
     return vm::instruction::opt_get;
   if (sym == builtin::sym::at_end)
     return vm::instruction::opt_at_end;
+  if (sym == builtin::sym::increment)
+    return vm::instruction::opt_incr;
   return vm::instruction::opt_size;
 }
 
@@ -68,8 +70,9 @@ bool is_opt_monop_fn(const vm::command& com)
   if (com.instr != vm::instruction::method)
     return false;
   const auto sym = com.arg.as_sym();
-  return sym == builtin::sym::op_not || sym == builtin::sym::get
-      || sym == builtin::sym::at_end || sym == builtin::sym::size;
+  return sym == builtin::sym::op_not || sym == builtin::sym::size
+      || sym == builtin::sym::get    || sym == builtin::sym::at_end
+      || sym == builtin::sym::increment;
 }
 
 bool is_prim_push(const vm::command& com)
