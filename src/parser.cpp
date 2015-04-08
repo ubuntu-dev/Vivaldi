@@ -607,7 +607,7 @@ parse_res<> parse_new_obj(token_string tokens)
     return {};
   tokens = tokens.subvec(1); // 'new'
 
-  auto type_res = parse_variable(tokens);
+  auto type_res = parse_nonop_expression(tokens);
   auto type = move(type_res->first);
   tokens = type_res->second;
   tokens = type_res->second;

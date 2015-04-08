@@ -393,7 +393,7 @@ val_res val_new_obj(vector_ref<token> tokens)
     return {};
   tokens = tokens.subvec(1); // 'new'
 
-  auto name = val_variable(tokens);
+  auto name = val_noop(tokens);
   if (name.invalid())
     return name;
   if (!name)
