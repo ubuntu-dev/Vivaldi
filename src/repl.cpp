@@ -85,7 +85,10 @@ void vv::run_repl()
 
   while (!std::cin.eof()) {
     for (const auto& expr : get_valid_line()) {
-      vm::call_frame frame{expr->code()};
+      // call_frame contains a non-holding reference to code, so we need to
+      // store it out here
+      const auto code = expr->code();
+      vm::call_frame frame{code};
       frame.set_env(env);
       vm::machine machine{std::move(frame)};
       try {
