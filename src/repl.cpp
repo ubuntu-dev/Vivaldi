@@ -1,7 +1,6 @@
 #include "repl.h"
 
 #include "builtins.h"
-#include "gc.h"
 #include "messages.h"
 #include "parser.h"
 #include "gc/alloc.h"
@@ -86,8 +85,7 @@ void vv::run_repl()
 
   while (!std::cin.eof()) {
     for (const auto& expr : get_valid_line()) {
-      const auto body = expr->code();
-      vm::call_frame frame{body};
+      vm::call_frame frame{expr->code()};
       frame.set_env(env);
       vm::machine machine{std::move(frame)};
       try {
