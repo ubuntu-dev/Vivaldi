@@ -2,7 +2,6 @@
 
 #include "c_internal.h"
 #include "builtins/array.h"
-#include "builtins/boolean.h"
 #include "builtins/dictionary.h"
 #include "builtins/file.h"
 #include "builtins/floating_point.h"
@@ -472,11 +471,9 @@ void init_array_iterator()
 
 void init_boolean()
 {
-  const auto init = gc::alloc<value::opt_binop>( boolean::init );
-
   builtin::type::boolean = gc::alloc<value::type>(
-      gc::alloc<value::boolean>,
-      hash_map<vv::symbol, gc::managed_ptr>{ { {"init"}, init } },
+      [] { return gc::managed_ptr{}; },
+      hash_map<vv::symbol, gc::managed_ptr>{ },
       type::object,
       vv::symbol{"Bool"});
 }
