@@ -9,7 +9,7 @@ namespace builtin {
 
 namespace file {
 
-gc::managed_ptr init(vm::machine& vm);
+gc::managed_ptr init(gc::managed_ptr self, gc::managed_ptr arg);
 gc::managed_ptr contents(gc::managed_ptr self);
 gc::managed_ptr start(gc::managed_ptr self);
 gc::managed_ptr get(gc::managed_ptr self);

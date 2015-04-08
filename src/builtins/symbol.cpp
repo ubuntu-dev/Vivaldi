@@ -13,12 +13,8 @@
 using namespace vv;
 using namespace builtin;
 
-gc::managed_ptr builtin::symbol::init(vm::machine& vm)
+gc::managed_ptr builtin::symbol::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  vm.self();
-  const auto self = vm.top();
-  vm.arg(0);
-  auto arg = vm.top();
   if (arg.tag() == tag::symbol)
     value::get<value::symbol>(self) = value::get<value::symbol>(arg);
   else if (arg.tag() == tag::string)

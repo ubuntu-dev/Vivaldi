@@ -35,19 +35,15 @@ auto fn_string_cmp(const F& cmp)
 
 // string
 
-gc::managed_ptr string::init(vm::machine& vm)
+gc::managed_ptr string::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  vm.self();
-  auto str = vm.top();
-  vm.arg(0);
-  auto arg = vm.top();
   if (arg.tag() == tag::string)
-    value::get<value::string>(str) = value::get<value::string>(arg);
+    value::get<value::string>(self) = value::get<value::string>(arg);
   else if (arg.tag() == tag::symbol)
-    value::get<value::string>(str) = to_string(value::get<value::symbol>(arg));
+    value::get<value::string>(self) = to_string(value::get<value::symbol>(arg));
   else
-     value::get<value::string>(str) = value_for(arg);
-  return str;
+     value::get<value::string>(self) = value_for(arg);
+  return self;
 }
 
 gc::managed_ptr string::size(gc::managed_ptr self)

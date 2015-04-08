@@ -47,7 +47,7 @@ gc::managed_ptr regex::init(vm::machine& vm)
   }
   else if (arg.tag() == tag::string) {
     vm.pre(value::get<value::string>(arg));
-    regex = vm.top();
+    value::get<value::regex>(regex) = value::get<value::regex>(vm.top());
   }
   else {
     return throw_exception("RegExes can only be constructed from Strings or other RegExes");

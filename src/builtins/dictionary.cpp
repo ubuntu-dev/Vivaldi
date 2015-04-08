@@ -9,19 +9,15 @@
 using namespace vv;
 using namespace builtin;
 
-gc::managed_ptr dictionary::init(vm::machine& vm)
+gc::managed_ptr dictionary::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  vm.self();
-  const auto dict = vm.top();
-  vm.arg(0);
-  const auto arg = vm.top();
   if (arg.tag() != tag::dictionary) {
     return throw_exception(message::init_type_error(type::dictionary,
                                                     type::dictionary,
                                                     arg.type()));
   }
-  value::get<value::dictionary>(dict) = value::get<value::dictionary>(arg);
-  return dict;
+  value::get<value::dictionary>(self) = value::get<value::dictionary>(arg);
+  return self;
 }
 
 gc::managed_ptr dictionary::size(gc::managed_ptr self)

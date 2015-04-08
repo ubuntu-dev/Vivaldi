@@ -12,18 +12,14 @@
 using namespace vv;
 using namespace builtin;
 
-gc::managed_ptr file::init(vm::machine& vm)
+gc::managed_ptr file::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  vm.arg(0);
-  auto arg = vm.top();
   if (arg.tag() != tag::string) {
     return throw_exception(message::init_type_error(type::file,
                                                     type::string,
                                                     arg.type()));
   }
 
-  vm.self();
-  const auto self = vm.top();
   const auto& filename = value::get<value::string>(arg);
 
   value::get<value::file>(self).val = std::fstream{filename};

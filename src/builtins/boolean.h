@@ -9,7 +9,7 @@ namespace builtin {
 
 namespace boolean {
 
-gc::managed_ptr init(vm::machine& vm);
+gc::managed_ptr init(gc::managed_ptr self, gc::managed_ptr arg);
 
 }
 

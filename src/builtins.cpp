@@ -406,7 +406,7 @@ namespace {
 
 void init_array()
 {
-  const auto init = gc::alloc<value::builtin_function>( array::init, size_t{1} );
+  const auto init = gc::alloc<value::opt_binop>( array::init );
   const auto size = gc::alloc<value::opt_monop>( array::size );
   const auto append = gc::alloc<value::opt_binop>( array::append );
   const auto pop = gc::alloc<value::opt_monop>( array::pop );
@@ -472,7 +472,7 @@ void init_array_iterator()
 
 void init_boolean()
 {
-  const auto init = gc::alloc<value::builtin_function>( boolean::init, size_t{1} );
+  const auto init = gc::alloc<value::opt_binop>( boolean::init );
 
   builtin::type::boolean = gc::alloc<value::type>(
       gc::alloc<value::boolean>,
@@ -483,7 +483,7 @@ void init_boolean()
 
 void init_dictionary()
 {
-  const auto init = gc::alloc<value::builtin_function>( dictionary::init, size_t{1} );
+  const auto init = gc::alloc<value::opt_binop>( dictionary::init );
   const auto size = gc::alloc<value::opt_monop>( dictionary::size );
   const auto at = gc::alloc<value::opt_binop>( dictionary::at );
   const auto set_at = gc::alloc<value::builtin_function>( dictionary::set_at, size_t{2} );
@@ -502,7 +502,7 @@ void init_dictionary()
 
 void init_file()
 {
-  const auto init = gc::alloc<value::builtin_function>( file::init, size_t{1} );
+  const auto init = gc::alloc<value::opt_binop>( file::init );
   const auto contents = gc::alloc<value::opt_monop>( file::contents );
   const auto start = gc::alloc<value::opt_monop>( file::start );
   const auto get = gc::alloc<value::opt_monop>( file::get );
@@ -737,7 +737,7 @@ void init_regex_result()
 
 void init_string()
 {
-  const auto init = gc::alloc<value::builtin_function>( string::init, size_t{1} );
+  const auto init = gc::alloc<value::opt_binop>( string::init );
   const auto size = gc::alloc<value::opt_monop>( string::size );
 
   const auto equals = gc::alloc<value::opt_binop>( string::equals );
@@ -839,7 +839,7 @@ void init_string_iterator()
 
 void init_symbol()
 {
-  const auto init = gc::alloc<value::builtin_function>( builtin::symbol::init, size_t{1} );
+  const auto init = gc::alloc<value::opt_binop>( builtin::symbol::init );
   const auto equals = gc::alloc<value::opt_binop>( builtin::symbol::equals );
   const auto unequal = gc::alloc<value::opt_binop>( builtin::symbol::unequal );
 

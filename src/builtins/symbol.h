@@ -9,7 +9,7 @@ namespace builtin {
 
 namespace symbol {
 
-gc::managed_ptr init(vm::machine& vm);
+gc::managed_ptr init(gc::managed_ptr self, gc::managed_ptr arg);
 
 gc::managed_ptr equals(gc::managed_ptr self, gc::managed_ptr arg);
 gc::managed_ptr unequal(gc::managed_ptr self, gc::managed_ptr arg);

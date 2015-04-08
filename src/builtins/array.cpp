@@ -12,12 +12,8 @@ using namespace builtin;
 
 // Array
 
-gc::managed_ptr array::init(vm::machine& vm)
+gc::managed_ptr array::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  vm.self();
-  const auto self = vm.top();
-  vm.arg(0);
-  const auto arg = vm.top();
   if (arg.tag() != tag::array)
     return throw_exception(message::init_type_error(type::array,
                                                     type::array,
