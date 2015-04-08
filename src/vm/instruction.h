@@ -120,6 +120,14 @@ enum class instruction {
 
   // Optimized 'not' method call.
   opt_not,
+
+  // Optimized 'get' method call.
+  opt_get,
+  // Optimized 'at_end' method call.
+  opt_at_end,
+
+  // Optimized 'size' method call.
+  opt_size
 };
 
 

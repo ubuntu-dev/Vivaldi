@@ -41,6 +41,37 @@ bool is_opt_fn(const vm::command& com)
       || sym == builtin::sym::times || sym == builtin::sym::divides;
 }
 
+vm::instruction instr_for(symbol sym)
+{
+  if (sym == builtin::sym::add)
+    return vm::instruction::opt_add;
+  if (sym == builtin::sym::subtract)
+    return vm::instruction::opt_sub;
+  if (sym == builtin::sym::times)
+    return vm::instruction::opt_mul;
+  return vm::instruction::opt_div;
+}
+
+vm::instruction instr_for_monop(symbol sym)
+{
+  if (sym == builtin::sym::op_not)
+    return vm::instruction::opt_not;
+  if (sym == builtin::sym::get)
+    return vm::instruction::opt_get;
+  if (sym == builtin::sym::at_end)
+    return vm::instruction::opt_at_end;
+  return vm::instruction::opt_size;
+}
+
+bool is_opt_monop_fn(const vm::command& com)
+{
+  if (com.instr != vm::instruction::method)
+    return false;
+  const auto sym = com.arg.as_sym();
+  return sym == builtin::sym::op_not || sym == builtin::sym::get
+      || sym == builtin::sym::at_end || sym == builtin::sym::size;
+}
+
 bool is_prim_push(const vm::command& com)
 {
   switch (com.instr) {
@@ -80,17 +111,6 @@ bool is_opt(const vm::command& com)
   case vm::instruction::opt_div: return true;
   default: return false;
   }
-}
-
-vm::instruction instr_for(symbol sym)
-{
-  if (sym == builtin::sym::add)
-    return vm::instruction::opt_add;
-  if (sym == builtin::sym::subtract)
-    return vm::instruction::opt_sub;
-  if (sym == builtin::sym::times)
-    return vm::instruction::opt_mul;
-  return vm::instruction::opt_div;
 }
 
 bool is_noop(const vm::command& com)
@@ -157,7 +177,7 @@ bool optimize_blocks(std::vector<vm::command>& code)
 }
 
 // Replace calls to 'add', 'subtract', etc. with optimized instructions
-bool optimize_instructions(std::vector<vm::command>& code)
+bool optimize_binops(std::vector<vm::command>& code)
 {
   auto changed = false;
 
@@ -169,6 +189,29 @@ bool optimize_instructions(std::vector<vm::command>& code)
         changed = true;
 
         i->instr = instr_for(i->arg.as_sym());
+        i->arg = {};
+        next->instr = vm::instruction::noop;
+        next->arg = {};
+      }
+    }
+    i = next;
+  }
+  return changed;
+}
+
+// Replace calls to 'add', 'subtract', etc. with optimized instructions
+bool optimize_monops(std::vector<vm::command>& code)
+{
+  auto changed = false;
+
+  auto i = find_if(begin(code), end(code), is_opt_monop_fn);
+  for (; i != end(code); i = find_if(i, end(code), is_opt_monop_fn)) {
+    const auto next = find_if_not(i + 1, end(code), is_noop);
+    if (next != end(code)) {
+      if (next->instr == vm::instruction::call && next->arg.as_int() == 0) {
+        changed = true;
+
+        i->instr = instr_for_monop(i->arg.as_sym());
         i->arg = {};
         next->instr = vm::instruction::noop;
         next->arg = {};
@@ -277,7 +320,9 @@ bool optimize_args(std::vector<vm::command>& code)
 
 bool optimize_lets(std::vector<vm::command>& code)
 {
-  if (any_of(begin(code), end(code), [](const auto& c) { return c.instr == vm::instruction::pfn; }))
+  // Can't alter the current scope if a closure's capturing it
+  if (any_of(begin(code), end(code),
+             [](const auto& c) { return c.instr == vm::instruction::pfn; }))
     return false;
 
   auto changed = false;
@@ -372,7 +417,8 @@ bool optimize_once(std::vector<vm::command>& code)
 {
   auto changed = false;
   if (optimize_blocks(code))       changed = true;
-  if (optimize_instructions(code)) changed = true;
+  if (optimize_binops(code))       changed = true;
+  if (optimize_monops(code))       changed = true;
   if (optimize_noops(code))        changed = true;
   if (optimize_constants(code))    changed = true;
   if (optimize_args(code)) changed = true;

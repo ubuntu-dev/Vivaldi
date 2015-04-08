@@ -26,14 +26,12 @@ std::vector<vm::command> ast::for_loop::generate() const
 
   auto test_idx = vec.size() - 1;
   vec.emplace_back(vm::instruction::dup);
-  vec.emplace_back(vm::instruction::method, symbol{"at_end"});
-  vec.emplace_back(vm::instruction::call, 0);
+  vec.emplace_back(vm::instruction::opt_at_end);
   vec.emplace_back(vm::instruction::jt);
   auto jmp_to_end_idx = vec.size() - 1;
   vec.emplace_back(vm::instruction::pop, 1);
   vec.emplace_back(vm::instruction::dup);
-  vec.emplace_back(vm::instruction::method, symbol{"get"});
-  vec.emplace_back(vm::instruction::call, 0);
+  vec.emplace_back(vm::instruction::opt_get);
   vec.emplace_back(vm::instruction::write, m_iterator);
   vec.emplace_back(vm::instruction::pop, 1);
 

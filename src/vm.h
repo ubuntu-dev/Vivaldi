@@ -92,6 +92,11 @@ public:
 
   void opt_not();
 
+  void opt_get();
+  void opt_at_end();
+
+  void opt_size();
+
 private:
   void run_single_command(const vm::command& command);
 

@@ -4,6 +4,10 @@
 #include "gc.h"
 #include "get_file_contents.h"
 #include "messages.h"
+#include "builtins/array.h"
+#include "builtins/dictionary.h"
+#include "builtins/string.h"
+#include "builtins/range.h"
 #include "gc/alloc.h"
 #include "utils/error.h"
 #include "utils/lang.h"
@@ -13,6 +17,7 @@
 #include "value/floating_point.h"
 #include "value/function.h"
 #include "value/opt_functions.h"
+#include "value/range.h"
 #include "value/regex.h"
 #include "value/string.h"
 #include "value/symbol.h"
@@ -586,6 +591,68 @@ void vm::machine::opt_not()
   run_cur_scope();
 }
 
+void vm::machine::opt_get()
+{
+  const auto val = top();
+  if (val.tag() == tag::array_iterator) {
+    m_stack.pop_back();
+    push(builtin::array_iterator::get(val));
+  }
+  else if (val.tag() == tag::string_iterator) {
+    m_stack.pop_back();
+    push(builtin::string_iterator::get(val));
+  }
+  else if (val.type() == builtin::type::range) {
+    m_stack.pop_back();
+    push(value::get<value::range>(val).start);
+  }
+  else {
+    method(builtin::sym::get);
+    call(0);
+    run_cur_scope();
+  }
+}
+
+void vm::machine::opt_at_end()
+{
+  const auto val = top();
+  if (val.tag() == tag::array_iterator) {
+    pop(1);
+    push(builtin::array_iterator::at_end(val));
+  }
+  else if (val.tag() == tag::string_iterator) {
+    pop(1);
+    push(builtin::string_iterator::at_end(val));
+  }
+  else {
+    method(builtin::sym::at_end);
+    call(0);
+    run_cur_scope();
+  }
+}
+
+void vm::machine::opt_size()
+{
+  const auto val = top();
+  if (val.type() == builtin::type::array) {
+    pop(1);
+    push(builtin::array::size(val));
+  }
+  else if (val.type() == builtin::type::dictionary) {
+    pop(1);
+    push(builtin::dictionary::size(val));
+  }
+  else if (val.type() == builtin::type::string) {
+    pop(1);
+    push(builtin::string::size(val));
+  }
+  else {
+    method(builtin::sym::size);
+    call(0);
+    run_cur_scope();
+  }
+}
+
 // }}}
 
 void vm::machine::run_single_command(const vm::command& command)
@@ -658,6 +725,11 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::opt_div: opt_div(); break;
 
   case instruction::opt_not: opt_not(); break;
+
+  case instruction::opt_get:    opt_get();    break;
+  case instruction::opt_at_end: opt_at_end(); break;
+
+  case instruction::opt_size: opt_size(); break;
   }
 }
 

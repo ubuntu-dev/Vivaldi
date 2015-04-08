@@ -23,8 +23,5 @@ std::vector<vm::command> ast::type_definition::generate() const
     methods[i.first] = arg.as_fn();
   }
 
-  std::vector<vm::command> vec;
-  vec.emplace_back(vm::instruction::ptype,
-                   vm::type_t{m_name, m_parent, methods});
-  return vec;
+  return { { vm::instruction::ptype, vm::type_t{m_name, m_parent, methods} } };
 }

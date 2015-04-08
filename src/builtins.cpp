@@ -43,6 +43,8 @@ const vv::symbol sym::at_end{"at_end"};
 const vv::symbol sym::get{"get"};
 const vv::symbol sym::increment{"increment"};
 
+const vv::symbol sym::size{"size"};
+
 const vv::symbol sym::add{"add"};
 const vv::symbol sym::subtract{"subtract"};
 const vv::symbol sym::times{"times"};
@@ -50,6 +52,8 @@ const vv::symbol sym::divides{"divides"};
 
 const vv::symbol sym::equals{"equals"};
 const vv::symbol sym::unequal{"unequal"};
+
+const vv::symbol sym::op_not{"not"};
 
 const vv::symbol sym::greater{"greater"};
 const vv::symbol sym::less{"less"};
@@ -92,13 +96,18 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
   const auto supplied_fn = vm.top();
 
   for (;;) {
-    const auto at_end = call_method(vm, iter, sym::at_end).value;
+    vm.push(iter);
+    vm.opt_at_end();
+    const auto at_end = vm.top();
+    vm.pop(1);
     if (truthy(at_end)) {
-      vm.pop(1); // iter
       return { true, at_end };
     }
 
-    const auto next_item = call_method(vm, iter, sym::get).value;
+    vm.push(iter);
+    vm.opt_get();
+    const auto next_item = vm.top();
+    vm.pop(1);
 
     const auto res = inner(vm, supplied_fn, next_item);
     if (res.completed) {
@@ -227,13 +236,19 @@ gc::managed_ptr fn_reduce(vm::machine& vm)
 
 
   for (;;) {
-    const auto at_end = call_method(vm, iter, sym::at_end).value;
+    vm.push(iter);
+    vm.opt_at_end();
+    const auto at_end = vm.top();
+    vm.pop(1);
     if (truthy(at_end)) {
       return vm.top();
     }
 
     auto total = vm.top();
-    const auto next_item = call_method(vm, iter, sym::get).value;
+    vm.push(iter);
+    vm.opt_get();
+    const auto next_item = vm.top();
+    vm.pop(1);
     vm.push(next_item);
     vm.push(total);
 
@@ -262,11 +277,17 @@ gc::managed_ptr fn_sort(vm::machine& vm)
   vm.push(iter);
 
   for (;;) {
-    const auto at_end = call_method(vm, iter, sym::at_end).value;
+    vm.push(iter);
+    vm.opt_at_end();
+    const auto at_end = vm.top();
+    vm.pop(1);
     if (truthy(at_end))
       break;
 
-    const auto next_item = call_method(vm, iter, sym::get).value;
+    vm.push(iter);
+    vm.opt_get();
+    const auto next_item = vm.top();
+    vm.pop(1);
     value::get<value::array>(array).push_back(next_item);
 
     call_method(vm, iter, sym::increment);
@@ -308,14 +329,20 @@ gc::managed_ptr fn_reverse(vm::machine& vm)
   const auto arr = vm.top();
 
   for (;;) {
-    const auto at_end = call_method(vm, iter, sym::at_end).value;
+    vm.push(iter);
+    vm.opt_at_end();
+    const auto at_end = vm.top();
+    vm.pop(1);
     if (truthy(at_end)) {
       vm.pop(1); // iter
       reverse(begin(value::get<value::array>(arr)), end(value::get<value::array>(arr)));
       return arr;
     }
 
-    const auto next_item = call_method(vm, iter, sym::get).value;
+    vm.push(iter);
+    vm.opt_get();
+    const auto next_item = vm.top();
+    vm.pop(1);
     value::get<value::array>(arr).push_back(next_item);
 
     call_method(vm, iter, sym::increment);

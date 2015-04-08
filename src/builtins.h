@@ -1,7 +1,6 @@
 #ifndef VV_BUILTINS_H
 #define VV_BUILTINS_H
 
-
 namespace vv {
 
 class symbol;
@@ -28,6 +27,8 @@ const extern vv::symbol at_end;
 const extern vv::symbol get;
 const extern vv::symbol increment;
 
+const extern vv::symbol size;
+
 const extern vv::symbol add;
 const extern vv::symbol subtract;
 const extern vv::symbol times;
@@ -35,6 +36,8 @@ const extern vv::symbol divides;
 
 const extern vv::symbol equals;
 const extern vv::symbol unequal;
+
+const extern vv::symbol op_not;
 
 const extern vv::symbol greater;
 const extern vv::symbol less;
