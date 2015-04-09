@@ -35,7 +35,19 @@ gc::managed_ptr object::member(gc::managed_ptr self, gc::managed_ptr arg)
     return throw_exception(message::type_error(type::symbol, arg.type()));
   }
   const auto mem = get_member(self, value::get<value::symbol>(arg));
-  return mem ? mem : gc::alloc<value::nil>( );
+  if (mem) {
+    return mem;
+  }
+  return throw_exception("Member variable " + to_string(value::get<value::symbol>(arg)) + " does not exist");
+}
+
+gc::managed_ptr object::has_member(gc::managed_ptr self, gc::managed_ptr arg)
+{
+  if (arg.tag() != tag::symbol) {
+    return throw_exception(message::type_error(type::symbol, arg.type()));
+  }
+  const auto mem = get_member(self, value::get<value::symbol>(arg));
+  return gc::alloc<value::boolean>( mem ? true : false );
 }
 
 gc::managed_ptr object::set_member(vm::machine& vm)

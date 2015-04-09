@@ -64,7 +64,9 @@ Objects support a few universal methods:
 
 * `type()` &mdash; Returns the type of `self`.
 * `member(x)`&mdash; Returns the member with the name `x` (where `x` is a
-Symbol), or `nil` if member `x` doesn't exist.
+Symbol); if member `x` doesn't exist, throws an exception.
+* `has_member(x)`&mdash; Returns true if `self` has a member named `x`, and
+  false otherwise.
 * `set_member(x, y)`&mdash; Sets the member with the name `x` (where `x` is a
   Symbol) to value `y`, overwriting member `x` if it already exists.
 * `not()` &mdash;  Returns whether or not `self` is truthy (i.e. not `false` or

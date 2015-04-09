@@ -50,10 +50,17 @@ end
 
 fn non_object_classes(): do
   let f = "foo"
-  assert(f.member('bar) == nil, "f.member('bar) == nil")
+  assert(!f.has_member('bar), "!f.member('bar)")
+
+  let excepted = false
+  try: f.member('bar)
+  catch e: excepted = true
+  assert(excepted, "except on accessing nonexistent member variable")
+
   f.set_member('bar, 120)
   assert(f.member('bar) == 120, "f.member('bar) == 120")
-  assert("foo".member('bar) == nil, "\"foo\".member('bar) == nil")
+  assert(f.has_member('bar), "f.member('bar)")
+  assert(!"foo".has_member('bar), "!\"foo\".has_member('bar)")
 end
 
 section("Types")
