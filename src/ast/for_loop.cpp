@@ -24,24 +24,24 @@ std::vector<vm::command> ast::for_loop::generate() const
   vec.emplace_back(vm::instruction::let, m_iterator);
   vec.emplace_back(vm::instruction::pop, 1);
 
-  auto test_idx = vec.size() - 1;
+  const auto test_idx = vec.size() - 1;
   vec.emplace_back(vm::instruction::dup);
   vec.emplace_back(vm::instruction::opt_at_end);
   vec.emplace_back(vm::instruction::jt);
-  auto jmp_to_end_idx = vec.size() - 1;
+  const auto jmp_to_end_idx = vec.size() - 1;
   vec.emplace_back(vm::instruction::pop, 1);
   vec.emplace_back(vm::instruction::dup);
   vec.emplace_back(vm::instruction::opt_get);
   vec.emplace_back(vm::instruction::write, m_iterator);
   vec.emplace_back(vm::instruction::pop, 1);
 
-  auto body = m_body->code();
+  const auto body = m_body->code();
   copy(begin(body), end(body), back_inserter(vec));
 
   vec.emplace_back(vm::instruction::pop, 1);
   vec.emplace_back(vm::instruction::opt_incr);
   vec.emplace_back(vm::instruction::jmp);
-  auto vec_sz = static_cast<int>(vec.size() - 1);
+  const auto vec_sz = static_cast<int>(vec.size() - 1);
   vec.back().arg = static_cast<int>(test_idx) - vec_sz;
   vec[jmp_to_end_idx].arg = static_cast<int>(vec.size() - jmp_to_end_idx);
   vec.emplace_back(vm::instruction::lblk);

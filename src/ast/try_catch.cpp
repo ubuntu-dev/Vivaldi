@@ -17,7 +17,7 @@ std::vector<vm::command> ast::try_catch::generate() const
   std::vector<vm::command> catcher;
   catcher.emplace_back(vm::instruction::arg, 0);
   catcher.emplace_back(vm::instruction::let, m_exception_name);
-  auto catcher_body = m_catcher->code();
+  const auto catcher_body = m_catcher->code();
   copy(begin(catcher_body), end(catcher_body), back_inserter(catcher));
   catcher.emplace_back(vm::instruction::ret, false);
 

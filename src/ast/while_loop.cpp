@@ -14,11 +14,11 @@ std::vector<vm::command> ast::while_loop::generate() const
 {
   auto vec = m_test->code();
 
-  auto test_idx = vec.size();
+  const auto test_idx = vec.size();
   vec.emplace_back(vm::instruction::jf);
   vec.emplace_back(vm::instruction::pop, 1); //test result
 
-  auto body = m_body->code();
+  const auto body = m_body->code();
   for (auto&& i : body)
     vec.push_back(std::move(i));
 

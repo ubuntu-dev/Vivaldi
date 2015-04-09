@@ -13,7 +13,7 @@ std::vector<vm::command> ast::dictionary::generate() const
   std::vector<vm::command> vec;
 
   for (const auto& i : m_members) {
-    auto arg = i->code();
+    const auto arg = i->code();
     copy(begin(arg), end(arg), back_inserter(vec));
   }
 

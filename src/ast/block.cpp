@@ -29,7 +29,7 @@ std::vector<vm::command> ast::block::generate() const
   vec.emplace_back(vm::instruction::pnil);
 
   for (const auto& i : m_subexpressions) {
-    auto subexpr = i->code();
+    const auto subexpr = i->code();
     vec.emplace_back(vm::instruction::pop, 1);
     copy(begin(subexpr), end(subexpr), back_inserter(vec));
   }

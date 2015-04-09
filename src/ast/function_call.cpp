@@ -18,11 +18,11 @@ std::vector<vm::command> ast::function_call::generate() const
   //for (const auto& i : m_args) {
   for_each(rbegin(m_args), rend(m_args), [&](auto& i)
   {
-    auto arg = i->code();
+    const auto arg = i->code();
     copy(begin(arg), end(arg), back_inserter(vec));
   });
 
-  auto fn = m_function->code();
+  const auto fn = m_function->code();
   copy(begin(fn), end(fn), back_inserter(vec));
 
   vec.emplace_back(vm::instruction::call, static_cast<int>(m_args.size()));
