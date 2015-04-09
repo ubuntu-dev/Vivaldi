@@ -750,6 +750,7 @@ void init_string()
   const auto times = gc::alloc<value::opt_binop>( string::times );
 
   const auto to_int = gc::alloc<value::opt_monop>( string::to_int );
+  const auto to_flt = gc::alloc<value::opt_monop>( string::to_flt );
 
   const auto at = gc::alloc<value::opt_binop>( string::at );
   const auto start = gc::alloc<value::opt_monop>( string::start );
@@ -782,6 +783,7 @@ void init_string()
         { {"times"}, times },
 
         { {"to_int"}, to_int },
+        { {"to_flt"}, to_flt },
 
         { {"at"}, at },
         { {"start"}, start },

@@ -50,6 +50,15 @@ fn comparison(): do
   assert("abcde" >= "ABCDE", "\"abcde\" <= \"ABCDE\"")
 end
 
+fn conversion(): do
+  let one = "1"
+  let one_point_five = "1.5"
+  assert(one.to_int() == 1, "\"1\".to_int() == 1")
+  assert(one_point_five.to_int() == 1, "\"1.5\".to_int() == 1")
+  assert(one.to_flt() == 1.0, "\"1\".to_flt() == 1.0")
+  assert(one_point_five.to_flt() == 1.5, "\"1.5\".to_flt() == 1.5")
+end
+
 section("Strings")
 test(size, "size")
 test(indexing, "indexing")
@@ -58,3 +67,4 @@ test(starts_with, "starts_with")
 test(case, "case-changing")
 test(ord, "ASCII ord and escaping")
 test(comparison, "comparison")
+test(conversion, "to_int and to_flt")

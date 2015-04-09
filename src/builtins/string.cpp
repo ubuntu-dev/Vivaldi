@@ -5,6 +5,7 @@
 #include "gc/alloc.h"
 #include "utils/lang.h"
 #include "utils/string_helpers.h"
+#include "value/floating_point.h"
 #include "value/regex.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
@@ -114,6 +115,11 @@ gc::managed_ptr string::times(gc::managed_ptr self, gc::managed_ptr arg)
 gc::managed_ptr string::to_int(gc::managed_ptr self)
 {
   return gc::alloc<value::integer>(vv::to_int(value::get<value::string>(self)));
+}
+
+gc::managed_ptr string::to_flt(gc::managed_ptr self)
+{
+  return gc::alloc<value::floating_point>(std::stof(value::get<value::string>(self)));
 }
 
 gc::managed_ptr string::at(gc::managed_ptr self, gc::managed_ptr arg)

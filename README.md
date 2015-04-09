@@ -127,6 +127,10 @@ Simple, immutable string class. Currently supports:
   and `false` otherwise.
 * `ord()`&mdash; Returns the integer value of `self.at(0)` (unless `self` is
   empty, which results in an exception).
+* `to_int()`&mdash; Parses the numerical string beginning `self`, and returns it
+as an Integer.
+* `to_flt()`&mdash; Parses the numerical string beginning `self`, and returns it
+as an Float.
 * `split(x)`&mdash; Returns an Array of each substrings of `self` separated by
   the String `x`.
 * `replace(x, y)`&mdash; Returns a String with all occurrences of RegEx `x`
