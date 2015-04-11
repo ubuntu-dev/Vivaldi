@@ -174,7 +174,7 @@ val_res val_accessor(vector_ref<token> tokens)
         if (res.invalid())
           return res;
         if (!res)
-          return {tokens.subvec(1), "expected member name"}; // '.'
+          return {tokens.subvec(1), "expected method name"}; // '.'
         tokens = *res;
       }
     }
