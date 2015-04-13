@@ -17,6 +17,7 @@
 #include "value/floating_point.h"
 #include "value/function.h"
 #include "value/opt_functions.h"
+#include "value/partial_function.h"
 #include "value/range.h"
 #include "value/regex.h"
 #include "value/string.h"
@@ -294,6 +295,17 @@ void vm::machine::call(const int argc)
   const static std::array<vm::command, 1> body_shim{{
     { instruction::ret, false }
   }};
+
+  if (top().tag() == tag::partial_function) {
+    const auto func = top();
+    m_stack.pop_back();
+    for (auto i : value::get<value::partial_function>(func).provided_args)
+      push(i);
+
+    push(value::get<value::partial_function>(func).function);
+    call(argc + value::get<value::partial_function>(func).provided_args.size());
+    return;
+  }
 
   if (top().tag() != tag::function && top().tag() != tag::builtin_function &&
       top().tag() != tag::opt_monop && top().tag() != tag::opt_binop) {

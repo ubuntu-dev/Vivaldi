@@ -26,6 +26,7 @@ struct function;
 struct object;
 struct opt_monop;
 struct opt_binop;
+struct partial_function;
 struct range;
 struct regex;
 struct regex_result;
@@ -129,6 +130,8 @@ template <>
 struct tag_for<value::opt_binop> : std::integral_constant<tag, tag::opt_binop> {};
 template <>
 struct tag_for<value::nil> : std::integral_constant<tag, tag::nil> {};
+template <>
+struct tag_for<value::partial_function> : std::integral_constant<tag, tag::partial_function> {};
 template <>
 struct tag_for<value::range> : std::integral_constant<tag, tag::range> {};
 template <>

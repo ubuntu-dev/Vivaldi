@@ -25,6 +25,7 @@ add_executable(vivaldi
   src/builtins/dictionary.cpp
   src/builtins/file.cpp
   src/builtins/floating_point.cpp
+  src/builtins/function.cpp
   src/builtins/integer.cpp
   src/builtins/range.cpp
   src/builtins/regex.cpp
@@ -86,6 +87,7 @@ add_executable(vivaldi
   src/value/function.cpp
   src/value/object.cpp
   src/value/opt_functions.cpp
+  src/value/partial_function.cpp
   src/value/range.cpp
   src/value/regex.cpp
   src/value/string.cpp

@@ -5,6 +5,7 @@
 #include "builtins/dictionary.h"
 #include "builtins/file.h"
 #include "builtins/floating_point.h"
+#include "builtins/function.h"
 #include "builtins/integer.h"
 #include "builtins/object.h"
 #include "builtins/range.h"
@@ -574,6 +575,12 @@ void init_function()
       hash_map<vv::symbol, gc::managed_ptr>{},
       type::object,
       vv::symbol{"Function"});
+
+  // Have to allocate function after defining type, since the opt_binop
+  // constructor references builtin::type::function.
+  const auto bind = gc::alloc<value::opt_binop>( function::bind );
+  value::get<value::type>(builtin::type::function).methods[{"bind"}] = bind;
+
 }
 
 void init_integer()

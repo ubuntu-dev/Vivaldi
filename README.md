@@ -325,6 +325,19 @@ wrapped in a block):
       false
     end
 
+* `bind(x)` Returns the partial application of `x` as the first argument to
+  `self`; if `self` takes no arguments, throws an exception:
+
+        fn is_div_by(a, b): b % a == 0
+        let is_even = is_div_by.bind(2)
+        is_even(2) // true
+        is_even(1) // false
+
+        let return_true = is_even.bind(2)
+        return_true() // true
+
+        let whoops = return_true.bind('foo) // excepts
+
 #### Types ####
 Everything in Vivaldi is an object, and has
 

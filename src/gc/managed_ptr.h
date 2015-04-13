@@ -42,14 +42,15 @@ enum class tag {
   object            = 0b01011,
   opt_monop         = 0b01100,
   opt_binop         = 0b01101,
-  range             = 0b01110,
-  regex             = 0b01111,
-  regex_result      = 0b10000,
-  string            = 0b10001,
-  string_iterator   = 0b10010,
-  symbol            = 0b10011,
-  type              = 0b10100,
-  environment       = 0b10101
+  partial_function  = 0b01110,
+  range             = 0b01111,
+  regex             = 0b10000,
+  regex_result      = 0b10001,
+  string            = 0b10010,
+  string_iterator   = 0b10011,
+  symbol            = 0b10100,
+  type              = 0b10101,
+  environment       = 0b10110
 };
 
 namespace gc {

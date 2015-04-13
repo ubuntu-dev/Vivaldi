@@ -13,6 +13,7 @@
 #include "value/function.h"
 #include "value/object.h"
 #include "value/opt_functions.h"
+#include "value/partial_function.h"
 #include "value/range.h"
 #include "value/regex.h"
 #include "value/string.h"
@@ -50,6 +51,7 @@ size_t vv::size_for(const tag type)
   case tag::nil:              return 0;
   case tag::opt_monop:        return sizeof(value::opt_monop);
   case tag::opt_binop:        return sizeof(value::opt_binop);
+  case tag::partial_function: return sizeof(value::partial_function);
   case tag::range:            return sizeof(value::range);
   case tag::regex:            return sizeof(value::regex);
   case tag::regex_result:     return sizeof(value::regex_result);
@@ -110,6 +112,7 @@ std::string vv::value_for(gc::managed_ptr ptr)
   case tag::opt_monop:
   case tag::opt_binop:
   case tag::builtin_function:
+  case tag::partial_function:
   case tag::function:        return "<function>";
   case tag::range:           return range_val(get<range>(ptr));
   case tag::regex:           return '`' + get<regex>(ptr).str + '`';
