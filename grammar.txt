@@ -18,6 +18,8 @@
                        | <type_definition>
                        | <variable_declaration>
                        | <variable>
+                       | <member_variable>
+                       | <member_variable_assignment>
                        | <while_loop>
 
 <prec0> ::= <nonop_expression>
@@ -111,6 +113,10 @@
 <variable_declaration> ::= 'let' <variable> '=' <expression>
 
 <variable> ::= /\([^[:space:][:punct:]\|_\)+/
+
+<member_variable> ::= '@' <variable>
+
+<member_variable_assignment> ::= <member_variable> '=' <expression>
 
 <while_loop> ::= 'while' <expression> ':' <expression>
 
