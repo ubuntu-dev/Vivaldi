@@ -883,7 +883,6 @@ void builtin::init()
   // this function initializes already being initialized. Whoops.
   //
   // Things to keep in mind:
-  // - a type's init method *must* be passed in its constructor
   // - if an object is instantiated before its VV type, its type has to be
   //   corrected post facto
   // - ditto a type's parent

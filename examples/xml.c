@@ -51,7 +51,7 @@ static vv_object_t xml_type_node_list_iterator;
 
 static vv_object_t xml_document_ctor(void);
 static void xml_document_dtor(void*);
-static vv_object_t xml_document_init(vv_object_t self);
+static vv_object_t xml_document_init(vv_object_t self, vv_object_t text);
 static vv_object_t xml_document_root(vv_object_t self);
 static vv_object_t xml_document_to_str(vv_object_t self);
 
@@ -138,15 +138,10 @@ xml_document_dtor(void* blob)
 }
 
 static vv_object_t
-xml_document_init(vv_object_t self)
+xml_document_init(vv_object_t self, vv_object_t text)
 {
-  vv_object_t arg0 = vv_get_arg(0);
-  if (arg0 == vv_null) {
-    return vv_null;
-  }
-
   const char* string;
-  int str_succ = vv_get_str(arg0, &string);
+  int str_succ = vv_get_str(text, &string);
   if (str_succ == -1) {
     return vv_null;
   }
@@ -622,19 +617,16 @@ vv_init_lib(void)
 {
   xml_type_document = vv_new_type("XMLDocument",
                                   vv_null,
-                                  xml_document_ctor,
-                                  xml_document_init,
-                                  1);
+                                  xml_document_ctor);
   if (xml_type_document) {
+    vv_add_binop(xml_type_document, "init", xml_document_init);
     vv_add_monop(xml_type_document, "root", xml_document_root);
     vv_add_monop(xml_type_document, "to_str", xml_document_to_str);
   }
 
   xml_type_node = vv_new_type("XMLNode",
                               vv_null,
-                              xml_node_ctor,
-                              NULL,
-                              0);
+                              xml_node_ctor);
   if (xml_type_node) {
     vv_add_binop(xml_type_node, "all", xml_node_all);
     vv_add_binop(xml_type_node, "first", xml_node_first);
@@ -646,10 +638,9 @@ vv_init_lib(void)
 
   xml_type_node_list = vv_new_type("XMLNodeList",
                                    vv_null,
-                                   xml_node_list_ctor,
-                                   xml_node_list_init,
-                                   2);
+                                   xml_node_list_ctor);
   if (xml_type_node_list) {
+    vv_add_method(xml_type_node_list, "init", xml_node_list_init, 2);
     vv_add_monop(xml_type_node_list, "size", xml_node_list_size);
     vv_add_binop(xml_type_node_list, "at", xml_node_list_at);
     vv_add_monop(xml_type_node_list, "start", xml_node_list_start);
@@ -658,9 +649,7 @@ vv_init_lib(void)
 
   xml_type_node_list_iterator = vv_new_type("XMLNodeListIterator",
                                             vv_null,
-                                            xml_node_list_iter_ctor,
-                                            NULL,
-                                            0);
+                                            xml_node_list_iter_ctor);
   if (xml_type_node_list_iterator) {
     vv_add_monop(xml_type_node_list_iterator, "get", xml_node_list_iter_get);
     vv_add_binop(xml_type_node_list_iterator,

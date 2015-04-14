@@ -86,6 +86,7 @@ public:
   gc::managed_ptr type() const;
 
   operator bool() const { return m_flags; }
+  operator size_t() const = delete;
 
 private:
   managed_ptr(uint32_t blk, uint16_t os, vv::tag tag, int flags)

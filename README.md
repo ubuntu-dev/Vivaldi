@@ -694,15 +694,7 @@ use:
   the type, but rather in your constructor, where they're passed to
   `vv_alloc_blob`.
 
-  * (optionally) an `init` function, which is a Vivaldi method. The methods are
-  passed the result of your constructor as `self`, and initialize it to a
-  reasonable state.
-
-  * An expected number of arguments for `init`. If `init` is `NULL`, this
-  value is ignored.
-
-The function call to create a type is `vv_new_type(name, parent, ctor,
-init_or_NULL, init_argc)`.
+The function call to create a type is `vv_new_type(name, parent, ctor)`.
 
 * Vivaldi methods are defined in one of three ways:
 
@@ -720,11 +712,6 @@ init_or_NULL, init_argc)`.
   functions, Vivaldi arguments are accessed via `vv_get_arg`. Register it in
   `vv_init_lib` by calling `vv_add_method(my_type, method_name, my_C_method,
   expected_arg_count)`.
-
-Caveat: all `init` functions, even if they take zero or one arguments, can't be
-defined as monops or binops! This is because they're special, and are passed as
-arguments to `vv_new_type` instead of via `vv_add_method`, because they're
-needed to instantiate the Vivalid type.
 
 * To read or write Vivaldi variables, call `vv_let`, `vv_write`, or `vv_read` as
   appropriate.

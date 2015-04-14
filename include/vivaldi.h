@@ -81,9 +81,7 @@ vv_object_t vv_get_parent(vv_object_t type);
 
 vv_object_t vv_new_type(const char* name,
                         vv_object_t parent,
-                        vv_object_t(*constructor)(void),
-                        vv_object_t(*init)(vv_object_t),
-                        size_t init_argc);
+                        vv_object_t(*constructor)(void));
 
 vv_object_t vv_get_arg(size_t argnum);
 vv_object_t vv_new_function(vv_object_t(*func)(void), size_t argc);

@@ -31,7 +31,7 @@ vm::machine& cvm()
 template <typename... Args>
 std::function<vv_object_t(Args...)> fn_with_err_check(vv_object_t(*orig)(Args...))
 {
-  return [orig](Args&&... args...)
+  return [orig](Args&&... args)
   {
     const auto res = orig(std::forward<Args>(args)...);
     if (!res)
@@ -261,9 +261,7 @@ vv_object_t vv_get_parent(vv_object_t type)
 
 vv_object_t vv_new_type(const char* name,
                         vv_object_t parent,
-                        vv_object_t(*ctor)(),
-                        vv_object_t(*init)(vv_object_t),
-                        size_t argc)
+                        vv_object_t(*ctor)())
 {
   if (cast_from(parent) && cast_from(parent).tag() != tag::type)
     return vv_null;
@@ -273,21 +271,8 @@ vv_object_t vv_new_type(const char* name,
   const auto cpp_parent = parent ? value::get<value::type>(cast_from(parent)).parent
                                  : builtin::type::object;
 
-  symbol sym_name{name};
-  hash_map<symbol, gc::managed_ptr> methods{ };
-  if (init) {
-    const auto checked_init = fn_with_err_check(init);
-    const auto cpp_fn = [checked_init](vm::machine& vm)
-    {
-      vm.self();
-      const auto self = vm.top();
-      vm.pop(1);
-      return cast_from(checked_init(cast_to(self)));
-    };
-    const auto fn = gc::alloc<value::builtin_function>( cpp_fn, argc );
-    methods.insert({"init"}, fn);
-    cvm().push(fn);
-  }
+  const symbol sym_name{name};
+  const hash_map<symbol, gc::managed_ptr> methods{ };
 
   const auto type = gc::alloc<value::type>( cpp_ctor, methods, cpp_parent, sym_name );
 
@@ -331,7 +316,7 @@ vv_object_t vv_add_method(vv_object_t type,
     vm.self();
     const auto self = vm.top();
     vm.pop(1);
-    return cast_from(checked_fn(self));
+    return cast_from(checked_fn(cast_to(self)));
   };
 
   const auto fn = gc::alloc<value::builtin_function>( cpp_func, argc );
