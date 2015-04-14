@@ -20,7 +20,7 @@ tok_res zero_token(boost::string_ref line)
   auto last = begin(line) + 1;
   if (line.size() > 1) {
     if (line[1] == '.') {
-      auto post_dot = std::find_if_not(begin(line) + 2, end(line), isdigit);
+      const auto post_dot = std::find_if_not(begin(line) + 2, end(line), isdigit);
       if (post_dot != begin(line) + 2) {
         std::string num{begin(line), post_dot};
         return { {token::type::floating_point, num},
@@ -48,9 +48,9 @@ tok_res zero_token(boost::string_ref line)
 
 tok_res digit_token(boost::string_ref line)
 {
-  auto nondigit = std::find_if_not(begin(line), end(line), isdigit);
+  const auto nondigit = std::find_if_not(begin(line), end(line), isdigit);
   if (nondigit != end(line) && *nondigit == '.') {
-    auto nonfloat = std::find_if_not(nondigit + 1, end(line), isdigit);
+    const auto nonfloat = std::find_if_not(nondigit + 1, end(line), isdigit);
     if (nonfloat != nondigit + 1)
       return { {token::type::floating_point, {begin(line), nonfloat}},
                line.substr(nonfloat - begin(line))};
@@ -65,8 +65,8 @@ tok_res digit_token(boost::string_ref line)
 
 tok_res sym_token(boost::string_ref line)
 {
-  auto name = line.substr(1);
-  auto last = std::find_if_not(begin(name), end(name), isnamechar);
+  const auto name = line.substr(1);
+  const auto last = std::find_if_not(begin(name), end(name), isnamechar);
   if (last == begin(name) || isdigit(name.front()))
     return { {token::type::invalid, {begin(line), last}},
              line.substr(last - begin(line)) };
@@ -153,17 +153,17 @@ tok_res gt_tokens(boost::string_ref line)
 // '"' {{{
 std::pair<char, boost::string_ref> escaped_oct(boost::string_ref line)
 {
-  auto last = std::find_if_not(begin(line),
-                               begin(line) + std::min(line.size(), size_t{3}),
-                               [](auto c) { return '0' <= c && c < '8'; });
+  const auto last = std::find_if_not(begin(line),
+                                     begin(line) + std::min(line.size(), size_t{3}),
+                                     [](auto c) { return '0' <= c && c < '8'; });
 
-  auto val = stoi(std::string{begin(line), last}, nullptr, 8);
+  const auto val = stoi(std::string{begin(line), last}, nullptr, 8);
   return { static_cast<char>(val), line.substr(last - begin(line)) };
 }
 
 std::pair<char, boost::string_ref> escaped(boost::string_ref line)
 {
-  auto nonescaped = line.front();
+  const auto nonescaped = line.front();
   if (isdigit(nonescaped))
     return escaped_oct(line);
   line = line.substr(1);
@@ -207,7 +207,7 @@ tok_res string_token(boost::string_ref line)
 
 std::pair<char, boost::string_ref> escaped_regex(boost::string_ref line)
 {
-  auto nonescaped = line.front();
+  const auto nonescaped = line.front();
   switch (nonescaped) {
   case 'a':  return { '\a', line.substr(1) };
   case 'b':  return { '\b', line.substr(1) };
@@ -248,8 +248,8 @@ tok_res regex_token(boost::string_ref line)
 
 tok_res mem_token(boost::string_ref line)
 {
-  auto name = line.substr(1);
-  auto last = std::find_if_not(begin(name), end(name), isnamechar);
+  const auto name = line.substr(1);
+  const auto last = std::find_if_not(begin(name), end(name), isnamechar);
   if (last == begin(name) || isdigit(name.front()))
     return { {token::type::invalid, {begin(line), last}},
              line.substr(last - begin(line)) };
@@ -294,7 +294,7 @@ token::type type_for(const std::string& name)
 
 tok_res name_token(boost::string_ref line)
 {
-  auto last = std::find_if_not(begin(line), end(line), isnamechar);
+  const auto last = std::find_if_not(begin(line), end(line), isnamechar);
   if (last == begin(line))
     return { {token::type::invalid, {line.front()}}, line.substr(1) };
   std::string name{begin(line), last};
@@ -364,7 +364,7 @@ std::vector<token> parser::tokenize(std::istream& input)
     boost::string_ref line{current_line};
     line = ltrim(line); // remove leading whitespace from line
     while (line.size() && !line.starts_with("//")) {
-      auto res = first_token(line);
+      const auto res = first_token(line);
       tokens.push_back(res.first);
       line = ltrim(res.second);
     }

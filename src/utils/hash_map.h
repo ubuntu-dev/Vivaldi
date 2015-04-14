@@ -104,9 +104,9 @@ public:
   {
     if (empty())
       return end();
-    auto bucket = std::begin(m_buckets) + s_hash(item) % m_buckets.size();
-    auto iter = std::find_if(std::begin(bucket->slots), std::end(bucket->slots),
-                             [&item](const auto& i) { return i.first == item; });
+    const auto bucket = std::begin(m_buckets) + s_hash(item) % m_buckets.size();
+    const auto iter = std::find_if(std::begin(bucket->slots), std::end(bucket->slots),
+                                   [&item](const auto& i) { return i.first == item; });
     return iter == std::end(bucket->slots) ? end()
                                            : iterator{bucket, iter, std::end(m_buckets)};
   }
@@ -141,8 +141,8 @@ public:
     // 4. empty; need to allocate space
     if (!empty()) {
       auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
-      auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
-                          [&](const auto& i) { return i.first == item; });
+      const auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
+                                [&](const auto& i) { return i.first == item; });
       if (slot != std::end(bucket.slots)) {
         // Case 1
         slot->second = std::move(val);
@@ -182,8 +182,8 @@ public:
     if (!empty()) {
       auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
 
-      auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
-                          [&](const auto& i) { return i.first == item; });
+      const auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
+                                [&](const auto& i) { return i.first == item; });
       if (slot != std::end(bucket.slots)) {
         // Case 1
         return slot->second;
@@ -219,8 +219,8 @@ public:
   {
     if (!empty()) {
       const auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
-      auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
-                          [&item](const auto& i) { return i.first == item; });
+      const auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
+                                [&item](const auto& i) { return i.first == item; });
       if (slot != std::end(bucket.slots))
         return slot->second;
     }
@@ -230,8 +230,8 @@ public:
 
   iterator begin()
   {
-    auto first_nonempty = find_if(std::begin(m_buckets), std::end(m_buckets),
-                                  [](const auto& i) { return !i.slots.empty(); });
+    const auto first_nonempty = find_if(std::begin(m_buckets), std::end(m_buckets),
+                                        [](const auto& i) { return !i.slots.empty(); });
     if (first_nonempty == std::end(m_buckets))
       return end();
     return {first_nonempty,
