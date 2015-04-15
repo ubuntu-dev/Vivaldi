@@ -104,7 +104,7 @@ std::string vv::value_for(gc::managed_ptr ptr)
   case tag::array:           return array_val(get<array>(ptr));
   case tag::array_iterator:  return "<array iterator>";
   case tag::boolean:         return get<boolean>(ptr) ? "true" : "false";
-  case tag::character:       return "#" + std::string{get<character>(ptr)};
+  case tag::character:       return "\\" + std::string{get<character>(ptr)};
   case tag::dictionary:      return dictionary_val(get<dictionary>(ptr));
   case tag::file:            return "File: " + get<file>(ptr).name;
   case tag::floating_point:  return std::to_string(get<floating_point>(ptr));

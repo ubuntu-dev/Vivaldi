@@ -18,6 +18,12 @@ inline bool isnamechar(char c)
   return isalnum(c) || c == '_';
 }
 
+// Returns whether or not 'c' is a valid octal digit
+inline bool isoctdigit(char c)
+{
+  return isdigit(c) && c < '8';
+}
+
 }
 
 #endif
