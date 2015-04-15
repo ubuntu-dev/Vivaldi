@@ -111,3 +111,7 @@ vm::command::command(instruction new_instr, const type_t& new_arg)
 vm::command::command(instruction new_instr)
   : instr {new_instr} // arg is default-constructed to boost::blank
 { }
+
+vm::command::command()
+  : instr {instruction::pnil} // arg is default-constructed to boost::blank
+{ }

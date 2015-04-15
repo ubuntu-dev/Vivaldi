@@ -3,13 +3,32 @@
 #include "builtins.h"
 #include "vm/instruction.h"
 
-#include <iostream>
-
 using namespace vv;
 
 namespace {
 
 // Helper functions {{{
+
+bool is_eblk(const vm::command& com);
+bool is_lblk(const vm::command& com);
+bool affects_env(const vm::command& com);
+bool uses_local_vars(const vm::command& com);
+bool captures_local_env(const vm::command& com);
+bool is_opt_fn(const vm::command& com);
+bool is_opt_monop_fn(const vm::command& com);
+bool is_prim_push(const vm::command& com);
+bool is_side_effect_free(const vm::command& com);
+bool is_referentially_transparent(const vm::command& com);
+bool is_opt(const vm::command& com);
+bool is_noop(const vm::command& com);
+bool is_cjmp(const vm::command& com);
+bool is_ncjmp(const vm::command& com);
+bool is_jump(const vm::command& com);
+
+vm::instruction instr_for(symbol sym);
+vm::instruction instr_for_monop(symbol sym);
+
+std::vector<size_t> jump_targets(const std::vector<vm::command>& code);
 
 bool is_eblk(const vm::command& com)
 {
@@ -32,6 +51,12 @@ bool uses_local_vars(const vm::command& com)
       || com.instr == vm::instruction::write;
 }
 
+bool captures_local_env(const vm::command& com)
+{
+  return com.instr == vm::instruction::pfn || com.instr == vm::instruction::ptype
+      || com.instr == vm::instruction::pushc;
+}
+
 bool is_opt_fn(const vm::command& com)
 {
   if (com.instr != vm::instruction::method)
@@ -39,30 +64,6 @@ bool is_opt_fn(const vm::command& com)
   const auto sym = com.arg.as_sym();
   return sym == builtin::sym::add   || sym == builtin::sym::subtract
       || sym == builtin::sym::times || sym == builtin::sym::divides;
-}
-
-vm::instruction instr_for(symbol sym)
-{
-  if (sym == builtin::sym::add)
-    return vm::instruction::opt_add;
-  if (sym == builtin::sym::subtract)
-    return vm::instruction::opt_sub;
-  if (sym == builtin::sym::times)
-    return vm::instruction::opt_mul;
-  return vm::instruction::opt_div;
-}
-
-vm::instruction instr_for_monop(symbol sym)
-{
-  if (sym == builtin::sym::op_not)
-    return vm::instruction::opt_not;
-  if (sym == builtin::sym::get)
-    return vm::instruction::opt_get;
-  if (sym == builtin::sym::at_end)
-    return vm::instruction::opt_at_end;
-  if (sym == builtin::sym::increment)
-    return vm::instruction::opt_incr;
-  return vm::instruction::opt_size;
 }
 
 bool is_opt_monop_fn(const vm::command& com)
@@ -105,6 +106,21 @@ bool is_side_effect_free(const vm::command& com)
   }
 }
 
+// Strictly speaking, this name is a lie; other instructions (e.g. read, readm)
+// are referentially transparent, but they're also more expensive to recompute
+// than to cache (unlike these ones, which recomputing them is cheaper than the
+// variable lookup)
+bool is_referentially_transparent(const vm::command& com)
+{
+  switch (com.instr) {
+  case vm::instruction::pnil:
+  case vm::instruction::pint:
+  case vm::instruction::pbool:
+  case vm::instruction::arg: return true;
+  default: return false;
+  }
+}
+
 bool is_opt(const vm::command& com)
 {
   switch (com.instr) {
@@ -136,6 +152,30 @@ bool is_jump(const vm::command& com)
   return is_cjmp(com) || is_ncjmp(com);
 }
 
+vm::instruction instr_for(symbol sym)
+{
+  if (sym == builtin::sym::add)
+    return vm::instruction::opt_add;
+  if (sym == builtin::sym::subtract)
+    return vm::instruction::opt_sub;
+  if (sym == builtin::sym::times)
+    return vm::instruction::opt_mul;
+  return vm::instruction::opt_div;
+}
+
+vm::instruction instr_for_monop(symbol sym)
+{
+  if (sym == builtin::sym::op_not)
+    return vm::instruction::opt_not;
+  if (sym == builtin::sym::get)
+    return vm::instruction::opt_get;
+  if (sym == builtin::sym::at_end)
+    return vm::instruction::opt_at_end;
+  if (sym == builtin::sym::increment)
+    return vm::instruction::opt_incr;
+  return vm::instruction::opt_size;
+}
+
 std::vector<size_t> jump_targets(const std::vector<vm::command>& code)
 {
   std::vector<size_t> targets;
@@ -148,6 +188,18 @@ std::vector<size_t> jump_targets(const std::vector<vm::command>& code)
 
 // }}}
 // Optimization functions {{{
+
+bool optimize_blocks(std::vector<vm::command>& code);
+bool optimize_binops(std::vector<vm::command>& code);
+bool optimize_monops(std::vector<vm::command>& code);
+bool optimize_noops(std::vector<vm::command>& code);
+bool optimize_constants(std::vector<vm::command>& code);
+bool optimize_simple_vars(std::vector<vm::command>& code);
+bool optimize_abs_jumps(std::vector<vm::command>& code);
+bool optimize_cond_jumps(std::vector<vm::command>& code);
+bool optimize_noop_instrs(std::vector<vm::command>& code);
+
+bool optimize_lets(std::vector<vm::command>& code);
 
 // Remove unnecessary 'eblk'/'lblk' pairs in which nothing is defined (since
 // creating a new environment is potentially expensive)
@@ -202,7 +254,7 @@ bool optimize_binops(std::vector<vm::command>& code)
   return changed;
 }
 
-// Replace calls to 'add', 'subtract', etc. with optimized instructions
+// Replace calls to 'not', 'size', etc. with optimized instructions
 bool optimize_monops(std::vector<vm::command>& code)
 {
   auto changed = false;
@@ -287,34 +339,39 @@ bool optimize_constants(std::vector<vm::command>& code)
   return changed;
 }
 
-// If possible, replace named argument access with argument number
-bool optimize_args(std::vector<vm::command>& code)
+// If possible, replace variables with simple, unique instructions (int, bool,
+// and nil literals, as well as 'arg' instructions) with the literal value
+bool optimize_simple_vars(std::vector<vm::command>& code)
 {
   if (any_of(begin(code), end(code), is_jump))
     return false;
+  const auto in_closure = any_of(begin(code), end(code), captures_local_env);
 
-  std::unordered_map<vv::symbol, int> arg_nos;
+  std::unordered_map<vv::symbol, vm::command> values;
 
-  bool changed = false;
+  auto changed = false;
 
   for (auto i = begin(code); i != end(code); ++i) {
-    if (i->instr == vm::instruction::arg) {
+    if (is_referentially_transparent(*i)) {
       const auto next = std::next(i);
       if (next != end(code)) {
-        if (next->instr == vm::instruction::let)
-          arg_nos[next->arg.as_sym()] = i->arg.as_int();
-        i = next;
+        if (next->instr == vm::instruction::let) {
+          values[next->arg.as_sym()] = *i;
+          i = next;
+        }
       }
     }
     else if (i->instr == vm::instruction::req) {
       return changed;
     }
     else if ((i->instr == vm::instruction::let || i->instr == vm::instruction::write)) {
-      arg_nos.erase(i->arg.as_sym());
+      values.erase(i->arg.as_sym());
     }
-    else if (i->instr == vm::instruction::read && arg_nos.count(i->arg.as_sym())) {
-      i->instr = vm::instruction::arg;
-      i->arg = arg_nos[i->arg.as_sym()];
+    else if (in_closure && i->instr == vm::instruction::call) {
+      values.clear();
+    }
+    else if (i->instr == vm::instruction::read && values.count(i->arg.as_sym())) {
+      *i = values[i->arg.as_sym()];
       changed = true;
     }
   }
@@ -324,8 +381,7 @@ bool optimize_args(std::vector<vm::command>& code)
 bool optimize_lets(std::vector<vm::command>& code)
 {
   // Can't alter the current scope if a closure's capturing it
-  if (any_of(begin(code), end(code),
-             [](const auto& c) { return c.instr == vm::instruction::pfn; }))
+  if (any_of(begin(code), end(code), captures_local_env))
     return false;
 
   auto changed = false;
@@ -419,15 +475,15 @@ bool optimize_noop_instrs(std::vector<vm::command>& code)
 bool optimize_once(std::vector<vm::command>& code)
 {
   auto changed = false;
-  if (optimize_blocks(code))       changed = true;
-  if (optimize_binops(code))       changed = true;
-  if (optimize_monops(code))       changed = true;
-  if (optimize_noops(code))        changed = true;
-  if (optimize_constants(code))    changed = true;
-  if (optimize_args(code)) changed = true;
-  if (optimize_cond_jumps(code))   changed = true;
-  if (optimize_abs_jumps(code))    changed = true;
-  if (optimize_noop_instrs(code))  changed = true;
+  if (optimize_blocks(code))      changed = true;
+  if (optimize_binops(code))      changed = true;
+  if (optimize_monops(code))      changed = true;
+  if (optimize_noops(code))       changed = true;
+  if (optimize_constants(code))   changed = true;
+  if (optimize_simple_vars(code)) changed = true;
+  if (optimize_cond_jumps(code))  changed = true;
+  if (optimize_abs_jumps(code))   changed = true;
+  if (optimize_noop_instrs(code)) changed = true;
 
   return changed;
 }

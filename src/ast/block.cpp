@@ -1,5 +1,6 @@
 #include "block.h"
 
+#include "opt.h"
 #include "vm/instruction.h"
 
 using namespace vv;
@@ -35,5 +36,6 @@ std::vector<vm::command> ast::block::generate() const
   }
 
   vec.push_back(vm::instruction::lblk);
+  optimize_independent_block(vec);
   return vec;
 }

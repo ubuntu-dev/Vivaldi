@@ -216,6 +216,7 @@ public:
   command(instruction instr, const function_t& arg);
   command(instruction instr, const type_t& arg);
   command(instruction instr);
+  command();
 
   instruction instr;
   argument arg;
