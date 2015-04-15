@@ -15,9 +15,9 @@ class Brainfuck
       if (@tape_pos >= @tape.size()): @tape.append(0)
 
       cond
-        @code[@code_pos] == "[": self.do_inc(),
-        @code[@code_pos] == "]": return @tape[@tape_pos] != 0,
-        !skip:                      self.do_code()
+        @code[@code_pos] == \[: self.do_inc(),
+        @code[@code_pos] == \]: return @tape[@tape_pos] != 0,
+        !skip:                  self.do_code()
 
       @code_pos = @code_pos + 1
     end
@@ -34,12 +34,12 @@ class Brainfuck
   fn do_code(): do
     let code_char = @code[@code_pos]
     cond
-      code_char == "+": @tape[@tape_pos] = @tape[@tape_pos] + 1,
-      code_char == "-": @tape[@tape_pos] = @tape[@tape_pos] - 1,
-      code_char == ">": @tape_pos = @tape_pos + 1,
-      code_char == "<": @tape_pos = @tape_pos - 1,
-      code_char == ".": self.print_char(@tape[@tape_pos]),
-      code_char == ",": @tape[@tape_pos] = next_char_ord
+      code_char == \+: @tape[@tape_pos] = @tape[@tape_pos] + 1,
+      code_char == \-: @tape[@tape_pos] = @tape[@tape_pos] - 1,
+      code_char == \>: @tape_pos = @tape_pos + 1,
+      code_char == \<: @tape_pos = @tape_pos - 1,
+      code_char == \.: self.print_char(@tape[@tape_pos]),
+      code_char == \,: @tape[@tape_pos] = next_char_ord
   end
 
   fn print_char(char): do
