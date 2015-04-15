@@ -3,6 +3,7 @@
 #include "builtins.h"
 #include "gc.h"
 #include "utils/lang.h"
+#include "utils/string_helpers.h"
 #include "value/array.h"
 #include "value/array_iterator.h"
 #include "value/blob.h"
@@ -104,7 +105,7 @@ std::string vv::value_for(gc::managed_ptr ptr)
   case tag::array:           return array_val(get<array>(ptr));
   case tag::array_iterator:  return "<array iterator>";
   case tag::boolean:         return get<boolean>(ptr) ? "true" : "false";
-  case tag::character:       return "\\" + std::string{get<character>(ptr)};
+  case tag::character:       return get_escaped_name(get<character>(ptr));
   case tag::dictionary:      return dictionary_val(get<dictionary>(ptr));
   case tag::file:            return "File: " + get<file>(ptr).name;
   case tag::floating_point:  return std::to_string(get<floating_point>(ptr));
@@ -119,7 +120,7 @@ std::string vv::value_for(gc::managed_ptr ptr)
   case tag::range:           return range_val(get<range>(ptr));
   case tag::regex:           return '`' + get<regex>(ptr).str + '`';
   case tag::regex_result:    return "<regex result>";
-  case tag::string:          return '"' + get<string>(ptr) + '"';
+  case tag::string:          return '"' + escape_chars(get<string>(ptr)) + '"';
   case tag::string_iterator: return "<string iterator>";
   case tag::symbol:          return '\'' + to_string(get<value::symbol>(ptr));
   case tag::type:            return to_string(get<type>(ptr).name);

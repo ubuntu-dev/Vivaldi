@@ -24,6 +24,9 @@ inline bool isoctdigit(char c)
   return isdigit(c) && c < '8';
 }
 
+std::string escape_chars(const std::string& orig);
+std::string get_escaped_name(char orig);
+
 }
 
 #endif
