@@ -94,6 +94,7 @@ parse_res<> parse_symbol(token_string tokens);
 parse_res<> parse_integer(token_string tokens);
 parse_res<> parse_float(token_string tokens);
 parse_res<> parse_bool(token_string tokens);
+parse_res<> parse_char(token_string tokens);
 parse_res<> parse_nil(token_string tokens);
 parse_res<> parse_regex(token_string tokens);
 parse_res<> parse_string(token_string tokens);
@@ -579,6 +580,7 @@ parse_res<> parse_literal(token_string tokens)
   if ((res = parse_float(tokens)))   return res;
   if ((res = parse_integer(tokens))) return res;
   if ((res = parse_bool(tokens)))    return res;
+  if ((res = parse_char(tokens)))    return res;
   if ((res = parse_nil(tokens)))     return res;
   if ((res = parse_regex(tokens)))   return res;
   if ((res = parse_string(tokens)))  return res;
@@ -758,6 +760,15 @@ parse_res<> parse_bool(token_string tokens)
   bool value{tokens.front().str == "true"};
   tokens = tokens.subvec(1); // value
   return {{ std::make_unique<literal::boolean>( value ), tokens }};
+}
+
+parse_res<> parse_char(const token_string tokens)
+{
+  if (tokens.empty() || tokens.front().which != token::type::character)
+    return {};
+
+  return {{ std::make_unique<literal::character>( tokens.front().str.front() ),
+            tokens.subvec(1) }};
 }
 
 parse_res<> parse_nil(token_string tokens)

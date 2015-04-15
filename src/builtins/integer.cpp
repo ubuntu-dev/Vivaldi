@@ -245,5 +245,5 @@ gc::managed_ptr integer::chr(gc::managed_ptr self)
   auto ord = value::get<value::integer>(self);
   if (ord < 0 || ord > 255)
     return throw_exception(message::out_of_range(0, 256, ord));
-  return gc::alloc<value::string>( std::string{static_cast<char>(ord)} );
+  return gc::alloc<value::character>( static_cast<char>(ord) );
 }

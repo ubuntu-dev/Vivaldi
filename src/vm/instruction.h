@@ -29,6 +29,8 @@ struct type_t {
 enum class instruction {
   // pushes the provided Bool literal onto the stack.
   pbool,
+  // pushes the provided Char literal onto the stack.
+  pchar,
   // pushes the provided Float literal onto the stack.
   pflt,
   // pushes the provided Function literal onto the stack.

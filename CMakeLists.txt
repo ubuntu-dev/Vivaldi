@@ -22,6 +22,7 @@ add_executable(vivaldi
   src/builtins/type.cpp
 
   src/builtins/array.cpp
+  src/builtins/character.cpp
   src/builtins/dictionary.cpp
   src/builtins/file.cpp
   src/builtins/floating_point.cpp

@@ -1,16 +1,16 @@
 require "assert"
 
 fn size(): do
-  assert("".size() == 0, "''.size() == 0")
-  assert(" ".size() == 1, "' '.size() == 1")
-  assert("foo".size() == 3, "'foo'.size() == 2")
+  assert("".size() == 0, "\"\".size() == 0")
+  assert(" ".size() == 1, "\" \".size() == 1")
+  assert("foo".size() == 3, "\"foo\".size() == 2")
 end
 
 let str = "foo"
 
 fn indexing(): do
-  assert(str[0] == "f", "(str[0] == 'f'");
-  assert(str[2] == "o", "(str[2] == 'o'");
+  assert(str[0] == #f, "str[0] == #f");
+  assert(str[2] == #o, "str[2] == #o");
 
   let excepted = false
   try: str[128]

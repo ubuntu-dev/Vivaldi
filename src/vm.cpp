@@ -102,6 +102,11 @@ void vm::machine::pbool(bool val)
   push(gc::alloc<value::boolean>( val ));
 }
 
+void vm::machine::pchar(int val)
+{
+  push(gc::alloc<value::character>( static_cast<char>(val) ));
+}
+
 void vm::machine::pflt(double val)
 {
   push(gc::alloc<value::floating_point>( val ));
@@ -703,6 +708,7 @@ void vm::machine::run_single_command(const vm::command& command)
 
   switch (instr) {
   case instruction::pbool: pbool(arg.as_bool());  break;
+  case instruction::pchar: pchar(arg.as_int());   break;
   case instruction::pflt:  pflt(arg.as_double()); break;
   case instruction::pfn:   pfn(arg.as_fn());      break;
   case instruction::pint:  pint(arg.as_int());    break;

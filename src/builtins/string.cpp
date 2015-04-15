@@ -133,7 +133,7 @@ gc::managed_ptr string::at(gc::managed_ptr self, gc::managed_ptr arg)
   if (str.size() <= static_cast<unsigned>(val) || val < 0)
     return throw_exception(message::out_of_range(0, str.size(), val));
 
-  return gc::alloc<value::string>( std::string{str[static_cast<unsigned>(val)]} );
+  return gc::alloc<value::character>( str[static_cast<unsigned>(val)] );
 }
 
 gc::managed_ptr string::start(gc::managed_ptr self)

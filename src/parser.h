@@ -80,6 +80,7 @@ struct token {
     member,
     name,
 
+    character,
     integer,
     floating_point,
     regex,

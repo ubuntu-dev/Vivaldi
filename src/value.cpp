@@ -43,6 +43,7 @@ size_t vv::size_for(const tag type)
   case tag::blob:             return sizeof(value::blob);
   case tag::boolean:          return sizeof(value::boolean);
   case tag::builtin_function: return sizeof(value::builtin_function);
+  case tag::character:        return sizeof(value::character);
   case tag::dictionary:       return sizeof(value::dictionary);
   case tag::file:             return sizeof(value::file);
   case tag::floating_point:   return sizeof(value::floating_point);
@@ -103,6 +104,7 @@ std::string vv::value_for(gc::managed_ptr ptr)
   case tag::array:           return array_val(get<array>(ptr));
   case tag::array_iterator:  return "<array iterator>";
   case tag::boolean:         return get<boolean>(ptr) ? "true" : "false";
+  case tag::character:       return "#" + std::string{get<character>(ptr)};
   case tag::dictionary:      return dictionary_val(get<dictionary>(ptr));
   case tag::file:            return "File: " + get<file>(ptr).name;
   case tag::floating_point:  return std::to_string(get<floating_point>(ptr));
@@ -144,6 +146,7 @@ size_t vv::hash_for(gc::managed_ptr obj)
 {
   switch (obj.tag()) {
   case tag::boolean:        return hash_val(get<boolean>(obj));
+  case tag::character:      return hash_val(get<character>(obj));
   case tag::floating_point: return hash_val(get<floating_point>(obj));
   case tag::integer:        return hash_val(get<integer>(obj));
   case tag::string:         return hash_val(get<string>(obj));
@@ -174,6 +177,7 @@ bool vv::equals(gc::managed_ptr lhs, gc::managed_ptr rhs)
 
   switch (lhs.tag()) {
   case tag::boolean:        return val_equals<boolean>(lhs, rhs);
+  case tag::character:      return val_equals<character>(lhs, rhs);
   case tag::floating_point: return val_equals<floating_point>(lhs, rhs);
   case tag::integer:        return val_equals<integer>(lhs, rhs);
   case tag::string:         return val_equals<string>(lhs, rhs);

@@ -17,6 +17,14 @@ private:
   bool m_val;
 };
 
+class character : public expression {
+public:
+  character(char val) : m_val{val} { }
+  std::vector<vm::command> generate() const override;
+private:
+  char m_val;
+};
+
 class floating_point : public expression {
 public:
   floating_point(double val) : m_val{val} { }

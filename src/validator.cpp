@@ -48,6 +48,7 @@ val_res val_while_loop(vector_ref<token> tokens);
 
 // Literals
 val_res val_bool(vector_ref<token> tokens);
+val_res val_char(vector_ref<token> tokens);
 val_res val_float(vector_ref<token> tokens);
 val_res val_integer(vector_ref<token> tokens);
 val_res val_nil(vector_ref<token> tokens);
@@ -378,6 +379,7 @@ val_res val_literal(const vector_ref<token> tokens)
     return {};
   val_res res;
   if ((res = val_bool(tokens))    || res.invalid()) return res;
+  if ((res = val_char(tokens))    || res.invalid()) return res;
   if ((res = val_float(tokens))   || res.invalid()) return res;
   if ((res = val_integer(tokens)) || res.invalid()) return res;
   if ((res = val_nil(tokens))     || res.invalid()) return res;
@@ -548,6 +550,13 @@ val_res val_while_loop(vector_ref<token> tokens)
 val_res val_bool(const vector_ref<token> tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::boolean)
+    return {};
+  return tokens.subvec(1); // 'true'/'false'
+}
+
+val_res val_char(const vector_ref<token> tokens)
+{
+  if (tokens.empty() || tokens.front().which != token::type::character)
     return {};
   return tokens.subvec(1); // 'true'/'false'
 }

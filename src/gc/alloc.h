@@ -25,9 +25,10 @@ managed_ptr emplace(T&& item)
 template <typename T, typename... Args>
 gc::managed_ptr alloc(Args&&... args)
 {
-  static_assert(!std::is_same<T, value::boolean>(), "unspecialized for bool");
-  static_assert(!std::is_same<T, value::nil>(),     "unspecialized for nil");
-  static_assert(!std::is_same<T, value::integer>(), "unspecialized for integer");
+  static_assert(!std::is_same<T, value::boolean>(),   "unspecialized for bool");
+  static_assert(!std::is_same<T, value::character>(), "unspecialized for char");
+  static_assert(!std::is_same<T, value::nil>(),       "unspecialized for nil");
+  static_assert(!std::is_same<T, value::integer>(),   "unspecialized for integer");
 
   auto ptr = internal::emplace(T{std::forward<Args>(args)...});
   return ptr;
@@ -54,6 +55,24 @@ template <>
 inline gc::managed_ptr alloc<value::boolean>()
 {
   return {1, 0, tag::boolean, 1};
+}
+
+template <>
+inline gc::managed_ptr alloc<value::character, char>(char&& val)
+{
+  return {static_cast<uint32_t>(val), 0, tag::character, 1};
+}
+
+template <>
+inline gc::managed_ptr alloc<value::character, char&>(char& val)
+{
+  return {static_cast<uint32_t>(val), 0, tag::character, 1};
+}
+
+template <>
+inline gc::managed_ptr alloc<value::character, const char&>(const char& val)
+{
+  return {static_cast<uint32_t>(val), 0, tag::character, 1};
 }
 
 template <>

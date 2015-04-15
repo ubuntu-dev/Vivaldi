@@ -2,6 +2,7 @@
 
 #include "c_internal.h"
 #include "builtins/array.h"
+#include "builtins/character.h"
 #include "builtins/dictionary.h"
 #include "builtins/file.h"
 #include "builtins/floating_point.h"
@@ -382,8 +383,9 @@ gc::managed_ptr function::reverse;
 gc::managed_ptr type::array;
 gc::managed_ptr type::array_iterator;
 gc::managed_ptr type::boolean;
-gc::managed_ptr type::dictionary;
+gc::managed_ptr type::character;
 gc::managed_ptr type::custom_type;
+gc::managed_ptr type::dictionary;
 gc::managed_ptr type::file;
 gc::managed_ptr type::floating_point;
 gc::managed_ptr type::function;
@@ -477,6 +479,20 @@ void init_boolean()
       hash_map<vv::symbol, gc::managed_ptr>{ },
       type::object,
       vv::symbol{"Bool"});
+}
+
+void init_character()
+{
+  const auto ord = gc::alloc<value::opt_monop>( character::ord );
+  const auto to_str = gc::alloc<value::opt_monop>( character::to_str );
+  builtin::type::character = gc::alloc<value::type>(
+      [] { return gc::managed_ptr{}; },
+      hash_map<vv::symbol, gc::managed_ptr>{
+        { {"ord"}, ord },
+        { {"to_str"}, to_str }
+      },
+      type::object,
+      vv::symbol{"Char"});
 }
 
 void init_dictionary()
@@ -910,6 +926,7 @@ void builtin::init()
   init_array();
   init_array_iterator();
   init_boolean();
+  init_character();
   init_dictionary();
   init_file();
   init_floating_point();
@@ -943,6 +960,7 @@ void builtin::init()
   vv_builtin_type_array           = cast_to(type::array);
   vv_builtin_type_array_iterator  = cast_to(type::array_iterator);
   vv_builtin_type_bool            = cast_to(type::boolean);
+  vv_builtin_type_char            = cast_to(type::character);
   vv_builtin_type_dictionary      = cast_to(type::dictionary);
   vv_builtin_type_file            = cast_to(type::file);
   vv_builtin_type_float           = cast_to(type::floating_point);
@@ -976,6 +994,7 @@ void builtin::make_base_env(gc::managed_ptr base)
     { {"Array"},          builtin::type::array },
     { {"ArrayIterator"},  builtin::type::array_iterator },
     { {"Bool"},           builtin::type::boolean },
+    { {"Char"},           builtin::type::character },
     { {"Dictionary"},     builtin::type::dictionary },
     { {"File"},           builtin::type::file },
     { {"Float"},          builtin::type::floating_point },

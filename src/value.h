@@ -34,8 +34,9 @@ struct string;
 struct string_iterator;
 struct symbol;
 struct type;
-using integer = int32_t;
 using boolean = bool;
+using character = char;
+using integer = int32_t;
 using nil = void;
 
 template <typename T>
@@ -53,6 +54,11 @@ struct result_type<boolean> {
   using type = boolean;
 };
 
+template <>
+struct result_type<character> {
+  using type = character;
+};
+
 template <typename T>
 inline typename result_type<T>::type get(gc::managed_ptr ptr)
 {
@@ -60,15 +66,21 @@ inline typename result_type<T>::type get(gc::managed_ptr ptr)
 }
 
 template <>
-inline result_type<int>::type get<int>(gc::managed_ptr ptr)
+inline result_type<boolean>::type get<boolean>(gc::managed_ptr ptr)
 {
-  return static_cast<int>(ptr.m_block);
+  return static_cast<bool>(ptr.m_block);
 }
 
 template <>
-inline result_type<bool>::type get<bool>(gc::managed_ptr ptr)
+inline result_type<character>::type get<character>(gc::managed_ptr ptr)
 {
-  return static_cast<bool>(ptr.m_block);
+  return static_cast<char>(ptr.m_block);
+}
+
+template <>
+inline result_type<integer>::type get<integer>(gc::managed_ptr ptr)
+{
+  return static_cast<int>(ptr.m_block);
 }
 
 }
@@ -114,6 +126,8 @@ template <>
 struct tag_for<value::boolean> : std::integral_constant<tag, tag::boolean> {};
 template <>
 struct tag_for<value::builtin_function> : std::integral_constant<tag, tag::builtin_function> {};
+template <>
+struct tag_for<value::character> : std::integral_constant<tag, tag::character> {};
 template <>
 struct tag_for<value::dictionary> : std::integral_constant<tag, tag::dictionary> {};
 template <>

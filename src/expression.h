@@ -50,6 +50,7 @@ class variable_declaration;
 namespace literal {
 
 class boolean;
+class character;
 class floating_point;
 class integer;
 class nil;

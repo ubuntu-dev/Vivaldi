@@ -11,8 +11,126 @@ namespace {
 
 using tok_res = std::pair<parser::token, boost::string_ref>;
 
+// String literal helpers {{{
+
+std::pair<char, boost::string_ref> escaped_oct(boost::string_ref line)
+{
+  const auto last = std::find_if_not(begin(line),
+                                     begin(line) + std::min(line.size(), size_t{3}),
+                                     [](auto c) { return '0' <= c && c < '8'; });
+
+  const auto val = stoi(std::string{begin(line), last}, nullptr, 8);
+  return { static_cast<char>(val), line.substr(last - begin(line)) };
+}
+
+std::pair<char, boost::string_ref> escaped(boost::string_ref line)
+{
+  const auto nonescaped = line.front();
+  if (isdigit(nonescaped))
+    return escaped_oct(line);
+  line = line.substr(1);
+  switch (nonescaped) {
+  case 'a':  return { '\a', line };
+  case 'b':  return { '\b', line };
+  case 'n':  return { '\n', line };
+  case 'f':  return { '\f', line };
+  case 'r':  return { '\r', line };
+  case 't':  return { '\t', line };
+  case 'v':  return { '\v', line };
+  case '"':  return { '"',  line };
+  case '\\': return { '\\', line };
+  default:   return { nonescaped, line };
+  }
+}
+
+// }}}
 // Individual tokenizing functions {{{
 
+// '!' {{{
+
+tok_res bang_tokens(boost::string_ref line)
+{
+  if (line.size() == 1 || line[1] != '=')
+    return { {token::type::bang, "!"}, line.substr(1)};
+  return { {token::type::unequal, "!="}, line.substr(2) };
+}
+
+// }}}
+// '"' {{{
+tok_res string_token(boost::string_ref line)
+{
+  std::string token{'"'};
+  line.remove_prefix(1);
+  while (line.front() != '"') {
+    if (line.front() == '\\') {
+      line.remove_prefix(1);
+      char chr;
+      tie(chr, line) = escaped(line);
+      token += chr;
+    }
+    else {
+      token += line.front();
+      line.remove_prefix(1);
+    }
+    if (line.empty())
+      return { {token::type::invalid, token}, line };
+  }
+  return { {token::type::string, token += '"'}, line.substr(1)};
+}
+
+// }}}
+// '#' {{{
+
+tok_res char_token(boost::string_ref line)
+{
+  if (line.size() == 1 || line[1] == '\n')
+    return { {token::type::invalid, "#"}, line.substr(1) };
+
+  if (line[1] == '\\') {
+    const auto past_char = escaped(line.substr(1));
+    const auto char_val = past_char.first;
+    return { {token::type::character, {char_val}}, past_char.second };
+  }
+
+  return { {token::type::character, {line[1]}}, line.substr(2) };
+}
+
+// }}}
+// '&' {{{
+
+tok_res and_tokens(boost::string_ref line)
+{
+  if (line.size() == 1 || line[1] != '&')
+    return { {token::type::ampersand, "&"}, line.substr(1)};
+  return { {token::type::and_sign, "&&"}, line.substr(2)};
+}
+
+// }}}
+// '\'' {{{
+
+tok_res sym_token(boost::string_ref line)
+{
+  const auto name = line.substr(1);
+  const auto last = std::find_if_not(begin(name), end(name), isnamechar);
+  if (last == begin(name) || isdigit(name.front()))
+    return { {token::type::invalid, {begin(line), last}},
+             line.substr(last - begin(line)) };
+
+  std::string sym{begin(name), last};
+  return { {token::type::symbol, sym}, line.substr(last - begin(line))};
+}
+
+// }}}
+// '*' {{{
+
+tok_res star_tokens(const boost::string_ref line)
+{
+  if (line.size() == 1 || line[1] != '*')
+    return { {token::type::star, "*"}, line.substr(1) };
+  return { {token::type::double_star, "**"}, line.substr(2) };
+}
+
+// }}}
 // '0' {{{
 
 tok_res zero_token(boost::string_ref line)
@@ -61,18 +179,15 @@ tok_res digit_token(boost::string_ref line)
 }
 
 // }}}
-// '\'' {{{
+// '<' {{{
 
-tok_res sym_token(boost::string_ref line)
+tok_res lt_tokens(boost::string_ref line)
 {
-  const auto name = line.substr(1);
-  const auto last = std::find_if_not(begin(name), end(name), isnamechar);
-  if (last == begin(name) || isdigit(name.front()))
-    return { {token::type::invalid, {begin(line), last}},
-             line.substr(last - begin(line)) };
-
-  std::string sym{begin(name), last};
-  return { {token::type::symbol, sym}, line.substr(last - begin(line))};
+  if (line.size() > 1 && line[1] == '=')
+    return { {token::type::less_eq, "<="}, line.substr(2)};
+  if (line.size() > 1 && line[1] == '<')
+    return { {token::type::lshift, "<<"}, line.substr(2)};
+  return { {token::type::less, "<"}, line.substr(1)};
 }
 
 // }}}
@@ -83,58 +198,6 @@ tok_res eq_tokens(boost::string_ref line)
   if (line.size() == 1 || line[1] != '=')
     return { {token::type::assignment, "="}, line.substr(1)};
   return { {token::type::equals, "=="}, line.substr(2)};
-}
-
-// }}}
-// '!' {{{
-
-tok_res bang_tokens(boost::string_ref line)
-{
-  if (line.size() == 1 || line[1] != '=')
-    return { {token::type::bang, "!"}, line.substr(1)};
-  return { {token::type::unequal, "!="}, line.substr(2) };
-}
-
-// }}}
-// '*' {{{
-
-tok_res star_tokens(boost::string_ref line)
-{
-  if (line.size() == 1 || line[1] != '*')
-    return { {token::type::star, "*"}, line.substr(1)};
-  return { {token::type::double_star, "**"}, line.substr(2)};
-}
-
-// }}}
-// '&' {{{
-
-tok_res and_tokens(boost::string_ref line)
-{
-  if (line.size() == 1 || line[1] != '&')
-    return { {token::type::ampersand, "&"}, line.substr(1)};
-  return { {token::type::and_sign, "&&"}, line.substr(2)};
-}
-
-// }}}
-// '|' {{{
-
-tok_res or_tokens(boost::string_ref line)
-{
-  if (line.size() == 1 || line[1] != '|')
-    return { {token::type::pipe, "|"}, line.substr(1)};
-  return { {token::type::or_sign, "||"}, line.substr(2)};
-}
-
-// }}}
-// '<' {{{
-
-tok_res lt_tokens(boost::string_ref line)
-{
-  if (line.size() > 1 && line[1] == '=')
-    return { {token::type::less_eq, "<="}, line.substr(2)};
-  if (line.size() > 1 && line[1] == '<')
-    return { {token::type::lshift, "<<"}, line.substr(2)};
-  return { {token::type::less, "<"}, line.substr(1)};
 }
 
 // }}}
@@ -150,56 +213,18 @@ tok_res gt_tokens(boost::string_ref line)
 }
 
 // }}}
-// '"' {{{
-std::pair<char, boost::string_ref> escaped_oct(boost::string_ref line)
-{
-  const auto last = std::find_if_not(begin(line),
-                                     begin(line) + std::min(line.size(), size_t{3}),
-                                     [](auto c) { return '0' <= c && c < '8'; });
+// '@' {{{
 
-  const auto val = stoi(std::string{begin(line), last}, nullptr, 8);
-  return { static_cast<char>(val), line.substr(last - begin(line)) };
-}
-
-std::pair<char, boost::string_ref> escaped(boost::string_ref line)
+tok_res mem_token(boost::string_ref line)
 {
-  const auto nonescaped = line.front();
-  if (isdigit(nonescaped))
-    return escaped_oct(line);
-  line = line.substr(1);
-  switch (nonescaped) {
-  case 'a':  return { '\a', line };
-  case 'b':  return { '\b', line };
-  case 'n':  return { '\n', line };
-  case 'f':  return { '\f', line };
-  case 'r':  return { '\r', line };
-  case 't':  return { '\t', line };
-  case 'v':  return { '\v', line };
-  case '"':  return { '"',  line };
-  case '\\': return { '\\', line };
-  default:   return { nonescaped, line };
-  }
-}
+  const auto name = line.substr(1);
+  const auto last = std::find_if_not(begin(name), end(name), isnamechar);
+  if (last == begin(name) || isdigit(name.front()))
+    return { {token::type::invalid, {begin(line), last}},
+             line.substr(last - begin(line)) };
 
-tok_res string_token(boost::string_ref line)
-{
-  std::string token{'"'};
-  line.remove_prefix(1);
-  while (line.front() != '"') {
-    if (line.front() == '\\') {
-      line.remove_prefix(1);
-      char chr;
-      tie(chr, line) = escaped(line);
-      token += chr;
-    }
-    else {
-      token += line.front();
-      line.remove_prefix(1);
-    }
-    if (line.empty())
-      return { {token::type::invalid, token}, line };
-  }
-  return { {token::type::string, token += '"'}, line.substr(1)};
+  std::string sym{begin(name), last};
+  return { {token::type::member, sym}, line.substr(last - begin(line))};
 }
 
 // }}}
@@ -244,18 +269,13 @@ tok_res regex_token(boost::string_ref line)
 }
 
 // }}}
-// '@' {{{
+// '|' {{{
 
-tok_res mem_token(boost::string_ref line)
+tok_res or_tokens(boost::string_ref line)
 {
-  const auto name = line.substr(1);
-  const auto last = std::find_if_not(begin(name), end(name), isnamechar);
-  if (last == begin(name) || isdigit(name.front()))
-    return { {token::type::invalid, {begin(line), last}},
-             line.substr(last - begin(line)) };
-
-  std::string sym{begin(name), last};
-  return { {token::type::member, sym}, line.substr(last - begin(line))};
+  if (line.size() == 1 || line[1] != '|')
+    return { {token::type::pipe, "|"}, line.substr(1)};
+  return { {token::type::or_sign, "||"}, line.substr(2)};
 }
 
 // }}}
@@ -326,6 +346,13 @@ tok_res first_token(boost::string_ref line)
   case '%': return {{token::type::percent, "%"}, line.substr(1)};
   case '/': return {{token::type::slash,   "/"}, line.substr(1)};
 
+  case '!': return bang_tokens(line);
+  case '"': return string_token(line);
+  case '#': return char_token(line);
+  case '&': return and_tokens(line);
+  case '\'': return sym_token(line);
+  case '*': return star_tokens(line);
+
   case '1':
   case '2':
   case '3':
@@ -336,17 +363,13 @@ tok_res first_token(boost::string_ref line)
   case '8':
   case '9': return digit_token(line);
   case '0': return zero_token(line);
-  case '\'': return sym_token(line);
-  case '=': return eq_tokens(line);
-  case '!': return bang_tokens(line);
-  case '*': return star_tokens(line);
-  case '&': return and_tokens(line);
-  case '|': return or_tokens(line);
+
   case '<': return lt_tokens(line);
+  case '=': return eq_tokens(line);
   case '>': return gt_tokens(line);
-  case '"': return string_token(line);
-  case '`': return regex_token(line);
   case '@': return mem_token(line);
+  case '`': return regex_token(line);
+  case '|': return or_tokens(line);
   default:  return name_token(line);
   }
 }

@@ -171,6 +171,7 @@ vv_object_t vv_new_object(vv_object_t type, vv_object_t* args, size_t argc)
 vv_object_t vv_builtin_type_array;
 vv_object_t vv_builtin_type_array_iterator;
 vv_object_t vv_builtin_type_bool;
+vv_object_t vv_builtin_type_char;
 vv_object_t vv_builtin_type_dictionary;
 vv_object_t vv_builtin_type_file;
 vv_object_t vv_builtin_type_float;

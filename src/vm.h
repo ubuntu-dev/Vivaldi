@@ -37,6 +37,7 @@ public:
   // in vm/instruction.h.
 
   void pbool(bool val);
+  void pchar(int val);
   void pflt(double val);
   void pfn(const function_t& val);
   void pint(int val);

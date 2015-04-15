@@ -10,10 +10,11 @@ using namespace gc;
 managed_ptr managed_ptr::type() const
 {
   switch (m_tag) {
-  case tag::nil:     return builtin::type::nil;
-  case tag::integer: return builtin::type::integer;
-  case tag::boolean: return builtin::type::boolean;
-  default:           return get()->type;
+  case tag::nil:       return builtin::type::nil;
+  case tag::boolean:   return builtin::type::boolean;
+  case tag::character: return builtin::type::character;
+  case tag::integer:   return builtin::type::integer;
+  default:             return get()->type;
   }
 }
 

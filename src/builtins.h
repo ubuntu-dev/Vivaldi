@@ -75,6 +75,7 @@ namespace type {
 extern gc::managed_ptr array;
 extern gc::managed_ptr array_iterator;
 extern gc::managed_ptr boolean;
+extern gc::managed_ptr character;
 extern gc::managed_ptr dictionary;
 extern gc::managed_ptr custom_type;
 extern gc::managed_ptr file;

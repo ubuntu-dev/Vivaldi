@@ -53,6 +53,7 @@ vv_object_t vv_new_object(vv_object_t type, vv_object_t* args, size_t argc);
 extern vv_object_t vv_builtin_type_array;
 extern vv_object_t vv_builtin_type_array_iterator;
 extern vv_object_t vv_builtin_type_bool;
+extern vv_object_t vv_builtin_type_char;
 extern vv_object_t vv_builtin_type_dictionary;
 extern vv_object_t vv_builtin_type_file;
 extern vv_object_t vv_builtin_type_float;
