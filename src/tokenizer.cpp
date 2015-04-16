@@ -114,6 +114,16 @@ tok_res star_tokens(const boost::string_ref line)
 }
 
 // }}}
+// '-' {{{
+
+tok_res dash_tokens(const boost::string_ref line)
+{
+  if (line.size() == 1 || line[1] != '>')
+    return { {token::type::dash, "-"}, line.substr(1) };
+  return { {token::type::arrow, "->"}, line.substr(2) };
+}
+
+// }}}
 // '0' {{{
 
 tok_res zero_token(boost::string_ref line)
@@ -368,7 +378,6 @@ tok_res first_token(boost::string_ref line)
   case '.': return {{token::type::dot,       "."}, line.substr(1)};
 
   case '+': return {{token::type::plus,    "+"}, line.substr(1)};
-  case '-': return {{token::type::dash,    "-"}, line.substr(1)};
   case '~': return {{token::type::tilde,   "~"}, line.substr(1)};
   case '^': return {{token::type::caret,   "^"}, line.substr(1)};
   case '%': return {{token::type::percent, "%"}, line.substr(1)};
@@ -380,6 +389,7 @@ tok_res first_token(boost::string_ref line)
   case '&': return and_tokens(line);
   case '\'': return sym_token(line);
   case '*': return star_tokens(line);
+  case '-': return dash_tokens(line);
 
   case '1':
   case '2':

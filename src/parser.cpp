@@ -140,9 +140,8 @@ parse_res<> parse_operator_expr(token_string tokens,
 
     const symbol name{convert(tokens.front().which)};
 
-    auto right_res = lower_pred(tokens.subvec(1)); // method (i.e. binop)
-    auto right = move(right_res->first);
-    tokens = right_res->second;
+    std::unique_ptr<ast::expression> right;
+    tie(right, tokens) = *lower_pred(tokens.subvec(1)); // method (i.e. binop)
 
     auto method = std::make_unique<ast::method>( move(left), name );
     arg_t arg{};
@@ -163,9 +162,8 @@ parse_res<> parse_prec13(token_string tokens)
   while (!tokens.empty() && tokens.front().which == token::type::or_sign) {
     auto left = move(left_res->first);
 
-    auto right_res = parse_prec13(tokens.subvec(1)); // '||'
-    auto right = move(right_res->first);
-    tokens = right_res->second;
+    std::unique_ptr<ast::expression> right;
+    tie(right, tokens) = *parse_prec13(tokens.subvec(1)); // '||'
 
     left_res = {{ std::make_unique<logical_or>(move(left), move(right)), tokens }};
   }
@@ -181,9 +179,8 @@ parse_res<> parse_prec12(token_string tokens)
 
   while (!tokens.empty() && tokens.front().which == token::type::and_sign) {
     auto left = move(left_res->first);
-    auto right_res = parse_prec12(tokens.subvec(1)); // '&&'
-    auto right = move(right_res->first);
-    tokens = right_res->second;
+    std::unique_ptr<ast::expression> right;
+    tie(right, tokens) = *parse_prec12(tokens.subvec(1)); // '||'
 
     left_res = {{ std::make_unique<logical_and>(move(left), move(right)), tokens }};
   }
@@ -233,9 +230,8 @@ parse_res<> parse_prec9(token_string tokens)
 
   while (!tokens.empty() && tokens.front().which == token::type::to) {
     auto left = move(left_res->first);
-    auto right_res = parse_prec9(tokens.subvec(1)); // 'to'
-    auto right = move(right_res->first);
-    tokens = right_res->second;
+    std::unique_ptr<ast::expression> right;
+    tie(right, tokens) = *parse_prec9(tokens.subvec(1)); // '||'
 
     arg_t args;
     args.emplace_back(move(left));
@@ -328,9 +324,8 @@ parse_res<> parse_prec1(token_string tokens)
     symbol name{(tokens.front().which == token::type::bang)  ? "not" :
                 (tokens.front().which == token::type::tilde) ? "negate" :
                                                                "negative"};
-    auto expr_res = parse_prec1(tokens.subvec(1)); // monop
-    tokens = expr_res->second;
-    auto expr = move(expr_res->first);
+    std::unique_ptr<ast::expression> expr;
+    tie(expr, tokens) = *parse_prec1(tokens.subvec(1)); // monop
     auto method = std::make_unique<ast::method>( move(expr), name );
 
     return {{ std::make_unique<function_call>( move(method), arg_t{} ),
@@ -351,6 +346,7 @@ parse_res<> parse_prec0(token_string tokens)
   auto expr = move(expr_res->first);
   while (!tokens.empty() && (tokens.front().which == token::type::open_paren
                         || tokens.front().which == token::type::dot
+                        || tokens.front().which == token::type::arrow
                         || tokens.front().which == token::type::open_bracket)) {
     if (tokens.front().which == token::type::open_paren) {
       auto list_res = parse_function_call(tokens);
@@ -368,9 +364,8 @@ parse_res<> parse_prec0(token_string tokens)
       tokens = idx_res->second;
 
       if (!tokens.empty() && tokens.front().which == token::type::assignment) {
-        auto value_res = parse_expression(tokens.subvec(1)); // '='
-        auto value = move(value_res->first);
-        tokens = value_res->second;
+        std::unique_ptr<ast::expression> value;
+        tie(value, tokens) = *parse_expression(tokens.subvec(1)); // '='
 
         auto method = std::make_unique<ast::method>( move(expr), symbol{"set_at"} );
         arg_t args{};
@@ -385,6 +380,16 @@ parse_res<> parse_prec0(token_string tokens)
       arg_t arg{};
       arg.emplace_back(move(idx));
       expr = std::make_unique<function_call>(move(method), move(arg));
+    }
+    else if (tokens.front().which == token::type::arrow) {
+      tokens = tokens.subvec(1); // '->'
+      std::unique_ptr<ast::expression> bound_fn;
+      tie(bound_fn, tokens) = *parse_nonop_expression(tokens);
+
+      auto method = std::make_unique<ast::method>( move(bound_fn), symbol{"bind"} );
+      arg_t args{};
+      args.emplace_back(move(expr));
+      expr = std::make_unique<function_call>( move(method), move(args) );
     }
     else {
       tokens = tokens.subvec(1); // '.'
@@ -434,10 +439,9 @@ parse_res<> parse_assignment(token_string tokens)
 {
   if (tokens.size() < 2 || tokens[1].which != token::type::assignment)
     return {};
-  symbol name{tokens.front().str};
-  auto expr_res = parse_expression(tokens.subvec(2)); // name '='
-  auto expr = move(expr_res->first);
-  tokens = expr_res->second;
+  const symbol name{tokens.front().str};
+  std::unique_ptr<ast::expression> expr;
+  tie(expr, tokens) = *parse_expression(tokens.subvec(2)); // name '='
   return {{ std::make_unique<assignment>( name, move(expr) ), tokens }};
 }
 
@@ -514,10 +518,8 @@ parse_res<> parse_except(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_except)
     return {};
-  tokens = tokens.subvec(1); // 'except'
-  auto expr_res = parse_expression(tokens);
-  auto expr = move(expr_res->first);
-  tokens = expr_res->second;
+  std::unique_ptr<ast::expression> expr;
+  tie(expr, tokens) = *parse_expression(tokens.subvec(1)); // 'except'
   return {{ std::make_unique<except>( move(expr) ), tokens }};
 }
 
@@ -527,16 +529,14 @@ parse_res<> parse_for_loop(token_string tokens)
     return {};
   tokens = tokens.subvec(1); // 'for'
 
-  symbol iterator{tokens.front().str};
+  const symbol iterator{tokens.front().str};
   tokens = tokens.subvec(2); // iterator 'in'
 
-  auto range_res = parse_expression(tokens);
-  auto range = move(range_res->first);
-  tokens = range_res->second.subvec(1); // ':'
+  std::unique_ptr<ast::expression> range;
+  tie(range, tokens) = *parse_expression(tokens);
 
-  auto body_res = parse_expression(tokens); // ':'
-  auto body = move(body_res->first);
-  tokens = body_res->second;
+  std::unique_ptr<ast::expression> body;
+  tie(body, tokens) = *parse_expression(tokens.subvec(1)); // ':'
 
   return {{ std::make_unique<for_loop>( iterator, move(range), move(body) ),
             tokens }};
@@ -566,9 +566,8 @@ parse_res<> parse_function_definition(token_string tokens)
   auto args = move(arg_res->first);
   tokens = arg_res->second;
 
-  auto body_res = parse_expression(tokens.subvec(1)); // ':'
-  auto body = move(body_res->first);
-  tokens = body_res->second;
+  std::unique_ptr<ast::expression> body;
+  tie(body, tokens) = *parse_expression(tokens.subvec(1)); // ':'
 
   return {{ std::make_unique<function_definition>( name, move(body), args ),
             tokens }};
@@ -609,10 +608,8 @@ parse_res<> parse_new_obj(token_string tokens)
     return {};
   tokens = tokens.subvec(1); // 'new'
 
-  auto type_res = parse_nonop_expression(tokens);
-  auto type = move(type_res->first);
-  tokens = type_res->second;
-  tokens = type_res->second;
+  std::unique_ptr<ast::expression> type;
+  tie(type, tokens) = *parse_nonop_expression(tokens);
 
   auto args_res = parse_function_call(tokens);
   auto args = move(args_res->first);
@@ -636,10 +633,9 @@ parse_res<> parse_return(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_return)
     return {};
-  tokens = tokens.subvec(1); // 'except'
-  auto expr_res = parse_expression(tokens);
-  auto expr = move(expr_res->first);
-  tokens = expr_res->second;
+
+  std::unique_ptr<ast::expression> expr;
+  tie(expr, tokens) = *parse_expression(tokens.subvec(1)); // 'return'
   return {{ std::make_unique<return_statement>( move(expr) ), tokens }};
 }
 
@@ -649,19 +645,17 @@ parse_res<> parse_try_catch(token_string tokens)
     return {};
   tokens = tokens.subvec(2); // 'try' ':'
 
-  auto body_res = parse_expression(tokens);
-  auto body = move(body_res->first);
-  tokens = body_res->second;
+  std::unique_ptr<ast::expression> body;
+  tie(body, tokens) = *parse_expression(tokens);
 
   tokens = ltrim_if(tokens, newline_test);
   tokens = tokens.subvec(1); // 'catch'
-  symbol exception_name{tokens.front().str};
+  const symbol exception_name{tokens.front().str};
   std::vector<symbol> exception_arg{exception_name};
   tokens = tokens.subvec(2); // name ':
 
-  auto catcher_res = parse_expression(tokens);
-  auto catcher = move(catcher_res->first);
-  tokens = catcher_res->second;
+  std::unique_ptr<ast::expression> catcher;
+  tie(catcher, tokens) = *parse_expression(tokens);
 
   return {{std::make_unique<try_catch>(move(body),exception_name,move(catcher)),
            tokens}};
@@ -671,7 +665,7 @@ parse_res<> parse_type_definition(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_class)
     return{};
-  symbol name{tokens[1].str};
+  const symbol name{tokens[1].str};
   tokens = tokens.subvec(2); // 'class' name
 
   symbol parent{"Object"};
@@ -698,10 +692,12 @@ parse_res<> parse_variable_declaration(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_let)
     return {};
-  symbol name{tokens[1].str};
-  auto expr_res = parse_expression(tokens.subvec(3)); // 'let' name '='
-  auto expr = move(expr_res->first);
-  tokens = expr_res->second;
+
+  const symbol name{tokens[1].str};
+
+  std::unique_ptr<ast::expression> expr;
+  tie(expr, tokens) = *parse_expression(tokens.subvec(3)); // 'let' name '='
+
   return {{ std::make_unique<variable_declaration>(name, move(expr)), tokens }};
 }
 
@@ -709,7 +705,7 @@ parse_res<> parse_variable(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::name)
     return {};
-  symbol name{tokens.front().str};
+  const symbol name{tokens.front().str};
   tokens = tokens.subvec(1); // name
   return {{ std::make_unique<variable>(name), tokens }};
 }
@@ -719,13 +715,11 @@ parse_res<> parse_while_loop(token_string tokens)
   if (tokens.empty() || tokens.front().which != token::type::key_while)
     return {};
 
-  auto test_res = parse_expression(tokens.subvec(1)); // 'while'
-  auto test = move(test_res->first);
-  tokens = test_res->second;
+  std::unique_ptr<ast::expression> test;
+  tie(test, tokens) = *parse_expression(tokens.subvec(1)); // 'while'
 
-  auto body_res = parse_expression(tokens.subvec(1)); // ':'
-  auto body = move(body_res->first);
-  tokens = body_res->second;
+  std::unique_ptr<ast::expression> body;
+  tie(body, tokens) = *parse_expression(tokens.subvec(1)); // ':'
 
   return {{ std::make_unique<while_loop>( move(test), move(body) ), tokens }};
 }
@@ -757,7 +751,7 @@ parse_res<> parse_bool(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::boolean)
     return {};
-  bool value{tokens.front().str == "true"};
+  const bool value{tokens.front().str == "true"};
   tokens = tokens.subvec(1); // value
   return {{ std::make_unique<literal::boolean>( value ), tokens }};
 }
@@ -783,8 +777,7 @@ parse_res<> parse_regex(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::regex)
     return {};
-  // inc/decrement to remove quotes
-  std::string val{tokens.front().str};
+  const std::string val{tokens.front().str};
   tokens = tokens.subvec(1); // val
   return {{ std::make_unique<literal::regex>( val ), tokens }};
 }
@@ -794,7 +787,7 @@ parse_res<> parse_string(token_string tokens)
   if (tokens.empty() || tokens.front().which != token::type::string)
     return {};
   // inc/decrement to remove quotes
-  std::string val{++begin(tokens.front().str), --end(tokens.front().str)};
+  const std::string val{++begin(tokens.front().str), --end(tokens.front().str)};
   tokens = tokens.subvec(1); // val
   return {{ std::make_unique<literal::string>( val ), tokens }};
 }
@@ -803,7 +796,7 @@ parse_res<> parse_symbol(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::symbol)
     return {};
-  symbol name{tokens[0].str};
+  const symbol name{tokens[0].str};
   tokens = tokens.subvec(1); // symbol
   return {{ std::make_unique<literal::symbol>( name ), tokens }};
 }
@@ -864,9 +857,8 @@ parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
   auto test = move(test_res->first);
   tokens = test_res->second.subvec(1); // ':'
 
-  auto body_res = parse_expression(tokens);
-  auto body = move(body_res->first);
-  tokens = body_res->second;
+  std::unique_ptr<ast::expression> body;
+  tie(body, tokens) = *parse_expression(tokens);
 
   return {{ make_pair(move(test), move(body)), tokens }};
 }
@@ -880,7 +872,7 @@ parse_res<std::pair<symbol, function_definition>>
     return {};
   tokens = tokens.subvec(1); // 'fn'
 
-  symbol name{tokens.front().str};
+  const symbol name{tokens.front().str};
   tokens = tokens.subvec(1); // name
 
   auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
@@ -895,9 +887,8 @@ parse_res<std::pair<symbol, function_definition>>
   auto args = move(arg_res->first);
   tokens = arg_res->second;
 
-  auto body_res = parse_expression(tokens.subvec(1)); // ':'
-  auto body = move(body_res->first);
-  tokens = body_res->second;
+  std::unique_ptr<ast::expression> body;
+  tie(body, tokens) = *parse_expression(tokens.subvec(1)); // ':'
 
   return {{ std::make_pair( name,function_definition{ {}, move(body), args} ),
             tokens}};
@@ -915,10 +906,9 @@ std::vector<std::unique_ptr<expression>> parser::parse(token_string tokens)
   tokens = ltrim_if(tokens, trim_test);
 
   while (!tokens.empty()) {
-    auto res = parse_expression(tokens);
-    expressions.push_back(move(res->first));
-    tokens = res->second;
-    tokens = ltrim_if(res->second, trim_test);
+    expressions.emplace_back();
+    tie(expressions.back(), tokens) = *parse_expression(tokens);
+    tokens = ltrim_if(tokens, trim_test);
   }
   return expressions;
 }

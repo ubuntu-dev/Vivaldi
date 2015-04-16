@@ -55,8 +55,7 @@ end
 // Parsing {{{
 
 fn tokenize(str): do
-  str = str.replace(`([\(\)])`, " $1 ")
-  filter(str.split(" "), fn (x): x.size() != 0)
+  str.replace(`([\(\)])`, " $1 ").split(" ")->filter(fn (x): x.size() != 0)
 end
 
 fn parse_atom(x): cond

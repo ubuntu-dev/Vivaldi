@@ -109,6 +109,7 @@ val_res val_expression(vector_ref<token> tokens)
   case token::type::ampersand:
   case token::type::lshift:
   case token::type::rshift:
+  case token::type::arrow:
   case token::type::plus:
   case token::type::dash:
   case token::type::star:

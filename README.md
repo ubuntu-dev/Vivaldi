@@ -148,7 +148,7 @@ Class representing a single character. Character literals consist of a backslash
 followed by either the literal character (e.g. `"a"[0] == \a`), the octal ASCII
 value (e.g. `"\016"[0] == \016`), or a named literal:
 
-    \nul.to_str()       ==  "\0"
+    \nul.to_str()       == "\0"
     \alarm.to_str()     == "\a"
     \backspace.to_str() == "\b"
     \tab.to_str()       == "\t"
@@ -363,6 +363,12 @@ wrapped in a block):
 
         let whoops = return_true.bind('foo) // excepts
 
+  `self.bind(x)` can be written more succinctly as `x->self` (the `->` doesn't
+  have any relation to the C meaning; think more like Clojure). This can read
+  more naturally for some range-based functions:
+
+       [1, 2, 3, 4, 5]->filter(fn (x): x % 2)
+
 #### Types ####
 Everything in Vivaldi is an object, and has
 
@@ -548,9 +554,10 @@ are expressions.
 Vivaldi operators, aside from `&&`, `||`, `to` (which is syntax sugar for
 Range), and `=` (which isn't actually an operator at all&mdash; it just looks like
 one), are all just syntax sugar for method calls. Here they are in order of
-precedence (basically C precedence, with the bitwise mistake fixed and `**` and
-`to` inserted where appropriate):
+precedence (basically C precedence, with the bitwise mistake fixed and `->`,
+`**`, and `to` inserted where appropriate):
 
+    a->b     // b.bind(a)
     a[b]     // a.at(b)
     a[b] = c // a.set_at(b, c)
     !a       // a.not()

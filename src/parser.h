@@ -43,6 +43,8 @@ struct token {
     lshift,
     rshift,
 
+    arrow,
+
     assignment,
     equals,
     unequal,
