@@ -93,11 +93,17 @@ gc::managed_ptr string::greater_equals(gc::managed_ptr self, gc::managed_ptr arg
 
 gc::managed_ptr string::add(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  if (arg.tag() != tag::string)
-    return throw_exception(message::add_type_error(type::string, type::string));
+  if (arg.tag() == tag::string) {
+    const auto str = value::get<value::string>(arg);
+    return gc::alloc<value::string>( value::get<value::string>(self) + str );
+  }
 
-  const auto str = value::get<value::string>(arg);
-  return gc::alloc<value::string>( value::get<value::string>(self) + str );
+  if (arg.tag() == tag::character) {
+    const auto chr = value::get<value::character>(arg);
+    return gc::alloc<value::string>( value::get<value::string>(self) + chr );
+  }
+
+  return throw_exception(message::add_type_error(type::string, type::string));
 }
 
 gc::managed_ptr string::times(gc::managed_ptr self, gc::managed_ptr arg)
