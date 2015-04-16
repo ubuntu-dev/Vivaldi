@@ -113,6 +113,8 @@ Simple, immutable string class. Currently supports:
   otherwise, creates a String with `x`'s display value. For instance, `new
   String(12)` will return `"12"`.
 * `size()`&mdash; returns the size of the string.
+* `at(x)`&mdash; Returns the Char at index `x` in `self` (unless `x` is either
+  negative or past the end of `self`, which results in an exception).
 * `add(x)`&mdash; Returns a string formed form concatenating `self` and the String
   `x`, leaving `self` unchanged.
 * `times(x)`&mdash; Returns a string formed by concatenating `x` copies of `self`,
@@ -125,8 +127,8 @@ Simple, immutable string class. Currently supports:
   switched with their lowercase equivalents.
 * `starts_with(x)`&mdash; Returns `true` if `self` begins with the string `x`,
   and `false` otherwise.
-* `ord()`&mdash; Returns the integer value of `self.at(0)` (unless `self` is
-  empty, which results in an exception).
+* `ord()`&mdash; Equivalent to `self[0].ord()` (unless `self` is empty, which
+  results in an exception).
 * `to_int()`&mdash; Parses the numerical string beginning `self`, and returns it
 as an Integer.
 * `to_flt()`&mdash; Parses the numerical string beginning `self`, and returns it
@@ -140,6 +142,29 @@ as an Float.
 * `less(x)`, `greater(x)`, `less_equals(x)`, `greater_equals(x)`&mdash; Return
   the result of the appropriate lexographical comparsion between `self` and
   String `x`.
+
+#### Chars ####
+Class representing a single character. Character literals consist of a backslash
+followed by either the literal character (e.g. `"a"[0] == \a`), the octal ASCII
+value (e.g. `"\016"[0] == \016`), or a named literal:
+
+    \nul.to_str()       ==  "\0"
+    \alarm.to_str()     == "\a"
+    \backspace.to_str() == "\b"
+    \tab.to_str()       == "\t"
+    \newline.to_str()   == "\n"
+    \vtab.to_str()      == "\v"
+    \page.to_str()      == "\f"
+    \return.to_str()    == "\r"
+    \space.to_str()     == " "
+
+Caveat: confusingly, `\n.to_str()` is `"n"`, not `"\n"` (and so on for other
+escape sequences).
+
+* `ord()`&mdash; Returns the integer value of `self`.
+* `to_str()`&mdash; Returns a String containing the single character `self`.
+
+More methods, as well as proper Unicode support, to be added later.
 
 #### Symbols ####
 `'symbol_name` - as in Ruby or Lisp:
@@ -772,5 +797,9 @@ vv_init_lib(void)
   local (and, by extension, add a standard library)
 
 * Improve commenting
+
+* Add proper Unicode support
+
+* Add better syntastic support for partial application
 
 Any and all contributions, questions, bug reports, and angry rants welcome!
