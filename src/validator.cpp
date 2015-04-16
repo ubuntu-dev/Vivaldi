@@ -77,7 +77,10 @@ val_res val_toplevel(parser::token_string tokens)
     const auto res = val_expression(tokens);
     if (!res)
       return res.invalid() ? res : tokens;
-    tokens = ltrim_if(*res, trim_test);
+    tokens = *res;
+    if (!tokens.empty() && !trim_test(tokens.front()))
+      return {tokens, "expected end of line"};
+    tokens = ltrim_if(tokens, trim_test);
   }
   return tokens;
 }
