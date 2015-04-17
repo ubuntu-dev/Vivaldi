@@ -35,7 +35,7 @@ fn test_reduce(): do
   let spacified = reduce(str, "", fn (t, i): t + " " + i)
   assert(spacified == " f o o",
          "reduce(\"foo\", \"\", fn (t, i): t + \" \" i) == \" f o o\"")
-  let reversed = reduce(str, "", fn (t, i): i + t)
+  let reversed = reduce(str, "", fn (t, i): "" + i + t)
   assert(reversed == "oof",
          "reduce(\"foo\", \"\", fn (t, i): i + t) == \"oof\"")
 end
@@ -48,9 +48,9 @@ fn test_reverse(): do
 
   let str = reverse("foo")
   assert(str.size() == 3, "reverse(\"foo\").size() == 3")
-  assert(str[0] == "o", "reverse(\"foo\")[0] == \"o\"")
-  assert(str[1] == "o", "reverse(\"foo\")[1] == \"o\"")
-  assert(str[2] == "f", "reverse(\"foo\")[2] == \"f\"")
+  assert(str[0] == \o, "reverse(\"foo\")[0] == \\o")
+  assert(str[1] == \o, "reverse(\"foo\")[1] == \\o")
+  assert(str[2] == \f, "reverse(\"foo\")[2] == \\f")
 
   let arr = reverse(['foo, 'bar, 'baz])
   assert(arr.size() == 3, "reverse(['foo, 'bar, 'baz]).size() == 3")

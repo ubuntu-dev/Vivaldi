@@ -261,7 +261,7 @@ gc::managed_ptr string_iterator::get(gc::managed_ptr self)
     return throw_exception(message::iterator_at_end(type::string_iterator));
 
   const auto chr = value::get<value::string>(iter.str)[iter.idx];
-  return gc::alloc<value::string>( std::string{chr} );
+  return gc::alloc<value::character>( chr );
 }
 
 gc::managed_ptr string_iterator::increment(gc::managed_ptr self)
