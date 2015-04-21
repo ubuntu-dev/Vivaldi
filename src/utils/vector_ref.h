@@ -67,7 +67,7 @@ public:
   size_t size() const { return m_sz; }
   bool empty() const { return m_sz == 0; }
 
-  const T& operator[](int idx) { return m_data[idx]; }
+  const T& operator[](int idx) const { return m_data[idx]; }
 
   iterator begin() const { return m_data; }
   iterator end() const { return m_data + m_sz; }
