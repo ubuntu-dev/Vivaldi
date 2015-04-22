@@ -178,7 +178,7 @@ val_res val_prec1_expression(const token_string tokens)
     return res;
   if (cur_str.size() == tokens.size())
     return {};
-  return {cur_str, "VP2E@expected expression"};
+  return {cur_str, "expected expression"};
 }
 
 val_res val_prec0_expression(const token_string tokens)
@@ -224,7 +224,7 @@ val_res val_prec0_expression(const token_string tokens)
         if (expr_res.invalid())
           return expr_res;
         if (!expr_res)
-          return {expr_str, "VP1E/open_bracket@expected expression"};
+          return {expr_str, "expected expression"};
         cur_str = *expr_res;
       }
     }
@@ -360,7 +360,7 @@ val_res val_except(const token_string tokens)
   const auto expr_res = val_expression(tokens.subvec(1)); // 'except'
   if (expr_res || expr_res.invalid())
     return expr_res;
-  return {tokens.subvec(1), "VE@expected expression"}; // 'except'
+  return {tokens.subvec(1), "expected expression"}; // 'except'
 }
 
 val_res val_for_loop(const token_string tokens)
@@ -379,7 +379,7 @@ val_res val_for_loop(const token_string tokens)
   const auto rng_str = in_str.subvec(1); // 'in'
   const auto rng_res = val_expression(rng_str);
   if (!rng_res)
-    return rng_res.invalid() ? rng_res : val_res{rng_str, "VFL/key_in@expected expression"};
+    return rng_res.invalid() ? rng_res : val_res{rng_str, "expected expression"};
 
   if (rng_res->empty() || rng_res->front().which != token::type::colon)
     return {*rng_res, "expected ':'"};
@@ -388,7 +388,7 @@ val_res val_for_loop(const token_string tokens)
   const auto body_res = val_expression(body_str);
   if (body_res || body_res.invalid())
     return body_res;
-  return {body_str, "VFL@expected expression"};
+  return {body_str, "expected expression"};
 }
 
 val_res val_function_definition(const token_string tokens)
@@ -427,7 +427,7 @@ val_res val_function_definition(const token_string tokens)
   if (body_res || body_res.invalid())
     return body_res;
 
-  return  {body_str, "VFD@expected expression"};
+  return  {body_str, "expected expression"};
 }
 
 val_res val_member_assignment(const token_string tokens)
@@ -439,7 +439,7 @@ val_res val_member_assignment(const token_string tokens)
   const auto expr_res = val_expression(expr_str);
   if (expr_res || expr_res.invalid())
     return expr_res;
-  return {expr_str, "VMA@expected expression"};
+  return {expr_str, "expected expression"};
 }
 
 val_res val_object_creation(const token_string tokens)
@@ -451,7 +451,7 @@ val_res val_object_creation(const token_string tokens)
   if (type_res.invalid())
     return type_res;
   if (!type_res)
-    return {type_str, "VOC@expected expression"};
+    return {type_str, "expected expression"};
 
   const auto arglist_str = *type_res;
   const auto arglist_res = val_delimited_expression(arglist_str,
@@ -487,7 +487,7 @@ val_res val_return(const token_string tokens)
   const auto expr_res = val_expression(tokens.subvec(1)); // 'return'
   if (expr_res || expr_res.invalid())
     return expr_res;
-  return {tokens.subvec(1), "VR@expected expression"}; // 'return'
+  return {tokens.subvec(1), "expected expression"}; // 'return'
 }
 
 val_res val_try_catch(const token_string tokens)
@@ -502,7 +502,7 @@ val_res val_try_catch(const token_string tokens)
   if (try_res.invalid())
     return try_res;
   if (!try_res)
-    return {try_str, "VTC/key_try@expected expression"};
+    return {try_str, "expected expression"};
 
   const auto catch_str = trim_newline_group(*try_res);
   if (catch_str.empty() || catch_str.front().which != token::type::key_catch)
@@ -516,7 +516,7 @@ val_res val_try_catch(const token_string tokens)
   const auto catch_body_res = val_expression(catch_body_str);
   if (catch_body_res || catch_body_res.invalid())
     return catch_body_res;
-  return {catch_body_str, "VTC/key_catch@expected expression"};
+  return {catch_body_str, "expected expression"};
 }
 
 val_res val_type_definition(const token_string tokens)
@@ -560,7 +560,7 @@ val_res val_variable_assignment(const token_string tokens)
   const auto expr_res = val_expression(expr_str);
   if (expr_res || expr_res.invalid())
     return expr_res;
-  return {expr_str, "VVA@expected expression"};
+  return {expr_str, "expected expression"};
 }
 
 val_res val_variable_declaration(const token_string tokens)
@@ -577,7 +577,7 @@ val_res val_variable_declaration(const token_string tokens)
   const auto expr_res = val_expression(expr_str);
   if (expr_res || expr_res.invalid())
     return expr_res;
-  return {expr_str, "VVD@expected expression"};
+  return {expr_str, "expected expression"};
 }
 
 val_res val_while_loop(const token_string tokens)
@@ -587,7 +587,7 @@ val_res val_while_loop(const token_string tokens)
   const auto rng_str = tokens.subvec(1); // 'while'
   const auto rng_res = val_expression(rng_str);
   if (!rng_res)
-    return rng_res.invalid() ? rng_res : val_res{rng_str, "VWL/key_while@expected expression"};
+    return rng_res.invalid() ? rng_res : val_res{rng_str, "expected expression"};
 
   if (rng_res->empty() || rng_res->front().which != token::type::colon)
     return {*rng_res, "expected ':'"};
@@ -596,7 +596,7 @@ val_res val_while_loop(const token_string tokens)
   const auto body_res = val_expression(body_str);
   if (body_res || body_res.invalid())
     return body_res;
-  return {body_str, "VWL/colon@expected expression"};
+  return {body_str, "expected expression"};
 }
 
 // }}}
@@ -725,7 +725,7 @@ val_res val_colon_separated_pair(const token_string tokens)
   const auto second_res = val_expression(second_str);
   if (second_res || second_res.invalid())
     return second_res;
-  return {second_str, "VCSP@expected expression"};
+  return {second_str, "expected expression"};
 }
 
 // }}}
