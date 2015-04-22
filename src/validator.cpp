@@ -102,6 +102,9 @@ val_res val_single_comma(token_string tokens);
 // Validates an expr: expr pair (used in cond statements and in dictionaries)
 val_res val_colon_separated_pair(token_string tokens);
 
+// Like val_function_definition, except that anonymous functions are rejected
+val_res val_method_definition(token_string tokens);
+
 // }}}
 
 // }}}
@@ -545,7 +548,7 @@ val_res val_type_definition(const token_string tokens)
   // As per val_block, can't use val_separated_list because the newlines between
   // the final method and 'end' would get confused for a separator
   while (!cur_str.empty() && cur_str.front().which != token::type::key_end) {
-    const auto method_res = val_function_definition(cur_str);
+    const auto method_res = val_method_definition(cur_str);
     if (method_res.invalid())
       return method_res;
     if (!method_res)
@@ -731,6 +734,46 @@ val_res val_colon_separated_pair(const token_string tokens)
   if (second_res || second_res.invalid())
     return second_res;
   return {second_str, "expected expression"};
+}
+
+val_res val_method_definition(const token_string tokens)
+{
+  if (tokens.empty() || tokens.front().which != token::type::key_fn)
+    return {};
+
+  const auto name_str = tokens.subvec(1); // 'fn'
+  if (name_str.empty() || name_str.front().which != token::type::name)
+    return {name_str, "expected method name"};
+  const auto arglist_str = name_str.subvec(1); // name
+
+  const auto arglist_res = val_delimited_expression(arglist_str,
+                                                    token::type::open_paren,
+                                                    token::type::close_paren,
+                                                    [](const auto inner_str)
+  {
+    return val_separated_list(inner_str, val_single_comma, [](const auto var_str)
+    {
+      if (var_str.empty() || var_str.front().which != token::type::name)
+        return val_res{};
+      return val_res{var_str.subvec(1)}; // name
+    }, "variable name");
+  }, "')'", "argument list");
+
+  if (arglist_res.invalid())
+    return arglist_res;
+  if (!arglist_res)
+    return {arglist_str, "expected argument list enclosed in parentheses"};
+
+  const auto colon_str = *arglist_res;
+  if (colon_str.empty() || colon_str.front().which != token::type::colon)
+    return {colon_str, "expected ':'"};
+
+  const auto body_str = trim_newline_group(colon_str.subvec(1)); // ':'
+  const auto body_res = val_expression(body_str);
+  if (body_res || body_res.invalid())
+    return body_res;
+
+  return  {body_str, "expected expression"};
 }
 
 // }}}
