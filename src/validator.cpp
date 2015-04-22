@@ -311,14 +311,19 @@ val_res val_block(const token_string tokens)
   auto cur_str = trim_newline_or_semicolon_group(tokens.subvec(1)); // 'do';
   while (!cur_str.empty() && cur_str.front().which != token::type::key_end) {
     const auto expr_res = val_expression(cur_str);
-    if (expr_res.invalid())
-      return expr_res;
-    if (!expr_res)
-      return {cur_str, "expected expression"};
+    if (!expr_res) {
+      return expr_res.valid() ? val_res{cur_str, "expected expression or 'end'"}
+                              : expr_res;
+    }
+
     cur_str = trim_newline_or_semicolon_group(*expr_res);
+    if (cur_str.empty() || cur_str.front().which == token::type::key_end)
+      break;
+    if (cur_str.size() == expr_res->size())
+      return {cur_str, "expected linebreak, ';', or 'end'"};
   }
   return cur_str.empty() ? val_res{cur_str, "expected 'end'"}
-                          : cur_str.subvec(1); // 'end'
+                         : cur_str.subvec(1); // 'end'
 }
 
 val_res val_cond_statement(const token_string tokens)
