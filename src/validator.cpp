@@ -4,671 +4,737 @@
 
 using namespace vv;
 using namespace parser;
+using namespace std::literals;
 
 namespace {
 
-// Validates a string of tokens via recursive descent, so that when we're
-// parsing it properly we don't have to worry about malformed syntax
+// Basic synposis:
+// - Toplevel
+// - Postfix and high-precedence infix operators (a[b], a(b, c...), a.b, a->b)
+// - Prefix operators (!a, ~a, -a)
+// - Low-precedence infix operators (a + b, a - b, etc)
+// - Complex expressions (parenthesized expressions, function declarations, etc)
+// - Single-token expressions (literals, variables, members)
 
-bool trim_test(const token& t)
-{
-  return t.which == token::type::newline || t.which == token::type::semicolon;
-};
+// Declarations {{{
 
-bool newline_test(const token& t)
-{
-  return t.which == token::type::newline;
-};
+// High-level validators {{{
 
-val_res val_toplevel(vector_ref<token> tokens);
+val_res val_toplevel(token_string tokens);
+val_res val_expression(token_string tokens);
+// Low-granularity precedence, since in most cases it doesn't matter
+val_res val_prec2_expression(token_string tokens); // // most infixes
+val_res val_prec1_expression(token_string tokens); // prefixes
+val_res val_prec0_expression(token_string tokens); // postfixes, a.b, a->b
 
-val_res val_expression(vector_ref<token> tokens); // infix binop
-val_res val_monop(vector_ref<token> tokens); // prefix monop
-val_res val_accessor(vector_ref<token> tokens); // member, call, or index
-val_res val_noop(vector_ref<token> tokens); // any other expression
+// }}}
+// Complex expression validators {{{
 
-val_res val_array_literal(vector_ref<token> tokens);
-val_res val_dict_literal(vector_ref<token> tokens);
-val_res val_assignment(vector_ref<token> tokens);
-val_res val_block(vector_ref<token> tokens);
-val_res val_cond_statement(vector_ref<token> tokens);
-val_res val_except(vector_ref<token> tokens);
-val_res val_for_loop(vector_ref<token> tokens);
-val_res val_function_definition(vector_ref<token> tokens);
-val_res val_literal(vector_ref<token> tokens);
-val_res val_member(vector_ref<token> tokens);
-val_res val_new_obj(vector_ref<token> tokens);
-val_res val_require(vector_ref<token> tokens);
-val_res val_return(vector_ref<token> tokens);
-val_res val_try_catch(vector_ref<token> tokens);
-val_res val_type_definition(vector_ref<token> tokens);
-val_res val_variable_declaration(vector_ref<token> tokens);
-val_res val_variable(vector_ref<token> tokens);
-val_res val_while_loop(vector_ref<token> tokens);
+val_res val_nonop_expression(token_string tokens);
 
-// Literals
-val_res val_bool(vector_ref<token> tokens);
-val_res val_char(vector_ref<token> tokens);
-val_res val_float(vector_ref<token> tokens);
-val_res val_integer(vector_ref<token> tokens);
-val_res val_nil(vector_ref<token> tokens);
-val_res val_regex(vector_ref<token> tokens);
-val_res val_string(vector_ref<token> tokens);
-val_res val_symbol(vector_ref<token> tokens);
+val_res val_array_literal(token_string tokens);
+val_res val_block(token_string tokens);
+val_res val_cond_statement(token_string tokens);
+val_res val_dictionary_literal(token_string tokens);
+val_res val_except(token_string tokens);
+val_res val_for_loop(token_string tokens);
+val_res val_function_definition(token_string tokens);
+val_res val_member_assignment(token_string tokens);
+val_res val_object_creation(token_string tokens);
+val_res val_require(token_string tokens);
+val_res val_return(token_string tokens);
+val_res val_try_catch(token_string tokens);
+val_res val_type_definition(token_string tokens);
+val_res val_variable_assignment(token_string tokens);
+val_res val_variable_declaration(token_string tokens);
+val_res val_while_loop(token_string tokens);
 
-// Helpers
+// }}}
+// Single-token expression validators {{{
+
+val_res val_single_token_expression(token_string tokens);
+
+// }}}
+// Helpers {{{
+
+// Accepts token strings of the form
+// opening
+// [newlines]*
+// inner
+// [newlines]*
+// closing
+//
+// where 'inner' is anything that innner_expr_validator returns a valid result
+// for. Returns {} for anything not beginning with opening, and returns an
+// invalid result for anything else.
 template <typename F>
-val_res val_comma_separated_list(vector_ref<token> tokens,
-                                 const F& val_item);
-template <typename F>
-val_res val_bracketed_subexpr(vector_ref<token> tokens,
-                              const F& val_item,
-                              token::type opening,
-                              token::type closing);
-// a: b pair, as in dicts or cond statements
-val_res val_pair(vector_ref<token> tokens);
+val_res val_delimited_expression(token_string tokens,
+                                 token::type opening,
+                                 token::type closing,
+                                 const F& innner_expr_validator,
+                                 const std::string& closing_name = "closing",
+                                 const std::string& expr_name = "expression");
 
-// Definitions
+// Accepts token strings matching zero or more alternations of expr_func,
+// sep_func, [newlines]*, beginning and ending with expr_func; returns invalid
+// for anything else (never returns {}). Newlines at the beginning or end of the
+// token string, as well as between expr_func's and sep_func's are *not* dealt
+// with automatically.
+template <typename SepFunc, typename ExprFunc>
+val_res val_separated_list(token_string tokens,
+                           const SepFunc& sep_validator,
+                           const ExprFunc& expr_validator,
+                           const std::string& expr_name = "expression");
 
-val_res val_toplevel(parser::token_string tokens)
+// Strips zero or more token::type::newlines from the start of tokens
+token_string trim_newline_group(token_string tokens);
+// Strips zero or more token::type::newlines or token::type::semicolons from the
+// start of tokens
+token_string trim_newline_or_semicolon_group(token_string tokens);
+
+// Return wrapped version of the trim_* equivalent, or {} if the token doesn't
+// start with the appropriate tokens
+val_res val_newline_or_semicolon_group(token_string tokens);
+
+// Validates a single comma at the start of the token string
+val_res val_single_comma(token_string tokens);
+
+// Validates an expr: expr pair (used in cond statements and in dictionaries)
+val_res val_colon_separated_pair(token_string tokens);
+
+// }}}
+
+// }}}
+// Definitions {{{
+
+// High-level validators {{{
+
+val_res val_toplevel(const token_string tokens)
 {
-  tokens = ltrim_if(tokens, trim_test);
+  const auto trimmed = rtrim_if(trim_newline_or_semicolon_group(tokens),
+                                [](const auto& tok)
+  {
+    return tok.which == token::type::newline
+        || tok.which == token::type::semicolon;
+  });
+  const auto res = val_separated_list(trimmed,
+                                      val_newline_or_semicolon_group,
+                                      val_expression);
 
-  while (!tokens.empty()) {
-    const auto res = val_expression(tokens);
-    if (!res)
-      return res.invalid() ? res : tokens;
-    tokens = *res;
-    if (!tokens.empty() && !trim_test(tokens.front()))
-      return {tokens, "expected end of line"};
-    tokens = ltrim_if(tokens, trim_test);
-  }
-  return tokens;
-}
-
-val_res val_expression(vector_ref<token> tokens)
-{
-  const auto res = val_monop(tokens);
-  if (!res)
+  if (!res || res->empty())
     return res;
-  tokens = *res;
-  if (tokens.empty())
-    return tokens;
-  switch (tokens.front().which) {
-  case token::type::or_sign:
-  case token::type::and_sign:
-  case token::type::equals:
-  case token::type::unequal:
-  case token::type::greater_eq:
-  case token::type::less_eq:
-  case token::type::less:
-  case token::type::greater:
-  case token::type::to:
-  case token::type::pipe:
-  case token::type::caret:
-  case token::type::ampersand:
-  case token::type::lshift:
-  case token::type::rshift:
-  case token::type::arrow:
-  case token::type::plus:
-  case token::type::dash:
-  case token::type::star:
-  case token::type::slash:
-  case token::type::percent:
-  case token::type::double_star: return val_expression(tokens.subvec(1));
-  default: return res;
-  }
+  return {*res, "expected end of line"};
 }
 
-val_res val_monop(const vector_ref<token> tokens)
+val_res val_expression(const token_string tokens)
 {
-  if (tokens.empty())
+  return val_prec2_expression(tokens);
+}
+
+val_res val_prec2_expression(const token_string tokens)
+{
+  const auto res = val_separated_list(tokens, [](const token_string sep_str)
+  {
+    if (sep_str.empty())
+      return val_res{};
+    switch (sep_str.front().which) {
+    case token::type::plus:
+    case token::type::slash:
+    case token::type::star:
+    case token::type::dash:
+    case token::type::percent:
+    case token::type::ampersand:
+    case token::type::pipe:
+    case token::type::caret:
+    case token::type::lshift:
+    case token::type::rshift:
+    case token::type::equals:
+    case token::type::unequal:
+    case token::type::less:
+    case token::type::greater:
+    case token::type::less_eq:
+    case token::type::greater_eq:
+    case token::type::double_star:
+    case token::type::and_sign:
+    case token::type::or_sign:
+    case token::type::to: return val_res{sep_str.subvec(1)};
+    default: return val_res{};
+    }
+  }, val_prec1_expression);
+
+  return (res && res->size() == tokens.size()) ? val_res{} : res;
+}
+
+val_res val_prec1_expression(const token_string tokens)
+{
+  auto cur_str = trim_newline_group(tokens);
+  while (!cur_str.empty() && (cur_str.front().which == token::type::bang ||
+                              cur_str.front().which == token::type::tilde ||
+                              cur_str.front().which == token::type::dash)) {
+    cur_str = trim_newline_group(cur_str.subvec(1)); // prefix
+  }
+  const auto res = val_prec0_expression(cur_str);
+  if (res || res.invalid())
+    return res;
+  if (cur_str.size() == tokens.size())
     return {};
-  switch (tokens.front().which) {
-  case token::type::bang:
-  case token::type::tilde:
-  case token::type::dash: return val_monop(tokens.subvec(1));
-  default: return val_accessor(tokens);
-  }
+  return {cur_str, "VP2E@expected expression"};
 }
 
-val_res val_accessor(vector_ref<token> tokens)
+val_res val_prec0_expression(const token_string tokens)
 {
-  const auto base = val_noop(tokens);
-  if (!base || base->empty())
-    return base;
-  tokens = *base;
-  while (!tokens.empty() && (tokens.front().which == token::type::open_paren
-                         || tokens.front().which == token::type::open_bracket
-                         || tokens.front().which == token::type::dot)) {
+  const auto base_res = val_nonop_expression(tokens);
+  if (!base_res)
+    return base_res;
 
-    if (tokens.front().which == token::type::open_paren) {
-      const auto args = val_bracketed_subexpr(tokens, [](auto t)
+  auto cur_str = *base_res;
+  while (!cur_str.empty() && (cur_str.front().which == token::type::open_paren
+                           || cur_str.front().which == token::type::open_bracket
+                           || cur_str.front().which == token::type::dot
+                           || cur_str.front().which == token::type::arrow)) {
+    if (cur_str.front().which == token::type::open_paren) {
+      const auto call_res = val_delimited_expression(cur_str,
+                                                     token::type::open_paren,
+                                                     token::type::close_paren,
+                                                     [](const auto inner_str)
       {
-        return val_comma_separated_list(t, val_expression);
-      }, token::type::open_paren, token::type::close_paren);
-
-      if (args.invalid())
-        return args;
-      if (!args)
-        return {tokens.subvec(1), "expected argument list"};
-      tokens = *args;
+        return val_separated_list(inner_str, val_single_comma, val_expression);
+      }, "')'", "argument list");
+      if (call_res.invalid())
+        return call_res;
+      if (!call_res)
+        return {cur_str,
+                "comma-separated list of expressions enclosed in parentheses"};
+      cur_str = *call_res;
     }
-    else {
-      if (tokens.front().which == token::type::open_bracket) {
-         const auto res = val_bracketed_subexpr(tokens,
-                                                val_expression,
-                                                token::type::open_bracket,
-                                                token::type::close_bracket);
-        if (res.invalid())
-          return res;
-        if (!res)
-          return {tokens.subvec(1), "expected index expression"}; // '['
-        tokens = *res;
-        if (!tokens.empty() && tokens.front().which == token::type::assignment) {
-          const auto expr = val_expression(tokens.subvec(1)); // '='
-          if (expr.invalid())
-            return expr;
-          if (!expr)
-            return {tokens.subvec(1), "expected assignment expression"};
-          tokens = *expr;
-        }
+    else if (cur_str.front().which == token::type::open_bracket) {
+      const auto at_res = val_delimited_expression(cur_str,
+                                                   token::type::open_bracket,
+                                                   token::type::close_bracket,
+                                                   val_expression,
+                                                   "']'");
+      if (at_res.invalid())
+        return at_res;
+      if (!at_res)
+        return {cur_str.subvec(1), "expected expression enclosed in brackets"};
+      cur_str = *at_res;
+      if (!cur_str.empty() && cur_str.front().which == token::type::assignment) {
+        const auto expr_str = trim_newline_group(cur_str.subvec(1)); // '='
+        const auto expr_res = val_expression(expr_str);
+        if (expr_res.invalid())
+          return expr_res;
+        if (!expr_res)
+          return {expr_str, "VP1E/open_bracket@expected expression"};
+        cur_str = *expr_res;
       }
-      else { // dot
-        const auto res = val_variable(tokens.subvec(1)); // '.'
-        if (res.invalid())
-          return res;
-        if (!res)
-          return {tokens.subvec(1), "expected method name"}; // '.'
-        tokens = *res;
-      }
+    }
+    else { // dot, arrow
+      const auto expr_str = trim_newline_group(cur_str.subvec(1)); // '.' or '->'
+      const auto expr_res = val_expression(expr_str);
+      if (expr_res.invalid())
+        return expr_str;
+      if (!expr_res)
+        return {expr_str, "expected expression"};
+      cur_str = *expr_res;
     }
   }
-  return tokens;
+  return cur_str;
 }
 
-val_res val_noop(const vector_ref<token> tokens)
+// }}}
+// Complex expression validators {{{
+
+val_res val_nonop_expression(const token_string tokens)
 {
-  if (tokens.empty())
-    return {};
-  if (tokens.front().which == token::type::open_paren) {
-    const auto expr = val_bracketed_subexpr(tokens,
-                                            val_expression,
-                                            token::type::open_paren,
-                                            token::type::close_paren);
-    if (expr || expr.invalid())
-      return expr;
-    return {tokens.subvec(1), "expected expression in parentheses"}; // ')'
+  if (!tokens.empty() && tokens.front().which == token::type::open_paren) {
+    return val_delimited_expression(tokens,
+                                    token::type::open_paren,
+                                    token::type::close_paren,
+                                    val_expression,
+                                    "')'",
+                                    "expression");
   }
 
-  val_res res;
-  if ((res = val_array_literal(tokens))        || res.invalid()) return res;
-  if ((res = val_assignment(tokens))           || res.invalid()) return res;
-  if ((res = val_block(tokens))                || res.invalid()) return res;
-  if ((res = val_cond_statement(tokens))       || res.invalid()) return res;
-  if ((res = val_dict_literal(tokens))         || res.invalid()) return res;
-  if ((res = val_except(tokens))               || res.invalid()) return res;
-  if ((res = val_for_loop(tokens))             || res.invalid()) return res;
-  if ((res = val_function_definition(tokens))  || res.invalid()) return res;
-  if ((res = val_literal(tokens))              || res.invalid()) return res;
-  if ((res = val_member(tokens))               || res.invalid()) return res;
-  if ((res = val_new_obj(tokens))              || res.invalid()) return res;
-  if ((res = val_require(tokens))              || res.invalid()) return res;
-  if ((res = val_return(tokens))               || res.invalid()) return res;
-  if ((res = val_try_catch(tokens))            || res.invalid()) return res;
-  if ((res = val_type_definition(tokens))      || res.invalid()) return res;
-  if ((res = val_variable_declaration(tokens)) || res.invalid()) return res;
-  if ((res = val_while_loop(tokens))           || res.invalid()) return res;
-  if ((res = val_variable(tokens))             || res.invalid()) return res;
+  for (auto&& i : { val_array_literal,
+                    val_block,
+                    val_cond_statement,
+                    val_dictionary_literal,
+                    val_except,
+                    val_for_loop,
+                    val_function_definition,
+                    val_member_assignment,
+                    val_object_creation,
+                    val_require,
+                    val_return,
+                    val_try_catch,
+                    val_type_definition,
+                    val_variable_assignment,
+                    val_variable_declaration,
+                    val_while_loop,
+                    val_single_token_expression }) {
+
+    const auto res = i(tokens);
+    if (res || res.invalid())
+      return res;
+  }
   return {};
 }
 
-val_res val_array_literal(const vector_ref<token> tokens)
+val_res val_array_literal(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::open_bracket)
     return {};
-  const auto body = val_bracketed_subexpr(tokens, [](auto t)
+  return val_delimited_expression(tokens,
+                                  token::type::open_bracket,
+                                  token::type::close_bracket,
+                                  [](const token_string inner_tokens)
   {
-    return val_comma_separated_list(t, val_expression);
-  }, token::type::open_bracket, token::type::close_bracket);
-  if (body || body.invalid())
-    return body;
-  return {tokens.subvec(1), "expected array literal"};
+    return val_separated_list(inner_tokens, val_single_comma, val_expression,
+                              "expression");
+  }, "']'", "expression");
 }
 
-val_res val_dict_literal(const vector_ref<token> tokens)
+val_res val_block(const token_string tokens)
 {
-  if (tokens.empty() || tokens.front().which != token::type::open_brace)
-    return {};
-  const auto body = val_bracketed_subexpr(tokens, [](auto t)
-  {
-    return val_comma_separated_list(t, val_pair);
-  }, token::type::open_brace, token::type::close_brace);
-  if (body || body.invalid())
-    return body;
-  return {tokens.subvec(1), "expected dictionary literal"};
-}
-
-val_res val_assignment(vector_ref<token> tokens)
-{
-  const auto expr = val_variable(tokens);
-  if (!expr || expr->empty() || expr->front().which != token::type::assignment)
-    return !expr ? expr : val_res{};
-  tokens = expr->subvec(1); // '='
-  const auto val = val_expression(tokens);
-  if (val || val.invalid())
-    return val;
-  return {tokens, "expected expression"};
-}
-val_res val_block(vector_ref<token> tokens)
-{
+  // Can't use val_delimited_expression, since the 'separator' is an
+  // indeterminate number of newlines/semicolons, such as might be placed before
+  // the 'end' delimiter.
+  //
+  //   do
+  //     1; 2; 3
+  //   end
+  //
+  // will be interpreted like [1, 2, 3,]--- that is, an error
   if (tokens.empty() || tokens.front().which != token::type::key_do)
     return {};
-  tokens = tokens.subvec(1); // 'do'
-  tokens = ltrim_if(tokens, trim_test);
 
-  while (!tokens.empty() && tokens.front().which != token::type::key_end) {
-    const auto res = val_expression(tokens);
-    if (res.invalid())
-      return res;
-    if (!res)
-      return {tokens, "expected expression or 'end'"};
-    tokens = ltrim_if(*res, trim_test);
+  auto cur_str = trim_newline_or_semicolon_group(tokens.subvec(1)); // 'do';
+  while (!cur_str.empty() && cur_str.front().which != token::type::key_end) {
+    const auto expr_res = val_expression(cur_str);
+    if (expr_res.invalid())
+      return expr_res;
+    if (!expr_res)
+      return {cur_str, "expected expression"};
+    cur_str = trim_newline_or_semicolon_group(*expr_res);
   }
-  if (tokens.empty())
-    return {tokens, "expected 'end'"};
-  return tokens.subvec(1); // 'end'
+  return cur_str.empty() ? val_res{cur_str, "expected 'end'"}
+                          : cur_str.subvec(1); // 'end'
 }
 
-val_res val_cond_statement(vector_ref<token> tokens)
+val_res val_cond_statement(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_cond)
     return {};
-  tokens = ltrim_if(tokens.subvec(1), newline_test); // 'cond'
-  const auto body = val_comma_separated_list(tokens, val_pair);
-  if (body || body.invalid())
-    return body;
-  return {tokens, "expected cond pair"};
+
+  const auto list_str = trim_newline_group(tokens.subvec(1)); // 'cond'
+
+  const auto after_res = val_separated_list(list_str,
+                                            val_single_comma,
+                                            val_colon_separated_pair,
+                                            "'predicate: result' pair");
+  if (after_res.invalid())
+    return after_res;
+  if (!after_res || after_res->size() == list_str.size())
+    return {list_str, "expected list of 'predicate: result' pairs"};
+  return *after_res;
 }
 
-val_res val_except(vector_ref<token> tokens)
+val_res val_dictionary_literal(const token_string tokens)
+{
+  return val_delimited_expression(tokens,
+                                  token::type::open_brace,
+                                  token::type::close_brace,
+                                  [](const token_string inner_tokens)
+  {
+    return val_separated_list(inner_tokens,
+                              val_single_comma,
+                              val_colon_separated_pair,
+                              "'key: value' pair");
+  }, "'}'", "list of 'key: value' pairs");
+}
+
+val_res val_except(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_except)
     return {};
-  tokens = tokens.subvec(1); // 'except'
-  const auto body = val_expression(tokens);
-  if (body || body.invalid())
-    return body;
-  return {tokens, "expected expression"};
+  const auto expr_res = val_expression(tokens.subvec(1)); // 'except'
+  if (expr_res || expr_res.invalid())
+    return expr_res;
+  return {tokens.subvec(1), "VE@expected expression"}; // 'except'
 }
 
-val_res val_for_loop(vector_ref<token> tokens)
+val_res val_for_loop(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_for)
     return {};
 
-  const auto iter = val_variable(tokens.subvec(1)); // 'for'
-  if (iter.invalid())
-    return iter;
-  if (!iter)
-    return {tokens.subvec(1), "expected variable name"}; // 'for'
-  tokens = *iter;
-  if (tokens.empty() || tokens.front().which != token::type::key_in)
-    return {tokens, "expected 'in'"};
+  const auto name_str = tokens.subvec(1); // 'for'
+  if (name_str.empty() || name_str.front().which != token::type::name)
+    return {name_str, "expected variable name"};
 
-  const auto range = val_expression(tokens.subvec(1)); // 'in'
-  if (range.invalid())
-    return range;
-  if (!range)
-    return {tokens.subvec(1), "expected expression"}; // 'in'
-  tokens = *range;
+  const auto in_str = name_str.subvec(1); // name
+  if (in_str.empty() || in_str.front().which != token::type::key_in)
+    return {in_str, "expected 'in'"};
 
-  if (tokens.empty() || tokens.front().which != token::type::colon)
-    return {tokens, "expected ':'"};
-  const auto body = val_expression(tokens.subvec(1)); // ':'
-  if (body || body.invalid())
-    return body;
-  return {tokens.subvec(1), "expected expression"}; // ':'
+  const auto rng_str = in_str.subvec(1); // 'in'
+  const auto rng_res = val_expression(rng_str);
+  if (!rng_res)
+    return rng_res.invalid() ? rng_res : val_res{rng_str, "VFL/key_in@expected expression"};
+
+  if (rng_res->empty() || rng_res->front().which != token::type::colon)
+    return {*rng_res, "expected ':'"};
+
+  const auto body_str = trim_newline_group(rng_res->subvec(1)); // ':'
+  const auto body_res = val_expression(body_str);
+  if (body_res || body_res.invalid())
+    return body_res;
+  return {body_str, "VFL@expected expression"};
 }
 
-val_res val_function_definition(vector_ref<token> tokens)
+val_res val_function_definition(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_fn)
     return {};
-  tokens = tokens.subvec(1); // 'fn'
 
-  const auto name = val_variable(tokens);
-  if (name.invalid())
-    return name;
-  if (name)
-    tokens = *name;
+  auto arglist_str = tokens.subvec(1); // 'fn'
+  if (!arglist_str.empty() && arglist_str.front().which == token::type::name)
+    arglist_str = arglist_str.subvec(1); // name
 
-  const auto arglist = val_bracketed_subexpr(tokens, [](auto t)
+  const auto arglist_res = val_delimited_expression(arglist_str,
+                                                    token::type::open_paren,
+                                                    token::type::close_paren,
+                                                    [](const auto inner_str)
   {
-    return val_comma_separated_list(t, val_variable);
-  }, token::type::open_paren, token::type::close_paren);
-  if (arglist.invalid())
-    return arglist;
-  if (!arglist)
-    return {tokens, "expected argument list"};
-  tokens = *arglist;
+    return val_separated_list(inner_str, val_single_comma, [](const auto var_str)
+    {
+      if (var_str.empty() || var_str.front().which != token::type::name)
+        return val_res{};
+      return val_res{var_str.subvec(1)}; // name
+    }, "variable name");
+  }, "')'", "argument list");
 
-  if (tokens.empty() || tokens.front().which != token::type::colon)
-    return {tokens, "expected ':'"};
+  if (arglist_res.invalid())
+    return arglist_res;
+  if (!arglist_res)
+    return {arglist_str, "expected argument list enclosed in parentheses"};
 
-  const auto body = val_expression(tokens.subvec(1)); // ':'
-  if (body || body.invalid())
-    return body;
-  return {tokens.subvec(1), "expected expression"}; // ':'
+  const auto colon_str = *arglist_res;
+  if (colon_str.empty() || colon_str.front().which != token::type::colon)
+    return {colon_str, "expected ':'"};
+
+  const auto body_str = trim_newline_group(colon_str.subvec(1)); // ':'
+  const auto body_res = val_expression(body_str);
+  if (body_res || body_res.invalid())
+    return body_res;
+
+  return  {body_str, "VFD@expected expression"};
 }
 
-val_res val_member(vector_ref<token> tokens)
+val_res val_member_assignment(const token_string tokens)
 {
-  if (tokens.empty() || tokens.front().which != token::type::member)
+  if (tokens.size() < 2 || tokens[0].which != token::type::member
+                        || tokens[1].which != token::type::assignment)
     return {};
-
-  tokens = tokens.subvec(1); // member
-  if (!tokens.empty() && tokens.front().which == token::type::assignment) {
-    const auto expr = val_expression(tokens.subvec(1)); // '='
-    if (expr || expr.invalid())
-      return expr;
-    return {tokens.subvec(1), "expected assignment expression"};
-  }
-  return tokens;
+  const auto expr_str = trim_newline_group(tokens.subvec(2)); // member, '='
+  const auto expr_res = val_expression(expr_str);
+  if (expr_res || expr_res.invalid())
+    return expr_res;
+  return {expr_str, "VMA@expected expression"};
 }
 
-val_res val_literal(const vector_ref<token> tokens)
-{
-  if (tokens.empty())
-    return {};
-  val_res res;
-  if ((res = val_bool(tokens))    || res.invalid()) return res;
-  if ((res = val_char(tokens))    || res.invalid()) return res;
-  if ((res = val_float(tokens))   || res.invalid()) return res;
-  if ((res = val_integer(tokens)) || res.invalid()) return res;
-  if ((res = val_nil(tokens))     || res.invalid()) return res;
-  if ((res = val_regex(tokens))   || res.invalid()) return res;
-  if ((res = val_string(tokens))  || res.invalid()) return res;
-  if ((res = val_symbol(tokens))  || res.invalid()) return res;
-  return {};
-}
-
-val_res val_new_obj(vector_ref<token> tokens)
+val_res val_object_creation(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_new)
     return {};
-  tokens = tokens.subvec(1); // 'new'
+  const auto type_str = tokens.subvec(1); // 'new'
+  const auto type_res = val_nonop_expression(type_str);
+  if (type_res.invalid())
+    return type_res;
+  if (!type_res)
+    return {type_str, "VOC@expected expression"};
 
-  const auto name = val_noop(tokens);
-  if (name.invalid())
-    return name;
-  if (!name)
-    return {tokens, "expected variable name"};
-  tokens = *name;
-
-  const auto args = val_bracketed_subexpr(tokens, [](auto t)
+  const auto arglist_str = *type_res;
+  const auto arglist_res = val_delimited_expression(arglist_str,
+                                                    token::type::open_paren,
+                                                    token::type::close_paren,
+                                                    [](const auto inner_str)
   {
-    return val_comma_separated_list(t, val_expression);
-  }, token::type::open_paren, token::type::close_paren);
-  if (args || args.invalid())
-    return args;
-  return {tokens, "expected argument list"};
+    return val_separated_list(inner_str, val_single_comma, val_expression);
+  }, "comma-separated list of expressions enclosed in parentheses");
+
+  if (arglist_res || arglist_res.invalid())
+    return arglist_res;
+  return {
+    arglist_str,
+    "expected comma-separated list of expressions enclosed in parentheses"
+  };
 }
 
-val_res val_require(const vector_ref<token> tokens)
+val_res val_require(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_require)
     return {};
-  const auto value = val_string(tokens.subvec(1)); // 'require'
-  if (value || value.invalid())
-    return value;
-  return {tokens.subvec(1), "expected expression"}; // 'require'
+  const auto filename_str = tokens.subvec(1); // 'require'
+  if (filename_str.empty() || filename_str.front().which != token::type::string)
+    return {filename_str, "expected string"};
+  return filename_str.subvec(1); // filename
 }
 
-val_res val_return(const vector_ref<token> tokens)
+val_res val_return(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_return)
     return {};
-  const auto value = val_expression(tokens.subvec(1)); // 'return'
-  if (value || value.invalid())
-    return value;
-  return {tokens.subvec(1), "expected expression"}; // 'return'
+  const auto expr_res = val_expression(tokens.subvec(1)); // 'return'
+  if (expr_res || expr_res.invalid())
+    return expr_res;
+  return {tokens.subvec(1), "VR@expected expression"}; // 'return'
 }
 
-val_res val_try_catch(vector_ref<token> tokens)
+val_res val_try_catch(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_try)
     return {};
   if (tokens.size() < 2 || tokens[1].which != token::type::colon)
     return {tokens.subvec(1), "expected ':'"}; // 'try'
-  tokens = tokens.subvec(2); // 'try' ':'
 
-  const auto body = val_expression(tokens);
-  if (body.invalid())
-    return body;
-  if (!body)
-    return {tokens, "expected expression"};
-  tokens = ltrim_if(*body, newline_test);
-  if (tokens.empty() || tokens.front().which != token::type::key_catch)
-    return {tokens, "expected 'catch'"};
-  const auto name = val_variable(tokens.subvec(1)); // 'catch'
-  if (name.invalid())
-    return name;
-  if (!name)
-    return {tokens, "expected variable name"};
-  tokens = *name;
+  const auto try_str = trim_newline_group(tokens.subvec(2)); // 'try', ':'
+  const auto try_res = val_expression(try_str);
+  if (try_res.invalid())
+    return try_res;
+  if (!try_res)
+    return {try_str, "VTC/key_try@expected expression"};
 
-  if (tokens.empty() || tokens.front().which != token::type::colon)
-    return {tokens, "expected ':'"};
-  tokens = tokens.subvec(1); // ':'
+  const auto catch_str = trim_newline_group(*try_res);
+  if (catch_str.empty() || catch_str.front().which != token::type::key_catch)
+    return {catch_str, "expected 'catch'"};
+  if (catch_str.size() < 2 || catch_str[1].which != token::type::name)
+    return {catch_str.subvec(1), "expected variable name"}; // 'catch'
+  if (catch_str.size() < 3 || catch_str[2].which != token::type::colon)
+    return {catch_str.subvec(2), "expected ':'"}; // 'catch', name
 
-  const auto catcher = val_expression(tokens);
-  if (catcher || catcher.invalid())
-    return catcher;
-  return {tokens, "expected expression"};
+  const auto catch_body_str = trim_newline_group(catch_str.subvec(3));
+  const auto catch_body_res = val_expression(catch_body_str);
+  if (catch_body_res || catch_body_res.invalid())
+    return catch_body_res;
+  return {catch_body_str, "VTC/key_catch@expected expression"};
 }
 
-val_res val_type_definition(vector_ref<token> tokens)
+val_res val_type_definition(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_class)
     return {};
-  const auto name = val_variable(tokens.subvec(1)); // 'class'
-  if (name.invalid())
-    return name;
-  if (!name)
-    return {tokens.subvec(1), "expected variable name"}; // 'class'
-  tokens = *name;
 
-  if (!tokens.empty() && tokens.front().which == token::type::colon) {
-    const auto parent = val_variable(tokens.subvec(1)); // ':'
-    if (parent.invalid())
-      return parent;
-    if (!parent)
-      return {tokens.subvec(1), "expected variable name"}; // ':'
-    tokens = *parent;
-  }
+  const auto class_str = tokens.subvec(1); // 'class'
+  if (class_str.empty() || class_str.front().which != token::type::name)
+    return {class_str, "expected class name"};
 
-  tokens = ltrim_if(tokens, trim_test);
-  while (!tokens.empty() && tokens.front().which != token::type::key_end) {
-    const auto next_fn = val_function_definition(tokens);
-    if (next_fn.invalid())
-      return next_fn;
-    if (!next_fn)
-      return {tokens, "expected method definition or 'end'"};
-    tokens = ltrim_if(*next_fn, trim_test);
+  auto cur_str = class_str.subvec(1); // classname
+  if (!cur_str.empty() && cur_str.front().which == token::type::colon) {
+    cur_str = cur_str.subvec(1);
+    if (cur_str.empty() || cur_str.front().which != token::type::name)
+      return {cur_str, "expected parent class name"};
+    cur_str = cur_str.subvec(1);
   }
-  if (!tokens.empty())
-    return tokens.subvec(1); // 'end'
-  return {tokens, "expected 'end'"};
+  cur_str = trim_newline_group(cur_str);
+
+  // As per val_block, can't use val_separated_list because the newlines between
+  // the final method and 'end' would get confused for a separator
+  while (!cur_str.empty() && cur_str.front().which != token::type::key_end) {
+    const auto method_res = val_function_definition(cur_str);
+    if (method_res.invalid())
+      return method_res;
+    if (!method_res)
+      return val_res{cur_str, "expected method definition"};
+    cur_str = trim_newline_group(*method_res);
+  }
+  return cur_str.empty() ? val_res{cur_str, "expected 'end'"}
+                           : val_res{cur_str.subvec(1)}; // 'end'
 }
 
-val_res val_variable_declaration(vector_ref<token> tokens)
+val_res val_variable_assignment(const token_string tokens)
+{
+  if (tokens.size() < 2 || tokens[0].which != token::type::name
+                        || tokens[1].which != token::type::assignment)
+    return {};
+  const auto expr_str = trim_newline_group(tokens.subvec(2)); // name, '='
+  const auto expr_res = val_expression(expr_str);
+  if (expr_res || expr_res.invalid())
+    return expr_res;
+  return {expr_str, "VVA@expected expression"};
+}
+
+val_res val_variable_declaration(const token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_let)
     return {};
-  const auto name = val_variable(tokens.subvec(1)); // 'let'
-  if (name.invalid())
-    return name;
-  if (!name)
-    return {tokens.subvec(1), "expected variable name"}; // 'let'
-  tokens = *name;
-  if (tokens.empty() || tokens.front().which != token::type::assignment)
-    return {tokens, "expected '='"};
-  const auto value = val_expression(tokens.subvec(1)); // '='
-  if (value || value.invalid())
-    return value;
-  return {tokens.subvec(1), "expected expression"}; // '='
+  const auto name_str = tokens.subvec(1); // 'let'
+  if (name_str.empty() || name_str.front().which != token::type::name)
+    return {name_str, "expected variable name"};
+  const auto eq_str = name_str.subvec(1); // name
+  if (eq_str.empty() || eq_str.front().which != token::type::assignment)
+    return {eq_str, "expected '='"};
+  const auto expr_str = eq_str.subvec(1);
+  const auto expr_res = val_expression(expr_str);
+  if (expr_res || expr_res.invalid())
+    return expr_res;
+  return {expr_str, "VVD@expected expression"};
 }
 
-val_res val_variable(const vector_ref<token> tokens)
+val_res val_while_loop(const token_string tokens)
+{
+  if (tokens.empty() || tokens.front().which != token::type::key_while)
+    return {};
+  const auto rng_str = tokens.subvec(1); // 'while'
+  const auto rng_res = val_expression(rng_str);
+  if (!rng_res)
+    return rng_res.invalid() ? rng_res : val_res{rng_str, "VWL/key_while@expected expression"};
+
+  if (rng_res->empty() || rng_res->front().which != token::type::colon)
+    return {*rng_res, "expected ':'"};
+
+  const auto body_str = trim_newline_group(rng_res->subvec(1)); // ':'
+  const auto body_res = val_expression(body_str);
+  if (body_res || body_res.invalid())
+    return body_res;
+  return {body_str, "VWL/colon@expected expression"};
+}
+
+// }}}
+// Single-token expression validators {{{
+
+val_res val_single_token_expression(const token_string tokens)
 {
   if (tokens.empty())
     return {};
   if (tokens.front().which == token::type::invalid)
-    return {tokens, '\'' + tokens.front().str + "': invalid token"};
-  if (tokens.front().which != token::type::name)
-    return {};
-  return tokens.subvec(1); // variable
-}
+    return {tokens, "invalid token"};
 
-val_res val_while_loop(vector_ref<token> tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::key_while)
-    return {};
-  tokens = tokens.subvec(1); // 'while'
-  const auto test = val_expression(tokens);
-  if (test.invalid())
-    return test;
-  if (!test)
-    return {tokens, "expected expression"};
-
-  tokens = *test;
-  if (tokens.empty() || tokens.front().which != token::type::colon)
-    return {tokens, "expected ':'"};
-  const auto body = val_expression(tokens.subvec(1)); // ':'
-  if (body || body.invalid())
-    return body;
-  return {tokens.subvec(1), "expected expression"}; // ':'
-}
-
-val_res val_bool(const vector_ref<token> tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::boolean)
-    return {};
-  return tokens.subvec(1); // 'true'/'false'
-}
-
-val_res val_char(const vector_ref<token> tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::character)
-    return {};
-  return tokens.subvec(1); // 'true'/'false'
-}
-
-val_res val_float(const vector_ref<token> tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::floating_point)
-    return {};
-  return tokens.subvec(1); // number
-}
-
-val_res val_integer(const vector_ref<token> tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::integer)
-    return {};
-  const auto& str = tokens.front().str;
-  if (str.front() == '0' && str.size() > 1) {
-    // all other errors should be dealt with in tokenizing
-    if (!isdigit(str[1]) && str.size() == 2)
-      return {tokens, "invalid number"};
+  switch (tokens.front().which) {
+  case token::type::boolean:
+  case token::type::character:
+  case token::type::floating_point:
+  case token::type::integer:
+  case token::type::member:
+  case token::type::name:
+  case token::type::nil:
+  case token::type::regex:
+  case token::type::string:
+  case token::type::symbol: return tokens.subvec(1);
+  default: return {};
   }
-  return tokens.subvec(1); // number
 }
 
-val_res val_nil(const vector_ref<token> tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::nil)
-    return {};
-  return tokens.subvec(1); // 'nil'
-}
-
-val_res val_regex(const vector_ref<token> tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::regex)
-    return {};
-  return tokens.subvec(1); // string
-}
-
-val_res val_string(const vector_ref<token> tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::string)
-    return {};
-  return tokens.subvec(1); // string
-}
-
-val_res val_symbol(const vector_ref<token> tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::symbol)
-    return {};
-  return tokens.subvec(1); // symbol
-}
+// }}}
+// Helpers {{{
 
 template <typename F>
-val_res val_comma_separated_list(vector_ref<token> tokens,
-                                 const F& val_item)
-{
-  val_res res{};
-  if (!val_item(tokens))
-    return tokens;
-  while ((res = val_item(tokens))) {
-    tokens = *res;
-    if (tokens.empty() || tokens.front().which != token::type::comma)
-      return tokens;
-    tokens = ltrim_if(tokens.subvec(1), newline_test); // ','
-  }
-  if (res.invalid())
-    return res;
-  return {tokens, "expected end of comma-separated list"};
-}
-
-template <typename F>
-val_res val_bracketed_subexpr(vector_ref<token> tokens,
-                              const F& val_item,
-                              const token::type opening,
-                              const token::type closing)
+val_res val_delimited_expression(const token_string tokens,
+                                 const token::type opening,
+                                 const token::type closing,
+                                 const F& innner_expr_validator,
+                                 const std::string& closing_name,
+                                 const std::string& expr_name)
 {
   if (tokens.empty() || tokens.front().which != opening)
     return {};
-  tokens = ltrim_if(tokens.subvec(1), newline_test); // opening
-  const auto item = val_item(tokens);
-  if (!item)
-    return item;
-  tokens = ltrim_if(*item, newline_test);
-  if (tokens.empty() || tokens.front().which != closing)
-    return {tokens, "expected closing"};
-  return tokens.subvec(1); // closing
+  const auto expr_str = trim_newline_group(tokens.subvec(1)); // opening
+  const auto expr_res = innner_expr_validator(expr_str);
+  if (expr_res.invalid())
+    return expr_res;
+  if (!expr_res)
+    return {expr_str, "expected " + expr_name};
+
+  const auto closing_str = trim_newline_group(*expr_res);
+  if (closing_str.empty() || closing_str.front().which != closing)
+    return {closing_str, "expected " + closing_name};
+  return closing_str.subvec(1); // closing
 }
 
-val_res val_pair(vector_ref<token> tokens)
+template <typename SepFunc, typename ExprFunc>
+val_res val_separated_list(const token_string tokens,
+                           const SepFunc& sep_validator,
+                           const ExprFunc& expr_validator,
+                           const std::string& expr_name)
 {
-  const auto left = val_expression(tokens);
-  if (!left)
-    return left;
-  tokens = *left;
-  if (tokens.empty() || tokens.front().which != token::type::colon)
-    return {tokens, "expected ':'"};
-  const auto right = val_expression(tokens.subvec(1)); // ':'
-  if (right || right.invalid())
-    return right;
-  return {tokens.subvec(1), "expected expression"}; // ':'
+  const auto first_expr_res = expr_validator(tokens);
+  if (first_expr_res.invalid())
+    return first_expr_res;
+  if (!first_expr_res)
+    return tokens;
+
+  auto cur_str = *first_expr_res;
+  for (;;) {
+    const auto sep_res = sep_validator(cur_str);
+    if (sep_res.invalid())
+      return sep_res;
+    if (!sep_res)
+      return cur_str;
+
+    const auto expr_str = trim_newline_group(*sep_res);
+    const auto expr_res = expr_validator(expr_str);
+    if (expr_res.invalid())
+      return expr_res;
+    if (!expr_res)
+      return {expr_str, "expected " + expr_name};
+    cur_str = *expr_res;
+  }
 }
 
-}
-
-val_res parser::is_valid(parser::token_string tokens)
+token_string trim_newline_group(const token_string tokens)
 {
-  const auto res = val_toplevel(tokens);
-  if (res && !res->empty())
-    return {*res, "expected end of input"};
-  return res;
+  return ltrim_if(tokens, [](const auto& token)
+  {
+    return token.which == token::type::newline;
+  });
+}
+
+token_string trim_newline_or_semicolon_group(const token_string tokens)
+{
+  return ltrim_if(tokens, [](const auto& token)
+  {
+    return token.which == token::type::newline
+        || token.which == token::type::semicolon;
+  });
+}
+
+val_res val_newline_or_semicolon_group(const token_string tokens)
+{
+  const auto after = trim_newline_or_semicolon_group(tokens);
+  if (after.size() == tokens.size())
+    return {};
+  return after;
+}
+
+val_res val_single_comma(const token_string tokens)
+{
+  if (tokens.empty() || tokens.front().which != token::type::comma)
+    return {};
+  return tokens.subvec(1);
+}
+
+val_res val_colon_separated_pair(const token_string tokens)
+{
+  const auto first_res = val_expression(tokens);
+  if (!first_res)
+    return first_res;
+  const auto colon_str = *first_res;
+  if (colon_str.empty() || colon_str.front().which != token::type::colon)
+    return {colon_str, "expected ':'"};
+
+  const auto second_str = trim_newline_group(colon_str.subvec(1)); // ':'
+  const auto second_res = val_expression(second_str);
+  if (second_res || second_res.invalid())
+    return second_res;
+  return {second_str, "VCSP@expected expression"};
+}
+
+// }}}
+
+// }}}
+
+}
+
+val_res parser::is_valid(const token_string tokens)
+{
+  return val_toplevel(tokens);
 }
