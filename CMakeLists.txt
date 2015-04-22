@@ -101,5 +101,9 @@ add_executable(vivaldi
 
 target_link_libraries(vivaldi boost_system boost_filesystem)
 
+add_subdirectory(test)
+enable_testing()
+add_test(NAME validator COMMAND test_validator)
+
 install(TARGETS vivaldi DESTINATION bin)
 install(FILES include/vivaldi.h DESTINATION include)
