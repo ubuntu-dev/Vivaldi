@@ -859,7 +859,7 @@ parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
   if (!test_res)
     return {};
   auto test = move(test_res->first);
-  tokens = test_res->second.subvec(1); // ':'
+  tokens = ltrim_if(test_res->second.subvec(1), newline_test); // ':'
 
   std::unique_ptr<ast::expression> body;
   tie(body, tokens) = *parse_expression(tokens);
