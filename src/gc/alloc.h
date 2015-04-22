@@ -97,6 +97,12 @@ inline gc::managed_ptr alloc<value::integer, int&>(int& val)
 }
 
 template <>
+inline gc::managed_ptr alloc<value::integer, const int&>(const int& val)
+{
+  return {static_cast<uint32_t>(val), 0, tag::integer, 1};
+}
+
+template <>
 inline gc::managed_ptr alloc<value::integer>()
 {
   return alloc<value::integer, int>(0);
