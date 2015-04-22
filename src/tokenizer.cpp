@@ -146,7 +146,7 @@ tok_res zero_token(boost::string_ref line)
                           [](auto c) { return c != '0' && c != '1'; });
     }
     else if (isdigit(line[1])) {
-      last = std::find_if(begin(line) + 2, end(line),
+      last = std::find_if(begin(line) + 1, end(line),
                           [](auto c) { return !isdigit(c) || c > '7'; });
     }
   }
