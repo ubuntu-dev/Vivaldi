@@ -15,16 +15,19 @@ void check_if_valid(const char* i)
   std::stringstream str{};
   str << i;
   const auto tokenized = vv::parser::tokenize(str);
-  BOOST_CHECK(vv::parser::is_valid(tokenized));
+  BOOST_CHECK_MESSAGE(vv::parser::is_valid(tokenized),
+                      '"' << vv::escape_chars(i) << "\""
+                      " is incorrectly marked invalid");
 }
 
 void check_if_invalid(const char* i)
 {
-  BOOST_MESSAGE('"' << vv::escape_chars(i) << '"');
   std::stringstream str{};
   str << i;
   const auto tokenized = vv::parser::tokenize(str);
-  BOOST_CHECK(!vv::parser::is_valid(tokenized));
+  BOOST_CHECK_MESSAGE(!vv::parser::is_valid(tokenized),
+                      '"' << vv::escape_chars(i) << "\""
+                      " is incorrectly marked valid");
 }
 
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
@@ -49,6 +52,8 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "true",
     "false",
     "nil",
+    "\nfoo",
+    "\nfoo\n",
 
     // Prefix operators
     "!foo",
