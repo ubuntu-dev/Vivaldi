@@ -141,7 +141,8 @@ parse_res<> parse_operator_expr(token_string tokens,
     const symbol name{convert(tokens.front().which)};
 
     std::unique_ptr<ast::expression> right;
-    tie(right, tokens) = *lower_pred(tokens.subvec(1)); // method (i.e. binop)
+    const auto right_tokens = ltrim_if(tokens.subvec(1), newline_test); // binop
+    tie(right, tokens) = *lower_pred(right_tokens);
 
     auto method = std::make_unique<ast::method>( move(left), name );
     arg_t arg{};
@@ -163,7 +164,8 @@ parse_res<> parse_prec13(token_string tokens)
     auto left = move(left_res->first);
 
     std::unique_ptr<ast::expression> right;
-    tie(right, tokens) = *parse_prec13(tokens.subvec(1)); // '||'
+    const auto right_tokens = ltrim_if(tokens.subvec(1), newline_test); // '||'
+    tie(right, tokens) = *parse_prec13(right_tokens);
 
     left_res = {{ std::make_unique<logical_or>(move(left), move(right)), tokens }};
   }
@@ -180,7 +182,8 @@ parse_res<> parse_prec12(token_string tokens)
   while (!tokens.empty() && tokens.front().which == token::type::and_sign) {
     auto left = move(left_res->first);
     std::unique_ptr<ast::expression> right;
-    tie(right, tokens) = *parse_prec12(tokens.subvec(1)); // '||'
+    const auto right_tokens = ltrim_if(tokens.subvec(1), newline_test); // '&&'
+    tie(right, tokens) = *parse_prec12(right_tokens);
 
     left_res = {{ std::make_unique<logical_and>(move(left), move(right)), tokens }};
   }
@@ -231,7 +234,8 @@ parse_res<> parse_prec9(token_string tokens)
   while (!tokens.empty() && tokens.front().which == token::type::to) {
     auto left = move(left_res->first);
     std::unique_ptr<ast::expression> right;
-    tie(right, tokens) = *parse_prec9(tokens.subvec(1)); // '||'
+    const auto right_tokens = ltrim_if(tokens.subvec(1), newline_test); // 'to'
+    tie(right, tokens) = *parse_prec9(right_tokens);
 
     arg_t args;
     args.emplace_back(move(left));
@@ -382,7 +386,7 @@ parse_res<> parse_prec0(token_string tokens)
       expr = std::make_unique<function_call>(move(method), move(arg));
     }
     else if (tokens.front().which == token::type::arrow) {
-      tokens = tokens.subvec(1); // '->'
+      tokens = ltrim_if(tokens.subvec(1), newline_test); // '->'
       std::unique_ptr<ast::expression> bound_fn;
       tie(bound_fn, tokens) = *parse_nonop_expression(tokens);
 
@@ -392,7 +396,7 @@ parse_res<> parse_prec0(token_string tokens)
       expr = std::make_unique<function_call>( move(method), move(args) );
     }
     else {
-      tokens = tokens.subvec(1); // '.'
+      tokens = ltrim_if(tokens.subvec(1), newline_test); // '.'
       symbol name{tokens.front().str};
       tokens = tokens.subvec(1); // name
       expr = std::make_unique<method>( move(expr), name );
