@@ -167,7 +167,7 @@ val_res val_prec2_expression(const token_string tokens)
 
 val_res val_prec1_expression(const token_string tokens)
 {
-  auto cur_str = trim_newline_group(tokens);
+  auto cur_str = tokens;
   while (!cur_str.empty() && (cur_str.front().which == token::type::bang ||
                               cur_str.front().which == token::type::tilde ||
                               cur_str.front().which == token::type::dash)) {
