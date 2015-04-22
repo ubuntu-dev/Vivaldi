@@ -19,6 +19,7 @@ template <typename T>
 class vector_ref {
 public:
   using iterator = const T*;
+  using reverse_iterator = std::reverse_iterator<iterator>;
 
   const static size_t npos{std::numeric_limits<size_t>::max()};
 
@@ -72,6 +73,9 @@ public:
   iterator begin() const { return m_data; }
   iterator end() const { return m_data + m_sz; }
 
+  reverse_iterator rbegin() const { return reverse_iterator{end()}; }
+  reverse_iterator rend() const { return reverse_iterator{begin()}; }
+
   const T* data() const { return m_data; }
 
 private:
@@ -96,6 +100,26 @@ inline vector_ref<T> ltrim_if(vector_ref<T> vec, const F& pred)
 {
   const auto last = std::find_if_not(std::begin(vec), std::end(vec), pred);
   return vec.subvec(static_cast<size_t>(last - std::begin(vec)));
+}
+
+// Given a vector_ref vec, return a vector_ref starting at the same position,
+// resized so that the first value in vec equal to item is now past the end
+template <typename T>
+inline vector_ref<T> rtrim(vector_ref<T> vec, const T& item)
+{
+  const auto last = std::find_if(std::rbegin(vec), std::rend(vec),
+                                 [&](const auto& i) { return i != item; });
+  return vec.subvec(0, last.base() - std::begin(vec));
+}
+
+// Given a vector_ref vec, return a vector_ref starting at the same position,
+// resized so that the value V in vec such that pred(V) holds true is now past
+// the end
+template <typename T, typename F>
+inline vector_ref<T> rtrim_if(vector_ref<T> vec, const F& pred)
+{
+  const auto last = std::find_if_not(std::rbegin(vec), std::rend(vec), pred);
+  return vec.subvec(0, last.base() - std::begin(vec));
 }
 
 }
