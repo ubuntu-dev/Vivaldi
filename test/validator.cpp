@@ -1,5 +1,5 @@
-#include "../src/parser.h"
-#include "../src/utils/string_helpers.h"
+#include "parser.h"
+#include "utils/string_helpers.h"
 
 //#define BOOST_TEST_MODULE validator
 //#define BOOST_TEST_MAIN
