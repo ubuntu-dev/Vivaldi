@@ -155,7 +155,8 @@ void gc::mark(managed_ptr obj)
   if (!obj)
     return;
 
-  if (obj.tag() == tag::nil || obj.tag() == tag::integer || obj.tag() == tag::boolean) {
+  if (obj.tag() == tag::boolean || obj.tag() == tag::character ||
+      obj.tag() == tag::integer || obj.tag() == tag::nil) {
     mark(obj.type());
     mark_members(obj);
     return;
