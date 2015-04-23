@@ -42,6 +42,7 @@ std::string vv::escape_chars(const std::string& orig)
         tmp += c;
       }
       else {
+        tmp += '\\';
         tmp += ('0' + (int{c} / 64));
         tmp += ('0' + (int{c} % 64 / 8));
         tmp += ('0' + (int{c} % 8));
