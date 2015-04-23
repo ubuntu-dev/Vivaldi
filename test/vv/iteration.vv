@@ -1,27 +1,27 @@
 require "assert"
 
 class Decrementer
-  init(x) = @x = x
+  let init(x) = @x = x
 
-  start() = self
-  get() = @x
-  at_end() = @x == 0
-  increment() = do
+  let start() = self
+  let get() = @x
+  let at_end() = @x == 0
+  let increment() = do
     @x = @x - 1
     self
   end
 end
 
 class Inverted
-  init(x) = @x = x
+  let init(x) = @x = x
 
-  greater(y) =
+  let greater(y) =
     try: except "hello"
     catch e: @x < y.get_x()
 
-  add(x) = new Inverted(@x - x)
+  let add(x) = new Inverted(@x - x)
 
-  get_x() = @x
+  let get_x() = @x
 end
 
 let for_loop() = do
@@ -55,7 +55,7 @@ end
 
 let subclass_iteration() = do
   class StupidRange : Range
-    at_end() = self.get() >= 12
+    let at_end() = self.get() >= 12
   end
   let to_5 = reduce(1 to 5, 0, fn (a, b): a + b)
   let to_12 = reduce(new StupidRange(1, 5), 0, fn (a, b): a + b)

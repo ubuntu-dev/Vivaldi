@@ -40,10 +40,10 @@ let arr_comp() = do
   assert(arr != different, "arr != different")
 
   class Foo
-    equals(x) = true
+    let equals(x) = true
   end
   class Bar
-    equals(x) = false
+    let equals(x) = false
   end
 
   assert([new Foo(), 56] == [new Foo(), 56], "[new Foo(), 56] == [new Foo(), 56]")

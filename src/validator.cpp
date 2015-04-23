@@ -785,10 +785,14 @@ val_res val_colon_separated_pair(const token_string tokens)
 
 val_res val_method_definition(const token_string tokens)
 {
-  if (tokens.empty() || tokens.front().which != token::type::name)
+  if (tokens.empty() || tokens.front().which != token::type::key_let)
     return {};
-  const auto arglist_str = tokens.subvec(1); // name
 
+  const auto name_str = tokens.subvec(1); // 'let'
+  if (name_str.empty() || name_str.front().which != token::type::name)
+    return {name_str, "expected method name"};
+
+  const auto arglist_str = name_str.subvec(1); // name
   const auto arglist_res = val_delimited_expression(arglist_str,
                                                     token::type::open_paren,
                                                     token::type::close_paren,

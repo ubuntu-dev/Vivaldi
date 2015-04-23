@@ -202,10 +202,10 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "class Foo : Bar end",
     "class Foo\n\n\nend",
     "class Foo : Bar\n\n\nend",
-    "class Foo foo(x) = x end",
-    "class Foo : Bar foo(x) = x end",
-    "class Foo\n\n\n foo(x) =\n\n\nx\n\n\nend",
-    "class Foo\n foo(x) = x\n bar(x) = x + 12\nend",
+    "class Foo let foo(x) = x end",
+    "class Foo : Bar let foo(x) = x end",
+    "class Foo\n\n\n let foo(x) =\n\n\nx\n\n\nend",
+    "class Foo\n let foo(x) = x\n let bar(x) = x + 12\nend",
 
     // Variable assignment
     "foo = 1",
@@ -356,6 +356,7 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "let a( = b",
     "let a) = b",
     "let\na() = b",
+    "a() = b",
 
 
     // Lambdas
@@ -368,6 +369,7 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "fn\na(): b",
     "fn a\n(): b",
     "fn ()\n: b",
+    "fn () = b",
 
     // Member assignment
     "@a\n= b",
@@ -415,9 +417,11 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "class Foo fn foo(): nil end",
     "class Foo fn (): nil end",
     "class Foo foo(): nil end",
-    "class Foo foo = nil end",
-    "class Foo foo()\n= nil end",
-    "class Foo foo() = nil bar() = nil end",
+    "class Foo foo() = nil end",
+    "class Foo let foo(): nil end",
+    "class Foo let foo = nil end",
+    "class Foo let foo()\n= nil end",
+    "class Foo let foo() = nil let bar() = nil end",
 
     // Variable assignments
     "a =",

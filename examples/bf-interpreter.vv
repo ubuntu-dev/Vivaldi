@@ -3,14 +3,14 @@
 // Based of Ruby implementation: https://github.com/buren/bf-interpreter/blob/master/bf.rb
 class Brainfuck
 
-  init(code) = do
+  let init(code) = do
     @code     = code
     @tape     = []
     @code_pos = 0
     @tape_pos = 0
   end
 
-  run(skip) = do
+  let run(skip) = do
     while (@tape_pos >= 0 && @code_pos < @code.size()): do
       if (@tape_pos >= @tape.size()): @tape.append(0)
 
@@ -23,7 +23,7 @@ class Brainfuck
     end
   end
 
-  do_inc() = do
+  let do_inc() = do
     @code_pos = @code_pos + 1
     let old_pos   = @code_pos
     while self.run(@tape[@tape_pos] == 0): do
@@ -31,7 +31,7 @@ class Brainfuck
     end
   end
 
-  do_code() = do
+  let do_code() = do
     let code_char = @code[@code_pos]
     cond
       code_char == \+: @tape[@tape_pos] = @tape[@tape_pos] + 1,
@@ -42,11 +42,11 @@ class Brainfuck
       code_char == \,: @tape[@tape_pos] = next_char_ord
   end
 
-  print_char(char) = do
+  let print_char(char) = do
     print(char.chr())
   end
 
-  next_char_ord() = do
+  let next_char_ord() = do
     gets().ord()
   end
 end

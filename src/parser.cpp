@@ -898,11 +898,11 @@ parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
 parse_res<std::pair<symbol, function_definition>>
   parse_method_definition(token_string tokens)
 {
-  if (tokens.empty() || tokens.front().which != token::type::name)
+  if (tokens.empty() || tokens.front().which != token::type::key_let)
     return {};
 
-  const symbol name{tokens.front().str};
-  tokens = tokens.subvec(1); // name
+  const symbol name{tokens[1].str};
+  tokens = tokens.subvec(2); // 'let' name
 
   auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
   {
