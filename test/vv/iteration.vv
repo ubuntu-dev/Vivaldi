@@ -23,7 +23,7 @@ class Inverted
   fn get_x(): @x
 end
 
-fn for_loop(): do
+let for_loop() = do
   let arr = []
   for i in new Decrementer(5): arr.append(i)
   assert(arr[0] == 5, "arr[0] == 5")
@@ -33,10 +33,12 @@ fn for_loop(): do
   assert(arr[4] == 1, "arr[4] == 1")
 end
 
-fn range_test(): do
+let range_test() = do
   let inv_arr = []
-  try: for i in new Inverted(10) to new Inverted(5): inv_arr.append(i.get_x())
-  catch e: assert(false, "failed to catch exception inside of Range")
+  try:
+    for i in new Inverted(10) to new Inverted(5): inv_arr.append(i.get_x())
+  catch e:
+    assert(false, "failed to catch exception inside of Range")
   assert(inv_arr[0] == 10, "inv_arr[0] == 10")
   assert(inv_arr[1] == 9, "inv_arr[1] == 9")
   assert(inv_arr[2] == 8, "inv_arr[2] == 8")
@@ -44,13 +46,13 @@ fn range_test(): do
   assert(inv_arr[4] == 6, "inv_arr[4] == 6")
 end
 
-fn range_persistence_test(): do
+let range_persistence_test() = do
   let r = 1 to 100
   for i in r: i
   assert(r.size() == 99, "(1 to 100).size() == 99")
 end
 
-fn subclass_iteration(): do
+let subclass_iteration() = do
   class StupidRange : Range
     fn at_end(): self.get() >= 12
   end

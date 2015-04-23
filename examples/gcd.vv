@@ -1,4 +1,4 @@
-fn gcd(a,b): do
+let gcd(a,b) = do
    while b != 0: do
      let t = b
      b = a % b

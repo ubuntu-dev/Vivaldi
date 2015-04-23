@@ -1,11 +1,11 @@
-fn assert(test, err): if !test: do
+let assert(test, err) = if !test: do
   puts("\033[91m✗\033[39m " + err)
   quit()
 end
 
-fn section(name): puts("\033[94m===\033[39m " + name + " \033[94m===\033[39m")
+let section(name) = puts("\033[94m===\033[39m " + name + " \033[94m===\033[39m")
 
-fn test(code, name): do
+let test(code, name) = do
   try: do
     code()
     puts("\033[92m✓\033[39m " + name)

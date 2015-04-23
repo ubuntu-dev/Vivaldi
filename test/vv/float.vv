@@ -1,23 +1,24 @@
 require "assert"
 
-fn basic(): do
+let basic() = do
   assert(0.0 != 1.0, "0.0 != 1.0")
   assert(0.0.type() == Float, "0.0.type() == Float")
 end
 
-fn int_comparisions(): do
+let int_comparisions() = do
   assert(0 == 0.0, "0 == 0.0")
   assert(1.0 == 1, "1.0 == 1")
   assert(1 != 1.3,  "1 != 1.3")
   assert(1.3 != 1,  "1.3 != 1")
 end
 
-fn division(): for i in 0.0 to 1000.0: do
-  assert(i / 1.0 == i, "i / 1.0 == i")
-  if i != 0.0: assert(i / i == 1.0, "i / i == 1.0")
-end
+let division() =
+  for i in 0.0 to 1000.0: do
+    assert(i / 1.0 == i, "i / 1.0 == i")
+    if i != 0.0: assert(i / i == 1.0, "i / i == 1.0")
+  end
 
-fn subtraction(): do
+let subtraction() = do
   for i in 0.0 to 1000.0: do
     assert(i - i == 0, "i - i == 0")
     assert(i - 0 == i, "i - 0 == 0")
@@ -26,30 +27,32 @@ fn subtraction(): do
   assert(0.0 - 1.0 == -1, "0.0 - 1.0 == -1")
 end
 
-fn addition(): for i in 0.0 to 1000.0: do
-  assert(-i + i == 0, "-i + i == 0")
-  assert(i + 0 == i,  "i + 0 == i")
-end
+let addition() =
+  for i in 0.0 to 1000.0: do
+    assert(-i + i == 0, "-i + i == 0")
+    assert(i + 0 == i,  "i + 0 == i")
+  end
 
-fn comparision(): for i in 0.0 to 1000.0: do
-  assert(i == i,   "i == i")
-  assert(i != -1.0,  "i != -1")
-  assert(i < 1000, "i < 1000")
-  assert(i > -1,   "i > -1")
-  assert(i <= i,   "i <= i")
-  assert(i >= i,   "i >= i")
-  assert(i >= 0,   "i >= 0")
-  assert(i <= 999, "i <= 999")
-end
+let comparision() =
+  for i in 0.0 to 1000.0: do
+    assert(i == i,   "i == i")
+    assert(i != -1.0, "i != -1")
+    assert(i < 1000, "i < 1000")
+    assert(i > -1,   "i > -1")
+    assert(i <= i,   "i <= i")
+    assert(i >= i,   "i >= i")
+    assert(i >= 0,   "i >= 0")
+    assert(i <= 999, "i <= 999")
+  end
 
-fn multiplication(): for i in 0.0 to 1000.0: do
-  assert(i * 1 == i,      "i * 1 == i")
-  assert(i * 0 == 0,      "i * 0 == 0")
+let multiplication() =
+  for i in 0.0 to 1000.0: do
+    assert(i * 1 == i,      "i * 1 == i")
+    assert(i * 0 == 0,      "i * 0 == 0")
+    assert(i * -1 == 0 - i, "i * -1 == 0 - i")
+  end
 
-  assert(i * -1 == 0 - i, "i * -1 == 0 - i")
-end
-
-fn division_type(): do
+let division_type() = do
   assert(10.0 / 2.0 == 5,    "10.0 / 2.0 == 5")
   assert(4.0 / 5 == 0.8,     "4.0 / 5 == 0.8")
   assert(3.0 / 2.0 == 1.5,   "3.0 / 2.0 == 1.5")

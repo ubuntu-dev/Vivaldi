@@ -1,25 +1,25 @@
 require "assert"
 
-fn ands(): do
+let ands() = do
   assert(true && true,      "true && true")
   assert(!(true && false),  "!(true && false)")
   assert(!(false && false), "!(false && false)")
   assert(!(false && true),  "!(false && true)")
 end
 
-fn and_truthiness(): do
+let and_truthiness() = do
   assert(1 && 0,         "1 && 0")
   assert(!(nil && true), "!(nil && true)")
 end
 
-fn ors(): do
+let ors() = do
   assert(true || true,      "true || true")
   assert(true || false,     "true || false")
   assert(!(false || false), "!(false || false)")
   assert(false || true,     "false || true")
 end
 
-fn or_truthiness(): do
+let or_truthiness() = do
   assert(1 || 0,        "1 || 0")
   assert(!(nil || nil), "!(nil || nil)")
 end

@@ -1,6 +1,6 @@
 require "assert"
 
-fn test_regex_creation(): do
+let test_regex_creation() = do
   let val = `foo.*bar`
   `foo(bar)`
 
@@ -10,7 +10,7 @@ fn test_regex_creation(): do
   assert(excepted, "Excepting on invalid regex literal")
 end
 
-fn test_match_index(): do
+let test_match_index() = do
   let re = `foo.*bar`
   let str = "this sentence contains foobazbar"
   assert(re.match_index(str) == 23, "re.match_index(str) == 23")
@@ -19,14 +19,14 @@ fn test_match_index(): do
   assert(re.match_index("nope") == nil, "re.match_index(\"nope\") == nil")
 end
 
-fn test_regex_result(): do
+let test_regex_result() = do
   let excepted = false
   try: new RegExResult()
   catch _: excepted = true
   assert(excepted, "nonconstructability in RegExResult")
 end
 
-fn test_match(): do
+let test_match() = do
   let re = `(foobar).*(foo[a-z]*bar)`
   let str = "foobar, foobazbar"
   let match = re.match(str)
@@ -39,7 +39,7 @@ fn test_match(): do
   assert(match.index(2) == 8, "match.index(1) == 8")
 end
 
-fn test_replace(): do
+let test_replace() = do
   let str = "foobazbar"
   let rep = str.replace(`foo(.*)bar`, "[$1]")
   assert(rep == "[baz]", "rep == \"[baz]\"")

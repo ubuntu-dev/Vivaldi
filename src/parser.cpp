@@ -79,6 +79,7 @@ parse_res<> parse_cond_statement(token_string tokens);
 parse_res<> parse_except(token_string tokens);
 parse_res<> parse_for_loop(token_string tokens);
 parse_res<> parse_function_definition(token_string tokens);
+parse_res<> parse_lambda(token_string tokens);
 parse_res<> parse_literal(token_string tokens);
 parse_res<> parse_member(token_string tokens);
 parse_res<> parse_new_obj(token_string tokens);
@@ -424,6 +425,7 @@ parse_res<> parse_nonop_expression(token_string tokens)
   if ((res = parse_except(tokens)))               return res;
   if ((res = parse_for_loop(tokens)))             return res;
   if ((res = parse_function_definition(tokens)))  return res;
+  if ((res = parse_lambda(tokens)))               return res;
   if ((res = parse_literal(tokens)))              return res;
   if ((res = parse_new_obj(tokens)))              return res;
   if ((res = parse_require(tokens)))              return res;
@@ -540,7 +542,7 @@ parse_res<> parse_for_loop(token_string tokens)
   tie(range, tokens) = *parse_expression(tokens);
 
   std::unique_ptr<ast::expression> body;
-  tie(body, tokens) = *parse_expression(tokens.subvec(1)); // ':'
+  tie(body, tokens) = *parse_expression(ltrim_if(tokens.subvec(1), newline_test)); // ':'
 
   return {{ std::make_unique<for_loop>( iterator, move(range), move(body) ),
             tokens }};
@@ -548,15 +550,41 @@ parse_res<> parse_for_loop(token_string tokens)
 
 parse_res<> parse_function_definition(token_string tokens)
 {
+  if (tokens.empty() || tokens.front().which != token::type::key_let)
+    return {};
+  const symbol name{tokens[1].str};
+  tokens = tokens.subvec(2); // let name
+
+  if (tokens.empty() || tokens.front().which != token::type::open_paren)
+    return {};
+
+  auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
+  {
+    return parse_comma_separated_list(tokens, [](auto t)
+    {
+      if (t.front().which == token::type::close_paren)
+        return parse_res<symbol>{};
+      return parse_res<symbol>{{ t.front().str, t.subvec(1) }}; // argname
+    });
+  }, token::type::open_paren, token::type::close_paren);
+  auto args = move(arg_res->first);
+  tokens = arg_res->second;
+
+  std::unique_ptr<ast::expression> body;
+  tie(body, tokens) = *parse_expression(ltrim_if(tokens.subvec(1), newline_test)); // '='
+
+  return {{ std::make_unique<function_definition>( name, move(body), args ),
+            tokens }};
+}
+
+parse_res<> parse_lambda(token_string tokens)
+{
   if (tokens.empty() || tokens.front().which != token::type::key_fn)
     return {};
-  tokens = tokens.subvec(1);
+  tokens = tokens.subvec(1); // 'fn'
 
-  symbol name;
-  if (tokens.front().which != token::type::open_paren) {
-    name = tokens.front().str;
-    tokens = tokens.subvec(1); // name
-  }
+  if (tokens.empty() || tokens.front().which != token::type::open_paren)
+    return {};
 
   auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
   {
@@ -571,9 +599,9 @@ parse_res<> parse_function_definition(token_string tokens)
   tokens = arg_res->second;
 
   std::unique_ptr<ast::expression> body;
-  tie(body, tokens) = *parse_expression(tokens.subvec(1)); // ':'
+  tie(body, tokens) = *parse_expression(ltrim_if(tokens.subvec(1), newline_test)); // ':'
 
-  return {{ std::make_unique<function_definition>( name, move(body), args ),
+  return {{ std::make_unique<function_definition>( symbol{}, move(body), args ),
             tokens }};
 }
 
@@ -647,7 +675,7 @@ parse_res<> parse_try_catch(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_try)
     return {};
-  tokens = tokens.subvec(2); // 'try' ':'
+  tokens = ltrim_if(tokens.subvec(2), newline_test); // 'try' ':'
 
   std::unique_ptr<ast::expression> body;
   tie(body, tokens) = *parse_expression(tokens);
@@ -656,7 +684,7 @@ parse_res<> parse_try_catch(token_string tokens)
   tokens = tokens.subvec(1); // 'catch'
   const symbol exception_name{tokens.front().str};
   std::vector<symbol> exception_arg{exception_name};
-  tokens = tokens.subvec(2); // name ':
+  tokens = ltrim_if(tokens.subvec(2), newline_test); // name ':
 
   std::unique_ptr<ast::expression> catcher;
   tie(catcher, tokens) = *parse_expression(tokens);
@@ -723,7 +751,7 @@ parse_res<> parse_while_loop(token_string tokens)
   tie(test, tokens) = *parse_expression(tokens.subvec(1)); // 'while'
 
   std::unique_ptr<ast::expression> body;
-  tie(body, tokens) = *parse_expression(tokens.subvec(1)); // ':'
+  tie(body, tokens) = *parse_expression(ltrim_if(tokens.subvec(1), newline_test)); // ':'
 
   return {{ std::make_unique<while_loop>( move(test), move(body) ), tokens }};
 }

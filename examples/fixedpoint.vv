@@ -1,8 +1,8 @@
 // Wikipedia tells me this is the fixed-point combinator. I don't understand it
 // at all, but it seems to work
-fn fixed_point(f): fn (x): f(fixed_point(f))(x)
+let fixed_point(f) = fn (x): f(fixed_point(f))(x)
 
-fn factabs(fact): fn (x): cond
+let factabs(fact) = fn (x): cond
   x == 0: 1,
   true:   x * fact(x - 1)
 

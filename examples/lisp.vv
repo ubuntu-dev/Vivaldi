@@ -54,16 +54,15 @@ end
 // }}}
 // Parsing {{{
 
-fn tokenize(str): do
-  str.replace(`([\(\)])`, " $1 ").split(" ")->filter(fn (x): x.size() != 0)
-end
+let tokenize(str) = str.replace(`([\(\)])`, " $1 ").split(" ") ->
+                      filter(fn (x): x.size() != 0)
 
-fn parse_atom(x): cond
+let parse_atom(x) = cond
   x == "nil":                                   nil,
   x.ord() >= "0".ord() && x.ord() <= "9".ord(): x.to_int(),
   true:                                         new Symbol(x)
 
-fn parse(tokens): do
+let parse(tokens) = do
   if tokens.at_end(): except "premature end of file"
 
   let token = tokens.get()
@@ -88,7 +87,7 @@ end
 // }}}
 // Printing {{{
 
-fn print_inner_cons_cell(x): do
+let print_inner_cons_cell(x) = do
   if (x.type() != ConsCell): do
     print_lisp_obj(x)
     return nil
@@ -110,7 +109,7 @@ fn print_inner_cons_cell(x): do
   print_inner_cons_cell(x.cdr())
 end
 
-fn print_lisp_obj(x): do
+let print_lisp_obj(x) = do
   if x.type() == ConsCell: do
     print("(")
     print_inner_cons_cell(x)
@@ -122,7 +121,7 @@ fn print_lisp_obj(x): do
     true:               print(x)
 end
 
-fn puts_lisp_obj(x): do
+let puts_lisp_obj(x) = do
   print_lisp_obj(x)
   puts("")
 end
@@ -130,14 +129,14 @@ end
 // }}}
 // Evaluation {{{
 
-fn ev1(args, env): eval(args.car(), env)
-fn ev2(args, env): eval(args.cdr().car(), env)
+let ev1(args, env) = eval(args.car(), env)
+let ev2(args, env) = eval(args.cdr().car(), env)
 
-fn argmap(arglist, env): cond
+let argmap(arglist, env) = cond
   !arglist: nil,
   true:     new ConsCell(eval(arglist.car(), env), argmap(arglist.cdr(), env))
 
-fn eval(expr, env): do
+let eval(expr, env) = do
   if expr.type() == Symbol: return env[expr]
   if expr.type() != ConsCell: return expr
 

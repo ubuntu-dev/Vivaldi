@@ -39,6 +39,7 @@ val_res val_dictionary_literal(token_string tokens);
 val_res val_except(token_string tokens);
 val_res val_for_loop(token_string tokens);
 val_res val_function_definition(token_string tokens);
+val_res val_lambda(token_string tokens);
 val_res val_member_assignment(token_string tokens);
 val_res val_object_creation(token_string tokens);
 val_res val_require(token_string tokens);
@@ -102,7 +103,7 @@ val_res val_single_comma(token_string tokens);
 // Validates an expr: expr pair (used in cond statements and in dictionaries)
 val_res val_colon_separated_pair(token_string tokens);
 
-// Like val_function_definition, except that anonymous functions are rejected
+// Like val_function_definition, with added function name. TODO: remove 'fn'
 val_res val_method_definition(token_string tokens);
 
 // }}}
@@ -265,6 +266,7 @@ val_res val_nonop_expression(const token_string tokens)
                     val_except,
                     val_for_loop,
                     val_function_definition,
+                    val_lambda,
                     val_member_assignment,
                     val_object_creation,
                     val_require,
@@ -401,12 +403,53 @@ val_res val_for_loop(const token_string tokens)
 
 val_res val_function_definition(const token_string tokens)
 {
+  if (tokens.empty() || tokens.front().which != token::type::key_let)
+    return {};
+
+  const auto name_str = tokens.subvec(1); // 'let'
+  if (name_str.empty() || name_str.front().which != token::type::name)
+    return {name_str, "expected variable or function name"};
+
+  const auto arglist_str = name_str.subvec(1); // name
+  if (arglist_str.empty() || arglist_str.front().which != token::type::open_paren)
+    return {}; // variable declaration
+
+  const auto arglist_res = val_delimited_expression(arglist_str,
+                                                    token::type::open_paren,
+                                                    token::type::close_paren,
+                                                    [](const auto inner_str)
+  {
+    return val_separated_list(inner_str, val_single_comma, [](const auto var_str)
+    {
+      if (var_str.empty() || var_str.front().which != token::type::name)
+        return val_res{};
+      return val_res{var_str.subvec(1)}; // name
+    }, "variable name");
+  }, "')'", "argument list");
+
+  if (arglist_res.invalid())
+    return arglist_res;
+  if (!arglist_res)
+    return {arglist_str, "expected argument list enclosed in parentheses"};
+
+  const auto eq_str = *arglist_res;
+  if (eq_str.empty() || eq_str.front().which != token::type::assignment)
+    return {eq_str, "expected '='"};
+
+  const auto body_str = trim_newline_group(eq_str.subvec(1)); // '='
+  const auto body_res = val_expression(body_str);
+  if (body_res || body_res.invalid())
+    return body_res;
+
+  return  {body_str, "expected expression"};
+}
+
+val_res val_lambda(const token_string tokens)
+{
   if (tokens.empty() || tokens.front().which != token::type::key_fn)
     return {};
 
-  auto arglist_str = tokens.subvec(1); // 'fn'
-  if (!arglist_str.empty() && arglist_str.front().which == token::type::name)
-    arglist_str = arglist_str.subvec(1); // name
+  const auto arglist_str = tokens.subvec(1); // 'fn'
 
   const auto arglist_res = val_delimited_expression(arglist_str,
                                                     token::type::open_paren,

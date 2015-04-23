@@ -15,7 +15,7 @@ end
 
 let obj = new Derived(1, 2)
 
-fn type_system(): do
+let type_system() = do
   assert(obj.type() == Derived,       "obj.type() == Derived")
   assert(obj.type().parent() == Base, "obj.type().parent() == Base")
   assert(obj.get_i() == 3,            "obj.get_i() == 3")
@@ -23,7 +23,7 @@ fn type_system(): do
   assert(obj.get_a() == 'foo,         "obj.get_a() == 'foo")
 end
 
-fn instantiation(): do
+let instantiation() = do
   class Uninstantiable
     fn init(): except nil
   end
@@ -35,20 +35,20 @@ fn instantiation(): do
   assert(!instantiated && i == nil, "returned object from exception in init")
 end
 
-fn self_wrapping(): do
+let self_wrapping() = do
   class SelfWrapper
     fn init(): @a = 5
     fn get_a(): @a
     fn self_a_getter(): fn (): self.get_a()
   end
 
-  fn apply(f): f()
+  let apply(f) = f()
   let obj = new SelfWrapper()
   let five = apply(obj.self_a_getter())
   assert(five == 5, "capturing self in lambdas")
 end
 
-fn non_object_classes(): do
+let non_object_classes() = do
   let f = "foo"
   assert(!f.has_member('bar), "!f.member('bar)")
 

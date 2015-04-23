@@ -1,13 +1,13 @@
 require "assert"
 
-fn unused_try_catch(): do
+let unused_try_catch() = do
   let i = false
   try: i = true
   catch _: assert(false, "exceptionless try body")
   assert(i, "assigning from try body")
 end
 
-fn used_try_catch(): do
+let used_try_catch() = do
   let i = false
   try: do
     except 55
@@ -16,7 +16,7 @@ fn used_try_catch(): do
   assert(i == 55, "assigning from catch body")
 end
 
-fn builtin_exception(): do
+let builtin_exception() = do
   let i = false
   try: 1 + "foo"
   catch _: i = 12

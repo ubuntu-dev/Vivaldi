@@ -1,6 +1,6 @@
 require "assert"
 
-fn dict_size(): do
+let dict_size() = do
   assert({}.size() == 0, "{}.size() == 0")
   assert({'foo: 'bar}.size() == 1, "{'foo: 'bar}.size() == 1")
   assert({'foo: 'bar, 1: 2}.size() == 2, "{'foo: 'bar, 1: 2}.size() == 2")
@@ -8,19 +8,19 @@ end
 
 let dict = { 'foo: 'bar, 1: 2, "baz": "blah", 1.5: 3.5 }
 
-fn initialization(): do
+let initialization() = do
   assert(dict['foo] == 'bar, "dict['foo] == 'bar")
   assert(dict[1] == 2, "dict[1] == 2")
   assert(dict["baz"] == "blah", "dict['baz'] == 'blah'")
   assert(dict[1.5] == 3.5, "dict[1.5] == 3.5}")
 end
 
-fn assignment(): do
+let assignment() = do
   dict[2] = 'foo
   assert(dict[2] == 'foo, "dict[2] == 'foo")
 end
 
-fn reassignment(): do
+let reassignment() = do
   dict[2] = 'bar
   assert(dict[2] == 'bar, "dict[2] == 'bar")
 end

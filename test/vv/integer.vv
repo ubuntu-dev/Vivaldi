@@ -1,11 +1,11 @@
 require "assert"
 
-fn basic(): do
+let basic() = do
   assert(0 != 1, "0 != 1")
   assert(0.type() == Integer, "0.type() == Integer")
 end
 
-fn division(): do
+let division() = do
   for i in 0 to 1000: do
     assert(i / 1 == i, "i / 1 == i")
     if i != 0: assert(i / i == 1, "i / i == 1")
@@ -17,48 +17,52 @@ fn division(): do
   assert(4000 / 2 == 2000, "4000 / 2 == 2000")
 end
 
-fn subtraction(): for i in 0 to 1000: do
-  assert(i - i == 0, "i - i == 0")
-  assert(i - 0 == i, "i - 0 == 0")
-end
+let subtraction() =
+  for i in 0 to 1000: do
+    assert(i - i == 0, "i - i == 0")
+    assert(i - 0 == i, "i - 0 == 0")
+  end
 
-fn addition(): for i in 0 to 1000: do
-  assert(-i + i == 0, "-i + i == 0")
-  assert(i + 0 == i,  "i + 0 == i")
-end
+let addition() =
+  for i in 0 to 1000: do
+    assert(-i + i == 0, "-i + i == 0")
+    assert(i + 0 == i,  "i + 0 == i")
+  end
 
-fn comparison(): for i in 0 to 1000: do
-  assert(i == i,   "i == i")
-  assert(i != -1,  "i != -1")
-  assert(i < 1000, "i < 1000")
-  assert(i > -1,   "i > -1")
-  assert(i <= i,   "i <= i")
-  assert(i >= i,   "i >= i")
-  assert(i >= 0,   "i >= 0")
-  assert(i <= 999, "i <= 999")
-end
+let comparison() =
+  for i in 0 to 1000: do
+    assert(i == i,   "i == i")
+    assert(i != -1,  "i != -1")
+    assert(i < 1000, "i < 1000")
+    assert(i > -1,   "i > -1")
+    assert(i <= i,   "i <= i")
+    assert(i >= i,   "i >= i")
+    assert(i >= 0,   "i >= 0")
+    assert(i <= 999, "i <= 999")
+  end
 
-fn multiplication(): for i in 0 to 1000: do
-  assert(i * 1 == i,      "i * 1 == i")
-  assert(i * 0 == 0,      "i * 0 == 0")
+let multiplication() =
+  for i in 0 to 1000: do
+    assert(i * 1 == i,      "i * 1 == i")
+    assert(i * 0 == 0,      "i * 0 == 0")
+    assert(i * -1 == 0 - i, "i * -1 == 0 - i")
+  end
 
-  assert(i * -1 == 0 - i, "i * -1 == 0 - i")
-end
+let bitwise() =
+  for i in 0 to 1000: do
+    assert(i & i == i, "i & i == i")
+    assert(i & 0 == 0, "i & i == i")
+    assert(i | i == i, "i | i == i")
+    assert(i | 0 == i, "i | 0 == i")
+    assert(i ^ i == 0, "i ^ i == 0")
+    assert(i ^ 0 == i, "i ^ 0 == i")
 
-fn bitwise(): for i in 0 to 1000: do
-  assert(i & i == i, "i & i == i")
-  assert(i & 0 == 0, "i & i == i")
-  assert(i | i == i, "i | i == i")
-  assert(i | 0 == i, "i | 0 == i")
-  assert(i ^ i == 0, "i ^ i == 0")
-  assert(i ^ 0 == i, "i ^ 0 == i")
+    assert(i >> 1 == i / 2, "i >> 1 == i / 2")
+  end
 
-  assert(i >> 1 == i / 2, "i >> 1 == i / 2")
-end
+let negative_num() = assert(0 - 1 == -1, "0 - 1 == -1")
 
-fn negative_num(): assert(0 - 1 == -1, "0 - 1 == -1")
-
-fn bases(): do
+let bases() = do
   assert(18 == 0b10010, "18 == 0b10010")
   assert(55 == 0x37, "55 == 0x37")
   assert(123 == 0173, "123 == 0173")

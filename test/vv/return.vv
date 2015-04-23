@@ -1,12 +1,12 @@
 require "assert"
 
-fn early_return(text, flag): do
+let early_return(text, flag) = do
   let i = text + "!"
   if flag: return i
   return "!" + i
 end
 
-fn early_ret_test(): do
+let early_ret_test() = do
   let t = "foo"
   let post = early_return(t, false)
   assert(post == "!foo!", "unintended early return")

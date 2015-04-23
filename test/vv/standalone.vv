@@ -1,6 +1,6 @@
 require "assert"
 
-fn test_filter(): do
+let test_filter() = do
   let filtered = filter(1 to 10, fn (x): x % 2 != 0)
   assert(filtered.size() == 5, "filtered.size() == 5")
   assert(filtered[0] == 1, "filtered[0] == 1")
@@ -10,7 +10,7 @@ fn test_filter(): do
   assert(filtered[4] == 9, "filtered[4] == 9")
 end
 
-fn test_map(): do
+let test_map() = do
   let orig = [1, 2, 3]
   let mapped = map(orig, fn (x): x * 2)
   assert(mapped.size() == 3, "mapped.size() == 3")
@@ -19,7 +19,7 @@ fn test_map(): do
   assert(mapped[2] == 6, "mapped[2] == 6")
 end
 
-fn test_counting(): do
+let test_counting() = do
   let counted = count(1 to 10, fn (x): x % 2 != 0)
   assert(counted == 5, "count(1 to 10, fn (x): x % 2 != 0) == 5")
   let any_check = any(1 to 10, fn (x): x % 2 != 0)
@@ -28,7 +28,7 @@ fn test_counting(): do
   assert(!all_check, "!all(1 to 10, fn (x): x % 2 != 0")
 end
 
-fn test_reduce(): do
+let test_reduce() = do
   let str = "foo"
   let same = reduce(str, "", fn (t, i): t + i)
   assert(str == same, "reduce(\"foo\", \"\", fn (t, i): t + i) == \"foo\"")
@@ -40,7 +40,7 @@ fn test_reduce(): do
          "reduce(\"foo\", \"\", fn (t, i): i + t) == \"oof\"")
 end
 
-fn test_reverse(): do
+let test_reverse() = do
   let rng = reverse(1 to 3)
   assert(rng.size() == 2, "reverse(1 to 3).size() == 2")
   assert(rng[0] == 2, "reverse(1 to 3)[0] == 2")
@@ -62,7 +62,7 @@ fn test_reverse(): do
   assert(reverse("").size() == 0, "reverse(\"\").size() == 0")
 end
 
-fn test_sort(): do
+let test_sort() = do
   let unsorted = [1, 5, 4, 2, 3, 0, 1]
   let sorted = sort(unsorted)
   assert(sorted == [0, 1, 1, 2, 3, 4, 5], "sorted == [0, 1, 1, 2, 3, 4, 5]")

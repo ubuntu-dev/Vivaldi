@@ -161,11 +161,15 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "for i in nil:\n\n\n\nputs(i) + 12",
 
     // Function definitions
+    "let foo() = nil",
+    "let foo(a, b, c, d, e, f, g, h, i, j, k, l) = a + b + c - d",
+    "let foo(\na,\nb,\nc\n) =\nnil",
+
+    // Lambdas
     "fn (): nil",
-    "fn foo(): nil",
     "fn (\n\n\n):\n\n\nnil",
-    "fn foo(a, b, c, d, e, f, g, h, i, j, k, l): a + b + c - d",
-    "fn foo(\na,\nb,\nc\n):\nnil",
+    "fn (a, b, c, d, e, f, g, h, i, j, k, l): a + b + c - d",
+    "fn (\na,\nb,\nc\n):\nnil",
 
     // Member assignment
     "@foo = bar",

@@ -1,4 +1,4 @@
-fn primes(upto): do
+let primes(upto) = do
   let candidates = (2 to upto).to_arr()
   let found = []
   while candidates[0] < upto.sqrt(): do
