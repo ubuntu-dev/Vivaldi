@@ -351,7 +351,16 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "for i in a:",
 
     // Function definitions
+    "let a()\n = b",
+    "let a() b",
+    "let a( = b",
+    "let a) = b",
+    "let\na() = b",
+
+
+    // Lambdas
     "fn a: b",
+    "fn a(): b",
     "fn a() b",
     "fn () b",
     "fn : b",
