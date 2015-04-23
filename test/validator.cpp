@@ -202,10 +202,10 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "class Foo : Bar end",
     "class Foo\n\n\nend",
     "class Foo : Bar\n\n\nend",
-    "class Foo fn foo(x): x end",
-    "class Foo : Bar fn foo(x): x end",
-    "class Foo\n\n\nfn foo(x):\n\n\nx\n\n\nend",
-    "class Foo\nfn foo(x): x\n fn bar(x): x + 12\nend",
+    "class Foo foo(x) = x end",
+    "class Foo : Bar foo(x) = x end",
+    "class Foo\n\n\n foo(x) =\n\n\nx\n\n\nend",
+    "class Foo\n foo(x) = x\n bar(x) = x + 12\nend",
 
     // Variable assignment
     "foo = 1",
@@ -412,7 +412,12 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "class\nFoo end",
     "class Foo\n: Bar end",
     "class Foo :\nBar end",
+    "class Foo fn foo(): nil end",
     "class Foo fn (): nil end",
+    "class Foo foo(): nil end",
+    "class Foo foo = nil end",
+    "class Foo foo()\n= nil end",
+    "class Foo foo() = nil bar() = nil end",
 
     // Variable assignments
     "a =",

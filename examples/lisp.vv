@@ -9,18 +9,18 @@
 // Classes {{{
 
 class ConsCell
-  fn init(car, cdr): do
+  init(car, cdr) = do
     @car = car
     @cdr = cdr
   end
 
-  fn car(): @car
-  fn cdr(): @cdr
+  car() = @car
+  cdr() = @cdr
 
-  fn set_car(car): @car = car
-  fn set_cdr(cdr): @cdr = cdr
+  set_car(car) = @car = car
+  set_cdr(cdr) = @cdr = cdr
 
-  fn length(): do
+  length() = do
     let len = 0
     let c = self
     while (c): do
@@ -32,12 +32,12 @@ class ConsCell
 end
 
 class Lambda
-  fn init(args, body): do
+  init(args, body) = do
     @args = args
     @body = body
   end
 
-  fn eval(args, env): do
+  eval(args, env) = do
     let nenv = new Dictionary(env)
     if args.length() != @args.length(): except "wrong number of arguments"
 

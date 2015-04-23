@@ -103,7 +103,7 @@ val_res val_single_comma(token_string tokens);
 // Validates an expr: expr pair (used in cond statements and in dictionaries)
 val_res val_colon_separated_pair(token_string tokens);
 
-// Like val_function_definition, with added function name. TODO: remove 'fn'
+// Validates a method definition inside a type definition.
 val_res val_method_definition(token_string tokens);
 
 // }}}
@@ -597,6 +597,10 @@ val_res val_type_definition(const token_string tokens)
     if (!method_res)
       return val_res{cur_str, "expected method definition"};
     cur_str = trim_newline_group(*method_res);
+    if (cur_str.empty() || cur_str.front().which == token::type::key_end)
+      break;
+    if (cur_str.size() == method_res->size())
+      return {cur_str, "expected linebreak or 'end'"};
   }
   return cur_str.empty() ? val_res{cur_str, "expected 'end'"}
                            : val_res{cur_str.subvec(1)}; // 'end'
@@ -781,13 +785,9 @@ val_res val_colon_separated_pair(const token_string tokens)
 
 val_res val_method_definition(const token_string tokens)
 {
-  if (tokens.empty() || tokens.front().which != token::type::key_fn)
+  if (tokens.empty() || tokens.front().which != token::type::name)
     return {};
-
-  const auto name_str = tokens.subvec(1); // 'fn'
-  if (name_str.empty() || name_str.front().which != token::type::name)
-    return {name_str, "expected method name"};
-  const auto arglist_str = name_str.subvec(1); // name
+  const auto arglist_str = tokens.subvec(1); // name
 
   const auto arglist_res = val_delimited_expression(arglist_str,
                                                     token::type::open_paren,
@@ -807,11 +807,11 @@ val_res val_method_definition(const token_string tokens)
   if (!arglist_res)
     return {arglist_str, "expected argument list enclosed in parentheses"};
 
-  const auto colon_str = *arglist_res;
-  if (colon_str.empty() || colon_str.front().which != token::type::colon)
-    return {colon_str, "expected ':'"};
+  const auto eq_str = *arglist_res;
+  if (eq_str.empty() || eq_str.front().which != token::type::assignment)
+    return {eq_str, "expected '='"};
 
-  const auto body_str = trim_newline_group(colon_str.subvec(1)); // ':'
+  const auto body_str = trim_newline_group(eq_str.subvec(1)); // '='
   const auto body_res = val_expression(body_str);
   if (body_res || body_res.invalid())
     return body_res;

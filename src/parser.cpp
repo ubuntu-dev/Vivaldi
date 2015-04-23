@@ -895,14 +895,11 @@ parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
   return {{ make_pair(move(test), move(body)), tokens }};
 }
 
-// Syntactically identical to (named) function definitions, but the returned
-// result is different
 parse_res<std::pair<symbol, function_definition>>
   parse_method_definition(token_string tokens)
 {
-  if (tokens.empty() || tokens.front().which != token::type::key_fn)
+  if (tokens.empty() || tokens.front().which != token::type::name)
     return {};
-  tokens = tokens.subvec(1); // 'fn'
 
   const symbol name{tokens.front().str};
   tokens = tokens.subvec(1); // name
@@ -920,7 +917,7 @@ parse_res<std::pair<symbol, function_definition>>
   tokens = arg_res->second;
 
   std::unique_ptr<ast::expression> body;
-  tie(body, tokens) = *parse_expression(tokens.subvec(1)); // ':'
+  tie(body, tokens) = *parse_expression(ltrim_if(tokens.subvec(1), newline_test)); // '='
 
   return {{ std::make_pair( name,function_definition{ {}, move(body), args} ),
             tokens}};

@@ -1,10 +1,10 @@
 class Foo
-  fn bar(x): @b = x
-  fn b(): @b
+  bar(x) = @b = x
+  b() = @b
 end
 
 class Bar : Foo
-  fn baz(x): self.bar(x + 1)
+  baz(x) = self.bar(x + 1)
 end
 
 let i = new Bar()

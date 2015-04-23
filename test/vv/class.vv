@@ -1,16 +1,16 @@
 require "assert"
 
 class Base
-  fn set_a(a): @a = a
-  fn get_i(): @i
+  set_a(a) = @a = a
+  get_i() = @i
 end
 
 class Derived : Base
-  fn init(a, b): do
+  init(a, b) = do
     @i = a + b
   end
 
-  fn get_a(): @a
+  get_a() = @a
 end
 
 let obj = new Derived(1, 2)
@@ -25,7 +25,7 @@ end
 
 let instantiation() = do
   class Uninstantiable
-    fn init(): except nil
+    init() = except nil
   end
 
   let instantiated = true
@@ -37,9 +37,9 @@ end
 
 let self_wrapping() = do
   class SelfWrapper
-    fn init(): @a = 5
-    fn get_a(): @a
-    fn self_a_getter(): fn (): self.get_a()
+    init() = @a = 5
+    get_a() = @a
+    self_a_getter() = fn (): self.get_a()
   end
 
   let apply(f) = f()

@@ -40,10 +40,10 @@ let arr_comp() = do
   assert(arr != different, "arr != different")
 
   class Foo
-    fn equals(x): true
+    equals(x) = true
   end
   class Bar
-    fn equals(x): false
+    equals(x) = false
   end
 
   assert([new Foo(), 56] == [new Foo(), 56], "[new Foo(), 56] == [new Foo(), 56]")
@@ -58,9 +58,7 @@ let arr_iter() = do
   assert(arr.start() < arr.stop(), "arr.start() < arr.stop()")
   let other = []
   for i in arr.start() to arr.stop(): other.append(i)
-  for i in 0 to 5: do
-    assert(arr[i] == other[i].get(), "member of range of iterators")
-  end
+  for i in 0 to 5: assert(arr[i] == other[i].get(), "member of range of iterators")
 end
 
 section("Arrays")
