@@ -9,10 +9,10 @@ namespace value {
 
 struct partial_function : public basic_object {
   partial_function(gc::managed_ptr function,
-                   const std::vector<gc::managed_ptr>& provided_args);
+                   gc::managed_ptr provided_arg);
   struct value_type {
     gc::managed_ptr function;
-    std::vector<gc::managed_ptr> provided_args;
+    gc::managed_ptr provided_arg;
   };
 
   value_type value;

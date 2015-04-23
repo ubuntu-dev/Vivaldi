@@ -5,8 +5,7 @@
 using namespace vv;
 using namespace value;
 
-partial_function::partial_function(gc::managed_ptr function,
-                                   const std::vector<gc::managed_ptr>& args)
+partial_function::partial_function(gc::managed_ptr func, gc::managed_ptr arg)
   : basic_object {builtin::type::function},
-    value        {function, args}
+    value        {func, arg}
 { }

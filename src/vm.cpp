@@ -304,11 +304,10 @@ void vm::machine::call(const int argc)
   if (top().tag() == tag::partial_function) {
     const auto func = top();
     m_stack.pop_back();
-    for (auto i : value::get<value::partial_function>(func).provided_args)
-      push(i);
+    push(value::get<value::partial_function>(func).provided_arg);
 
     push(value::get<value::partial_function>(func).function);
-    call(argc + value::get<value::partial_function>(func).provided_args.size());
+    call(argc + 1);
     return;
   }
 
