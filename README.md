@@ -317,25 +317,28 @@ String.
 #### Functions ####
 Functions! Syntactically, a function is very simple:
 
-    fn <name>(<arguments>): <body>
+    let <name>(<arguments>) = <body>
 
 A function body is any valid Vivaldi expression (which is to say any valid
 Vivaldi code):
 
-    fn is_three(x): x == 3
+    let is_three(x) = x == 3
 
-A lambda is identical to a function, just without the name&mdash; or, more
-accurately, a function is just a lambda with a name. The following:
+A lambda is like a function, but with somewhat different syntax:
+
+    fn (<arguments>): <body>
+
+Semantically, a function is just a lambda with a name. The following:
 
     let five_returner = fn(): 5
 
 is completely identical to
 
-    fn five_returner(): 5
+    let five_returner() = 5
 
 Once defined, functions work more or less like in Python:
 
-    fn id(x): x
+    let id(x) = x
 
     let function = id
     function(1) // 1
@@ -344,8 +347,8 @@ Once defined, functions work more or less like in Python:
 the last expression of a function body (or *only* expression, unless it's
 wrapped in a block):
 
-    // contrived; this could just be 'fn is_even(x): x % 2 == 0'
-    fn is_even(x): do
+    // contrived; this could just be 'let is_even(x) = x % 2 == 0'
+    let is_even(x) = do
       if x % 2 == 0: return true
       false
     end
@@ -353,7 +356,7 @@ wrapped in a block):
 * `bind(x)` Returns the partial application of `x` as the first argument to
   `self`; if `self` takes no arguments, throws an exception:
 
-        fn is_div_by(a, b): b % a == 0
+        let is_div_by(a, b) = b % a == 0
         let is_even = is_div_by.bind(2)
         is_even(2) // true
         is_even(1) // false
@@ -376,8 +379,8 @@ Everything in Vivaldi is an object, and has
   by the Object methods `member` and `set_member`)
 
         class Foo
-          fn set_foo(x): @foo = x
-          fn get_bar(): @bar
+          let set_foo(x) = @foo = x
+          let get_bar() = @bar
         end
 
         let a = new Foo()
@@ -390,9 +393,9 @@ Everything in Vivaldi is an object, and has
 
         // a is an object
         class Foo
-          fn say_hi(): puts("Hello world!")
+          let say_hi() = puts("Hello world!")
 
-          fn say_hi_twice(): do
+          let say_hi_twice() = do
             self.say_hi()
             self.say_hi()
           end
@@ -409,8 +412,8 @@ Everything in Vivaldi is an object, and has
 Defining custom types is simple:
 
     class MyType
-      fn init(x): @x = x
-      fn x_is_equal_to(y): @x = y
+      let init(x) = @x = x
+      let x_is_equal_to(y) = @x = y
     end
 
     let my_obj = new MyType(5)
@@ -522,7 +525,7 @@ result:
 
 Using this, it's possible to build actually useful constructs:
 
-    fn filter(array, predicate): do
+    filter(array, predicate) = do
       let filtered = []
       for i in array: if pred(i): filtered.append(i)
       filtered
@@ -624,7 +627,7 @@ In addition to the above types, Vivaldi has a select few miscellaneous builtins:
   result of the computation (starting with `y`) and each value in the range `x`;
   conceptually it looks something like
 
-        fn reduce(x, y, z): do
+        reduce(x, y, z) = do
           for i in x: y = z(y, i)
           y
         end
