@@ -42,10 +42,11 @@ std::string vv::escape_chars(const std::string& orig)
         tmp += c;
       }
       else {
+        const auto bitval = static_cast<unsigned char>(c);
         tmp += '\\';
-        tmp += ('0' + (int{c} / 64));
-        tmp += ('0' + (int{c} % 64 / 8));
-        tmp += ('0' + (int{c} % 8));
+        tmp += ('0' + (int{bitval} / 64));
+        tmp += ('0' + (int{bitval} % 64 / 8));
+        tmp += ('0' + (int{bitval} % 8));
       }
     }
   }
@@ -72,9 +73,10 @@ std::string vv::get_escaped_name(const char orig)
     }
     else {
       std::string tmp{"\\"};
-      tmp += ('0' + (int{orig} / 64));
-      tmp += ('0' + (int{orig} % 64 / 8));
-      tmp += ('0' + (int{orig} % 8));
+      const auto bitval = static_cast<unsigned char>(orig);
+      tmp += ('0' + (int{bitval} / 64));
+      tmp += ('0' + (int{bitval} % 64 / 8));
+      tmp += ('0' + (int{bitval} % 8));
       return tmp;
     }
   }
