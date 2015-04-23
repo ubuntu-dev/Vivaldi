@@ -125,5 +125,5 @@ std::string message::out_of_range(size_t lower, size_t upper, int recieved)
 
 std::string message::caught_exception(gc::managed_ptr err)
 {
-  return "Caught execption: " + value_for(err);
+  return "Caught exception: " + value_for(err);
 }
