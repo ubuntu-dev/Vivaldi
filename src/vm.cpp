@@ -16,6 +16,7 @@
 #include "value/dictionary.h"
 #include "value/floating_point.h"
 #include "value/function.h"
+#include "value/method.h"
 #include "value/opt_functions.h"
 #include "value/partial_function.h"
 #include "value/range.h"
@@ -258,7 +259,8 @@ void vm::machine::method(const symbol sym)
   m_stack.pop_back();
   const auto method = get_method(m_transient_self.type(), sym);
   if (method) {
-    push(method);
+    const auto fn_obj = gc::alloc<value::method>( method, m_transient_self );
+    push(fn_obj);
   }
   else {
     pstr(message::has_no_member(m_transient_self, sym));
@@ -309,6 +311,13 @@ void vm::machine::call(const int argc)
     push(value::get<value::partial_function>(func).function);
     call(argc + 1);
     return;
+  }
+
+  if (top().tag() == tag::method) {
+    const auto func = top();
+    m_stack.pop_back();
+    m_transient_self = value::get<value::method>(func).self;
+    push(value::get<value::method>(func).function);
   }
 
   if (top().tag() != tag::function && top().tag() != tag::builtin_function &&
@@ -571,6 +580,20 @@ void int_optimization(vm::machine& vm, const F& fn, const vv::symbol sym)
 
 }
 
+void vm::machine::opt_tmpm(const symbol sym)
+{
+  m_transient_self = top();
+  m_stack.pop_back();
+  const auto method = get_method(m_transient_self.type(), sym);
+  if (method) {
+    push(method);
+  }
+  else {
+    pstr(message::has_no_member(m_transient_self, sym));
+    exc();
+  }
+}
+
 void vm::machine::opt_add()
 {
   int_optimization(*this, std::plus<int>{}, builtin::sym::add);
@@ -753,6 +776,8 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::chreqp: chreqp(arg.as_str()); break;
 
   case instruction::noop: break;
+
+  case instruction::opt_tmpm: opt_tmpm(arg.as_sym()); break;
 
   case instruction::opt_add: opt_add(); break;
   case instruction::opt_sub: opt_sub(); break;

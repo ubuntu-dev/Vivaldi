@@ -86,6 +86,8 @@ public:
 
   // Optimization VM instructions.
 
+  void opt_tmpm(symbol name);
+
   void opt_add();
   void opt_sub();
   void opt_mul();

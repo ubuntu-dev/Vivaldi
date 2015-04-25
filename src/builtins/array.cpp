@@ -156,7 +156,7 @@ gc::managed_ptr array_iterator::at_end(gc::managed_ptr self)
 gc::managed_ptr array_iterator::get(gc::managed_ptr self)
 {
   const auto& iter = value::get<value::array_iterator>(self);
-  if (iter.idx == value::get<value::array>(iter.arr).size())
+  if (iter.idx >= value::get<value::array>(iter.arr).size())
     return throw_exception(message::iterator_at_end(type::array_iterator));
   return value::get<value::array>(iter.arr)[iter.idx];
 }
@@ -164,7 +164,7 @@ gc::managed_ptr array_iterator::get(gc::managed_ptr self)
 gc::managed_ptr array_iterator::increment(gc::managed_ptr self)
 {
   auto& iter = value::get<value::array_iterator>(self);
-  if (iter.idx == value::get<value::array>(iter.arr).size())
+  if (iter.idx >= value::get<value::array>(iter.arr).size())
     return throw_exception(message::iterator_past_end(type::array_iterator));
 
   ++iter.idx;

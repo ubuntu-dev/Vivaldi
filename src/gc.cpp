@@ -9,7 +9,9 @@
 #include "value/array_iterator.h"
 #include "value/dictionary.h"
 #include "value/function.h"
+#include "value/method.h"
 #include "value/object.h"
+#include "value/partial_function.h"
 #include "value/range.h"
 #include "value/regex.h"
 #include "value/string.h"
@@ -125,6 +127,18 @@ void mark_dictionary(gc::managed_ptr dictionary)
   }
 }
 
+void mark_method(gc::managed_ptr method)
+{
+  mark(value::get<value::method>(method).function);
+  mark(value::get<value::method>(method).self);
+}
+
+void mark_partial_function(gc::managed_ptr function)
+{
+  mark(value::get<value::partial_function>(function).function);
+  mark(value::get<value::partial_function>(function).provided_arg);
+}
+
 void mark_range(gc::managed_ptr rng)
 {
   mark(value::get<value::range>(rng).start);
@@ -172,16 +186,18 @@ void gc::mark(managed_ptr obj)
   mark_members(obj);
 
   switch (obj.tag()) {
-  case tag::array:           return mark_array(obj);
-  case tag::array_iterator:  return mark(get<array_iterator>(obj).arr);
-  case tag::dictionary:      return mark_dictionary(obj);
-  case tag::function:        return mark(get<function>(obj).enclosure);
-  case tag::range:           return mark_range(obj);
-  case tag::regex_result:    return mark(get<regex_result>(obj).owning_str);
-  case tag::string_iterator: return mark(get<string_iterator>(obj).str);
-  case tag::type:            return mark_type(obj);
-  case tag::environment:     return mark_environment(obj);
-  default:                   return;
+  case tag::array:            return mark_array(obj);
+  case tag::array_iterator:   return mark(get<array_iterator>(obj).arr);
+  case tag::dictionary:       return mark_dictionary(obj);
+  case tag::function:         return mark(get<function>(obj).enclosure);
+  case tag::method:           return mark_method(obj);
+  case tag::partial_function: return mark_partial_function(obj);
+  case tag::range:            return mark_range(obj);
+  case tag::regex_result:     return mark(get<regex_result>(obj).owning_str);
+  case tag::string_iterator:  return mark(get<string_iterator>(obj).str);
+  case tag::type:             return mark_type(obj);
+  case tag::environment:      return mark_environment(obj);
+  default:                    return;
   }
 }
 

@@ -12,6 +12,7 @@
 #include "value/file.h"
 #include "value/floating_point.h"
 #include "value/function.h"
+#include "value/method.h"
 #include "value/object.h"
 #include "value/opt_functions.h"
 #include "value/partial_function.h"
@@ -50,6 +51,7 @@ size_t vv::size_for(const tag type)
   case tag::floating_point:   return sizeof(value::floating_point);
   case tag::function:         return sizeof(value::function);
   case tag::integer:          return sizeof(value::integer);
+  case tag::method:           return sizeof(value::method);
   case tag::nil:              return 0;
   case tag::opt_monop:        return sizeof(value::opt_monop);
   case tag::opt_binop:        return sizeof(value::opt_binop);
@@ -115,6 +117,7 @@ std::string vv::value_for(gc::managed_ptr ptr)
   case tag::opt_monop:
   case tag::opt_binop:
   case tag::builtin_function:
+  case tag::method:
   case tag::partial_function:
   case tag::function:        return "<function>";
   case tag::range:           return range_val(get<range>(ptr));

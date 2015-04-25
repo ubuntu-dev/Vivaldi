@@ -23,6 +23,7 @@ struct object;
 struct file;
 struct floating_point;
 struct function;
+struct method;
 struct object;
 struct opt_monop;
 struct opt_binop;
@@ -138,6 +139,8 @@ template <>
 struct tag_for<value::function> : std::integral_constant<tag, tag::function> {};
 template <>
 struct tag_for<value::integer> : std::integral_constant<tag, tag::integer> {};
+template <>
+struct tag_for<value::method> : std::integral_constant<tag, tag::method> {};
 template <>
 struct tag_for<value::opt_monop> : std::integral_constant<tag, tag::opt_monop> {};
 template <>

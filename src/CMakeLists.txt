@@ -78,6 +78,7 @@ add_library(vivaldi_lib
   ${vivaldi_SOURCE_DIR}/src/value/file.cpp
   ${vivaldi_SOURCE_DIR}/src/value/floating_point.cpp
   ${vivaldi_SOURCE_DIR}/src/value/function.cpp
+  ${vivaldi_SOURCE_DIR}/src/value/method.cpp
   ${vivaldi_SOURCE_DIR}/src/value/object.cpp
   ${vivaldi_SOURCE_DIR}/src/value/opt_functions.cpp
   ${vivaldi_SOURCE_DIR}/src/value/partial_function.cpp

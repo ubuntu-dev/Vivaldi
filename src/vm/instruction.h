@@ -111,6 +111,10 @@ enum class instruction {
   // Does nothing; filler.
   noop,
 
+  // Identical to 'method', but avoids creating a new object; used for transient
+  // methods (i.e. all direct method calls)
+  opt_tmpm,
+
   // Optimized 'add' method call.
   opt_add,
   // Optimized 'subtract' method call.
