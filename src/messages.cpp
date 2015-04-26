@@ -107,7 +107,7 @@ std::string message::iterator_past_start(gc::managed_ptr self)
 
 std::string message::iterator_past_end(gc::managed_ptr self)
 {
-  return value_for(self) += " cannot be decremented past end";
+  return value_for(self) += " cannot be incremented past end";
 }
 
 std::string message::iterator_at_end(gc::managed_ptr self)
