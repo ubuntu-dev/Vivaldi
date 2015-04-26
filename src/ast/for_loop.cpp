@@ -19,33 +19,37 @@ std::vector<vm::command> ast::for_loop::generate() const
   vec.emplace_back(vm::instruction::method, symbol{"start"});
   vec.emplace_back(vm::instruction::call, 0);
 
-  vec.emplace_back(vm::instruction::eblk);
-  vec.emplace_back(vm::instruction::pnil);
-  vec.emplace_back(vm::instruction::let, m_iterator);
-  vec.emplace_back(vm::instruction::pop, 1);
-
-  const auto test_idx = vec.size() - 1;
+  const auto test_idx = static_cast<int>(vec.size() - 1);
   vec.emplace_back(vm::instruction::dup);
   vec.emplace_back(vm::instruction::opt_at_end);
   vec.emplace_back(vm::instruction::jt);
-  const auto jmp_to_end_idx = vec.size() - 1;
-  vec.emplace_back(vm::instruction::pop, 1);
-  vec.emplace_back(vm::instruction::dup);
+  const auto jmp_to_end_idx = static_cast<int>(vec.size() - 1);
+
+  vec.emplace_back(vm::instruction::eblk); // enter new scope for iterator var
+  vec.emplace_back(vm::instruction::pop, 1); // clear result of at_end test
+  vec.emplace_back(vm::instruction::dup); // duplicate iterator
   vec.emplace_back(vm::instruction::opt_get);
-  vec.emplace_back(vm::instruction::write, m_iterator);
-  vec.emplace_back(vm::instruction::pop, 1);
-
-  const auto body = m_body->code();
-  copy(begin(body), end(body), back_inserter(vec));
-
-  vec.emplace_back(vm::instruction::pop, 1);
-  vec.emplace_back(vm::instruction::opt_incr);
-  vec.emplace_back(vm::instruction::jmp);
-  const auto vec_sz = static_cast<int>(vec.size() - 1);
-  vec.back().arg = static_cast<int>(test_idx) - vec_sz;
-  vec[jmp_to_end_idx].arg = static_cast<int>(vec.size() - jmp_to_end_idx);
+  vec.emplace_back(vm::instruction::let, m_iterator);
+  vec.emplace_back(vm::instruction::pop, 1); // clear m_iterator value
+  const auto body_code = m_body->code();
+  copy(begin(body_code), end(body_code), back_inserter(vec));
   vec.emplace_back(vm::instruction::lblk);
+
+  vec.emplace_back(vm::instruction::pop, 1); // clear result of body code
+
+  vec.emplace_back(vm::instruction::dup); // duplicate iterator
+  vec.emplace_back(vm::instruction::opt_incr);
+  vec.emplace_back(vm::instruction::pop, 1); // clear garbage returned by incr
+
+  vec.emplace_back(vm::instruction::jmp);
+  const auto jmp_back_idx = static_cast<int>(vec.size() - 1);
+
+  const auto end_idx = static_cast<int>(vec.size());
+  vec.emplace_back(vm::instruction::pop, 2); // clear iterator and at_end result
   vec.emplace_back(vm::instruction::pnil);
+
+  vec[jmp_to_end_idx].arg = end_idx - jmp_to_end_idx;
+  vec[jmp_back_idx].arg = test_idx - jmp_back_idx;
 
   return vec;
 }
