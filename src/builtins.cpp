@@ -77,11 +77,10 @@ call_result call_method(vm::machine& vm,
                         const vv::symbol method)
 {
   vm.push(self);
-  vm.method(method);
+  vm.opt_tmpm(method);
   vm.call(0);
   vm.run_cur_scope();
   const auto val = vm.top();
-  vm.pop(1);
   return { true, val };
 }
 
