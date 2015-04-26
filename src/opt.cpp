@@ -195,6 +195,7 @@ bool optimize_monops(std::vector<vm::command>& code);
 bool optimize_noops(std::vector<vm::command>& code);
 bool optimize_constants(std::vector<vm::command>& code);
 bool optimize_simple_vars(std::vector<vm::command>& code);
+bool optimize_tmp_methods(std::vector<vm::command>& code);
 bool optimize_abs_jumps(std::vector<vm::command>& code);
 bool optimize_cond_jumps(std::vector<vm::command>& code);
 bool optimize_noop_instrs(std::vector<vm::command>& code);
@@ -378,6 +379,18 @@ bool optimize_simple_vars(std::vector<vm::command>& code)
   return changed;
 }
 
+bool optimize_tmp_methods(std::vector<vm::command>& code)
+{
+  auto changed = false;
+  for (auto i = begin(code); i != end(code) - 1; ++i) {
+    if (i->instr == vm::instruction::method && i[1].instr == vm::instruction::call) {
+      i->instr = vm::instruction::opt_tmpm;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 bool optimize_lets(std::vector<vm::command>& code)
 {
   // Can't alter the current scope if a closure's capturing it
@@ -481,6 +494,7 @@ bool optimize_once(std::vector<vm::command>& code)
   if (optimize_noops(code))       changed = true;
   if (optimize_constants(code))   changed = true;
   if (optimize_simple_vars(code)) changed = true;
+  if (optimize_tmp_methods(code)) changed = true;
   if (optimize_cond_jumps(code))  changed = true;
   if (optimize_abs_jumps(code))   changed = true;
   if (optimize_noop_instrs(code)) changed = true;
