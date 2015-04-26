@@ -314,10 +314,10 @@ void vm::machine::call(const int argc)
   }
 
   if (top().tag() == tag::method) {
-    const auto func = top();
+    const auto method = top();
     m_stack.pop_back();
-    m_transient_self = value::get<value::method>(func).self;
-    push(value::get<value::method>(func).function);
+    m_transient_self = value::get<value::method>(method).self;
+    push(value::get<value::method>(method).function);
   }
 
   if (top().tag() != tag::function && top().tag() != tag::builtin_function &&

@@ -1,11 +1,11 @@
 #ifndef VV_VALUE_H
 #define VV_VALUE_H
 
-#include <string>
-#include <utility>
-
 #include "symbol.h"
 #include "gc/managed_ptr.h"
+
+#include <string>
+#include <utility>
 
 namespace vv {
 
@@ -165,7 +165,6 @@ template <>
 struct tag_for<value::type> : std::integral_constant<tag, tag::type> {};
 template <>
 struct tag_for<vm::environment> : std::integral_constant<tag, tag::environment> {};
-
 
 }
 
