@@ -404,6 +404,12 @@ Everything in Vivaldi is an object, and has
         let a = new Foo()
         a.say_hi_twice()
 
+  Accessing a method without calling it results in a new function bound to the
+  original object:
+
+        let add_one = 1.add
+        add_one(45) // 46
+
 * A type:
 
         let int_type = int.type()
