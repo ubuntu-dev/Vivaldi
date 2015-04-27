@@ -573,7 +573,7 @@ void int_optimization(vm::machine& vm, const F& fn, const vv::symbol sym)
     return;
   }
   vm.push(first);
-  vm.method(sym);
+  vm.opt_tmpm(sym);
   vm.call(1);
   vm.run_cur_scope();
 }
@@ -625,7 +625,7 @@ void vm::machine::opt_not()
     pbool(res);
     return;
   }
-  method(sym);
+  opt_tmpm(sym);
   call(0);
   run_cur_scope();
 }
@@ -646,7 +646,7 @@ void vm::machine::opt_get()
     push(builtin::range::get(val));
   }
   else {
-    method(builtin::sym::get);
+    opt_tmpm(builtin::sym::get);
     call(0);
     run_cur_scope();
   }
@@ -664,7 +664,7 @@ void vm::machine::opt_at_end()
     push(builtin::string_iterator::at_end(val));
   }
   else {
-    method(builtin::sym::at_end);
+    opt_tmpm(builtin::sym::at_end);
     call(0);
     run_cur_scope();
   }
@@ -682,7 +682,7 @@ void vm::machine::opt_incr()
     push(builtin::string_iterator::increment(val));
   }
   else {
-    method(builtin::sym::increment);
+    opt_tmpm(builtin::sym::increment);
     call(0);
     run_cur_scope();
   }
@@ -704,7 +704,7 @@ void vm::machine::opt_size()
     push(builtin::string::size(val));
   }
   else {
-    method(builtin::sym::size);
+    opt_tmpm(builtin::sym::size);
     call(0);
     run_cur_scope();
   }
