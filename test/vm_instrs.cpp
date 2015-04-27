@@ -12,17 +12,6 @@
 
 #include <numeric>
 
-void check_pint(const int orig)
-{
-  vv::vm::machine vm{vv::vm::call_frame{}};
-
-  vm.pint(orig);
-  const auto val = vm.top();
-  BOOST_CHECK_EQUAL(val.tag(), vv::tag::integer);
-  BOOST_CHECK(val.type() == vv::builtin::type::integer);
-  BOOST_CHECK_EQUAL(vv::value::get<vv::value::integer>(val), orig);
-}
-
 BOOST_AUTO_TEST_CASE(check_pbool)
 {
   vv::vm::machine vm{vv::vm::call_frame{}};
@@ -40,14 +29,15 @@ BOOST_AUTO_TEST_CASE(check_pbool)
   BOOST_CHECK_EQUAL(vv::value::get<vv::value::boolean>(true_v), true);
 }
 
-BOOST_AUTO_TEST_CASE(check_pnil)
+void check_pchar(const char orig)
 {
   vv::vm::machine vm{vv::vm::call_frame{}};
 
-  vm.pnil();
-  const auto nil = vm.top();
-  BOOST_CHECK_EQUAL(nil.tag(), vv::tag::nil);
-  BOOST_CHECK(nil.type() == vv::builtin::type::nil);
+  vm.pchar(orig);
+  const auto val = vm.top();
+  BOOST_CHECK_EQUAL(val.tag(), vv::tag::character);
+  BOOST_CHECK(val.type() == vv::builtin::type::character);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::value::character>(val), orig);
 }
 
 void check_pflt(const double orig)
@@ -59,6 +49,27 @@ void check_pflt(const double orig)
   BOOST_CHECK_EQUAL(val.tag(), vv::tag::floating_point);
   BOOST_CHECK(val.type() == vv::builtin::type::floating_point);
   BOOST_CHECK_EQUAL(vv::value::get<vv::value::floating_point>(val), orig);
+}
+
+void check_pint(const int orig)
+{
+  vv::vm::machine vm{vv::vm::call_frame{}};
+
+  vm.pint(orig);
+  const auto val = vm.top();
+  BOOST_CHECK_EQUAL(val.tag(), vv::tag::integer);
+  BOOST_CHECK(val.type() == vv::builtin::type::integer);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::value::integer>(val), orig);
+}
+
+BOOST_AUTO_TEST_CASE(check_pnil)
+{
+  vv::vm::machine vm{vv::vm::call_frame{}};
+
+  vm.pnil();
+  const auto nil = vm.top();
+  BOOST_CHECK_EQUAL(nil.tag(), vv::tag::nil);
+  BOOST_CHECK(nil.type() == vv::builtin::type::nil);
 }
 
 void check_pstr(const std::string& orig)
@@ -94,6 +105,12 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 
   boost::unit_test::framework::master_test_suite().add(
     BOOST_PARAM_TEST_CASE(&check_pint, begin(ints), end(ints)));
+
+  std::array<char, 256> chars;
+  std::iota(begin(chars), end(chars), '\0');
+
+  boost::unit_test::framework::master_test_suite().add(
+    BOOST_PARAM_TEST_CASE(&check_pchar, begin(chars), end(chars)));
 
   std::array<double, 1003> doubles;
   ints[0] = std::numeric_limits<double>::min();
