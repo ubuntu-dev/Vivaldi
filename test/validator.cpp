@@ -1,9 +1,6 @@
 #include "parser.h"
 #include "utils/string_helpers.h"
 
-//#define BOOST_TEST_MODULE validator
-//#define BOOST_TEST_MAIN
-
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
