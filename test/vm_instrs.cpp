@@ -3,6 +3,7 @@
 #include "builtins.h"
 #include "value.h"
 #include "vm.h"
+#include "value/array.h"
 #include "value/floating_point.h"
 #include "value/string.h"
 #include "value/symbol.h"
@@ -94,6 +95,36 @@ void check_psym(const vv::symbol orig)
   BOOST_CHECK_EQUAL(vv::value::get<vv::value::symbol>(val), orig);
 }
 
+BOOST_AUTO_TEST_CASE(check_parr)
+{
+  vv::vm::machine vm{vv::vm::call_frame{}};
+  vm.parr(0);
+  const auto val = vm.top();
+  BOOST_CHECK_EQUAL(val.tag(), vv::tag::array);
+  BOOST_CHECK(val.type() == vv::builtin::type::array);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::value::array>(val).size(), 0);
+
+  vm.pop(1);
+  vm.pstr("sentinel");
+  for (auto i = 0; i != 10; ++i)
+    vm.pint(i);
+  vm.parr(10);
+  const auto arr10 = vm.top();
+  BOOST_CHECK_EQUAL(arr10.tag(), vv::tag::array);
+  BOOST_CHECK(arr10.type() == vv::builtin::type::array);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::value::array>(arr10).size(), 10);
+  for (auto i = 0; i != 10; ++i) {
+    const auto mem = vv::value::get<vv::value::array>(arr10)[i];
+    BOOST_CHECK_EQUAL(mem.tag(), vv::tag::integer);
+    BOOST_CHECK_EQUAL(vv::value::get<vv::value::integer>(mem), i);
+  }
+
+  vm.pop(1);
+  const auto sentinel = vm.top();
+  BOOST_CHECK_EQUAL(sentinel.tag(), vv::tag::string);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::value::string>(sentinel), "sentinel");
+}
+
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 {
   vv::builtin::init();
@@ -113,9 +144,9 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     BOOST_PARAM_TEST_CASE(&check_pchar, begin(chars), end(chars)));
 
   std::array<double, 1003> doubles;
-  ints[0] = std::numeric_limits<double>::min();
-  ints[1] = std::numeric_limits<double>::max();
-  ints[2] = 0.125;
+  doubles[0] = std::numeric_limits<double>::min();
+  doubles[1] = std::numeric_limits<double>::max();
+  doubles[2] = 0.125;
   std::iota(begin(doubles) + 3, end(doubles), -500.0);
 
   boost::unit_test::framework::master_test_suite().add(
