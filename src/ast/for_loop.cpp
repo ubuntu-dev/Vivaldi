@@ -44,7 +44,7 @@ std::vector<vm::command> ast::for_loop::generate() const
   vec.emplace_back(vm::instruction::jmp);
   const auto jmp_back_idx = static_cast<int>(vec.size() - 1);
 
-  const auto end_idx = static_cast<int>(vec.size());
+  const auto end_idx = static_cast<int>(vec.size() - 1);
   vec.emplace_back(vm::instruction::pop, 2); // clear iterator and at_end result
   vec.emplace_back(vm::instruction::pnil);
 
