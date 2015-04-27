@@ -4,6 +4,8 @@
 #include "value.h"
 #include "vm.h"
 #include "value/floating_point.h"
+#include "value/string.h"
+#include "value/symbol.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
@@ -59,6 +61,28 @@ void check_pflt(const double orig)
   BOOST_CHECK_EQUAL(vv::value::get<vv::value::floating_point>(val), orig);
 }
 
+void check_pstr(const std::string& orig)
+{
+  vv::vm::machine vm{vv::vm::call_frame{}};
+
+  vm.pstr(orig);
+  const auto val = vm.top();
+  BOOST_CHECK_EQUAL(val.tag(), vv::tag::string);
+  BOOST_CHECK(val.type() == vv::builtin::type::string);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::value::string>(val), orig);
+}
+
+void check_psym(const vv::symbol orig)
+{
+  vv::vm::machine vm{vv::vm::call_frame{}};
+
+  vm.psym(orig);
+  const auto val = vm.top();
+  BOOST_CHECK_EQUAL(val.tag(), vv::tag::symbol);
+  BOOST_CHECK(val.type() == vv::builtin::type::symbol);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::value::symbol>(val), orig);
+}
+
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 {
   vv::builtin::init();
@@ -79,6 +103,38 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 
   boost::unit_test::framework::master_test_suite().add(
     BOOST_PARAM_TEST_CASE(&check_pflt, begin(doubles), end(doubles)));
+
+  const auto strings = {
+    "",
+    "foo",
+    "hello world",
+    // I don't really know what there is to test for this one. Check weird
+    // attempts at parsing, maybe?
+    "do",
+    "let",
+    "fn",
+    // Or maybe escaped characters?
+    "foo\"bar",
+    "foo\\\n\tbar"
+  };
+
+  boost::unit_test::framework::master_test_suite().add(
+    BOOST_PARAM_TEST_CASE(&check_pstr, begin(strings), end(strings)));
+
+  std::array<vv::symbol, 8> symbols {{
+    {"foo"},
+    {"bar"},
+    {"do"},
+    {"let"},
+    {"foo bar baz"},
+    // ensure repeats work correctly
+    {"foo"},
+    {""},
+    {"Integer"}
+  }};
+
+  boost::unit_test::framework::master_test_suite().add(
+    BOOST_PARAM_TEST_CASE(&check_psym, begin(symbols), end(symbols)));
 
   return nullptr;
 }
