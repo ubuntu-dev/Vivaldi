@@ -3,8 +3,11 @@
 #include "builtins.h"
 #include "value.h"
 #include "vm.h"
+#include "gc/alloc.h"
+#include "utils/error.h"
 #include "value/array.h"
 #include "value/floating_point.h"
+#include "value/function.h"
 #include "value/string.h"
 #include "value/symbol.h"
 
@@ -50,6 +53,21 @@ void check_pflt(const double orig)
   BOOST_CHECK_EQUAL(val.tag(), vv::tag::floating_point);
   BOOST_CHECK(val.type() == vv::builtin::type::floating_point);
   BOOST_CHECK_EQUAL(vv::value::get<vv::value::floating_point>(val), orig);
+}
+
+void check_pfn(const int argc)
+{
+  vv::vm::machine vm{vv::vm::call_frame{}};
+
+  vm.pfn({ argc, { {vv::vm::instruction::pnil} } });
+  const auto fn = vm.top();
+  BOOST_CHECK_EQUAL(fn.tag(), vv::tag::function);
+  BOOST_CHECK(fn.type() == vv::builtin::type::function);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::value::function>(fn).argc, argc);
+
+  const auto& body = vv::value::get<vv::value::function>(fn).body;
+  BOOST_CHECK_EQUAL(body.size(), 1);
+  BOOST_CHECK(body[0].instr == vv::vm::instruction::pnil);
 }
 
 void check_pint(const int orig)
@@ -125,6 +143,19 @@ BOOST_AUTO_TEST_CASE(check_parr)
   BOOST_CHECK_EQUAL(vv::value::get<vv::value::string>(sentinel), "sentinel");
 }
 
+BOOST_AUTO_TEST_CASE(check_read)
+{
+  vv::vm::call_frame frame{};
+  frame.env().members[vv::symbol{"foo"}] = vv::gc::alloc<vv::value::integer>(1);
+  vv::vm::machine vm{std::move(frame)};
+  vm.read(vv::symbol{"foo"});
+  const auto foo = vm.top();
+  BOOST_CHECK_EQUAL(foo.tag(), vv::tag::integer);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::value::integer>(foo), 1);
+
+  BOOST_CHECK_THROW(vm.read(vv::symbol{"I don't exist"}), vv::vm_error);
+}
+
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 {
   vv::builtin::init();
@@ -148,6 +179,15 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
   doubles[1] = std::numeric_limits<double>::max();
   doubles[2] = 0.125;
   std::iota(begin(doubles) + 3, end(doubles), -500.0);
+
+  std::array<int32_t, 1002> argcs;
+  argcs[0] = std::numeric_limits<int32_t>::min();
+  argcs[1] = std::numeric_limits<int32_t>::max();
+  std::iota(begin(argcs) + 2, end(argcs), -500);
+
+  boost::unit_test::framework::master_test_suite().add(
+    BOOST_PARAM_TEST_CASE(&check_pfn, begin(argcs), end(argcs)));
+
 
   boost::unit_test::framework::master_test_suite().add(
     BOOST_PARAM_TEST_CASE(&check_pflt, begin(doubles), end(doubles)));
