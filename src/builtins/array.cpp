@@ -122,7 +122,7 @@ gc::managed_ptr array::equals(vm::machine& vm)
   {
     vm.push(second);
     vm.push(first);
-    vm.method(sym::equals);
+    vm.opt_tmpm(sym::equals);
     vm.call(1);
     vm.run_cur_scope();
     auto res = vm.top();

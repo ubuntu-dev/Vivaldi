@@ -307,7 +307,7 @@ gc::managed_ptr fn_sort(vm::machine& vm)
   {
     vm.push(right);
     vm.push(left);
-    vm.method(sym::less);
+    vm.opt_tmpm(sym::less);
     vm.call(1);
     vm.run_cur_scope();
     const auto res = vm.top();

@@ -29,7 +29,7 @@ std::string vv::pretty_print(gc::managed_ptr object, vm::machine& vm)
 {
   if (get_method(object.type(), {"str"})) {
     vm.push(object);
-    vm.method({"str"});
+    vm.opt_tmpm({"str"});
     vm.call(0);
     vm.run_cur_scope();
     const auto str = vm.top();
