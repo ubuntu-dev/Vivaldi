@@ -22,6 +22,8 @@ gc::managed_ptr greater(gc::managed_ptr self, gc::managed_ptr arg);
 gc::managed_ptr less_equals(gc::managed_ptr self, gc::managed_ptr arg);
 gc::managed_ptr greater_equals(gc::managed_ptr self, gc::managed_ptr arg);
 
+gc::managed_ptr to_int(gc::managed_ptr self);
+
 gc::managed_ptr negative(gc::managed_ptr self);
 gc::managed_ptr sqrt(gc::managed_ptr self);
 gc::managed_ptr sin(gc::managed_ptr self);

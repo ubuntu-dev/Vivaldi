@@ -127,6 +127,12 @@ gc::managed_ptr floating_point::greater_equals(gc::managed_ptr self, gc::managed
   return fn_float_bool_op([](auto a, auto b) { return a >= b; })(self, arg);
 }
 
+gc::managed_ptr floating_point::to_int(gc::managed_ptr self)
+{
+  const auto float_val = value::get<value::floating_point>(self);
+  return gc::alloc<value::integer>( static_cast<int32_t>(float_val) );
+}
+
 gc::managed_ptr floating_point::negative(gc::managed_ptr self)
 {
   return fn_float_monop([](auto a) { return -a; })(self);

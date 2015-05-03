@@ -553,6 +553,8 @@ void init_floating_point()
   const auto less_equals = gc::alloc<value::opt_binop>( floating_point::less_equals );
   const auto greater_equals = gc::alloc<value::opt_binop>( floating_point::greater_equals );
 
+  const auto to_int = gc::alloc<value::opt_monop>( floating_point::to_int );
+
   const auto negative = gc::alloc<value::opt_monop>( floating_point::negative );
   const auto sqrt = gc::alloc<value::opt_monop>( floating_point::sqrt );
   const auto sin = gc::alloc<value::opt_monop>( floating_point::sin );
@@ -574,6 +576,8 @@ void init_floating_point()
         { {"greater"}, greater },
         { {"less_equals"}, less_equals },
         { {"greater_equals"}, greater_equals },
+
+        { {"to_int"}, to_int },
 
         { {"negative"}, negative },
         { {"sqrt"}, sqrt },

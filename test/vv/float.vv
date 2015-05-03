@@ -59,6 +59,19 @@ let division_type() = do
   assert(4000 / 2.0 == 2000, "4000 / 2.0 == 2000")
 end
 
+let rounding()= do
+  assert(1.0.to_int() == 1, "1.0.to_int() == 1")
+  for i in -500 to 500:
+    assert((i * 1.0).to_int() == i,
+           "(" + new String(i) + " * 1.0).to_int() == " + new String(i))
+
+  assert(1.05.to_int() == 1, "1.05.to_int() == 1")
+  assert(1.25.to_int() == 1, "1.25.to_int() == 1")
+  assert(1.5.to_int() == 1, "1.5.to_int() == 1")
+  assert(1.999.to_int() == 1, "1.999.to_int() == 1")
+  assert(12.65.to_int() == 12, "12.65.to_int() == 1")
+end
+
 section("Floats")
 
 test(basic, "basic")
@@ -69,3 +82,4 @@ test(addition, "addition")
 test(comparision, "comparision")
 test(multiplication, "multiplication")
 test(division_type, "type correctness/coersion in division")
+test(rounding, "rounding")
