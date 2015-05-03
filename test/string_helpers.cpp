@@ -103,14 +103,15 @@ BOOST_AUTO_TEST_CASE(isnamechar)
   BOOST_CHECK(vv::isnamechar('8'));
   BOOST_CHECK(vv::isnamechar('9'));
 
+  BOOST_CHECK(vv::isnamechar('!'));
+  BOOST_CHECK(vv::isnamechar('?'));
+
   BOOST_CHECK(!vv::isnamechar(' '));
   BOOST_CHECK(!vv::isnamechar('\n'));
   BOOST_CHECK(!vv::isnamechar('\t'));
 
   BOOST_CHECK(!vv::isnamechar('\''));
   BOOST_CHECK(!vv::isnamechar('-'));
-  BOOST_CHECK(!vv::isnamechar('!'));
-  BOOST_CHECK(!vv::isnamechar('?'));
 }
 
 BOOST_AUTO_TEST_CASE(isoctdigit)

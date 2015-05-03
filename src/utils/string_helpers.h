@@ -15,7 +15,7 @@ int to_int(const std::string& str);
 // Returns whether or not 'c' is a valid character for a variable (or a symbol)
 inline bool isnamechar(char c)
 {
-  return isalnum(c) || c == '_';
+  return !isspace(c) && (!ispunct(c) || c == '?' || c == '!' || c == '_');
 }
 
 // Returns whether or not 'c' is a valid octal digit

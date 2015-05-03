@@ -322,7 +322,7 @@ Functions! Syntactically, a function is very simple:
 A function body is any valid Vivaldi expression (which is to say any valid
 Vivaldi code):
 
-    let is_three(x) = x == 3
+    let three?(x) = x == 3
 
 A lambda is like a function, but with somewhat different syntax:
 
@@ -347,8 +347,8 @@ Once defined, functions work more or less like in Python:
 the last expression of a function body (or *only* expression, unless it's
 wrapped in a block):
 
-    // contrived; this could just be 'let is_even(x) = x % 2 == 0'
-    let is_even(x) = do
+    // contrived; this could just be 'let even?(x) = x % 2 == 0'
+    let even?(x) = do
       if x % 2 == 0: return true
       false
     end
@@ -356,12 +356,12 @@ wrapped in a block):
 * `bind(x)` Returns the partial application of `x` as the first argument to
   `self`; if `self` takes no arguments, throws an exception:
 
-        let is_div_by(a, b) = b % a == 0
-        let is_even = is_div_by.bind(2)
-        is_even(2) // true
-        is_even(1) // false
+        let div_by?(a, b) = b % a == 0
+        let even? = div_by?.bind(2)
+        even?(2) // true
+        even?(1) // false
 
-        let return_true = is_even.bind(2)
+        let return_true = even?.bind(2)
         return_true() // true
 
         let whoops = return_true.bind('foo) // excepts
@@ -419,7 +419,7 @@ Defining custom types is simple:
 
     class MyType
       let init(x) = @x = x
-      let x_is_equal_to(y) = @x = y
+      let x_is_equal_to(y) = @x == y
     end
 
     let my_obj = new MyType(5)
