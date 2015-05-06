@@ -173,6 +173,7 @@ vv_object_t vv_builtin_type_array_iterator;
 vv_object_t vv_builtin_type_bool;
 vv_object_t vv_builtin_type_char;
 vv_object_t vv_builtin_type_dictionary;
+vv_object_t vv_builtin_type_exception;
 vv_object_t vv_builtin_type_file;
 vv_object_t vv_builtin_type_float;
 vv_object_t vv_builtin_type_function;

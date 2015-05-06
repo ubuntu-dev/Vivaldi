@@ -4,6 +4,7 @@
 #include "builtins/array.h"
 #include "builtins/character.h"
 #include "builtins/dictionary.h"
+#include "builtins/exception.h"
 #include "builtins/file.h"
 #include "builtins/floating_point.h"
 #include "builtins/function.h"
@@ -19,6 +20,7 @@
 #include "value/array.h"
 #include "value/builtin_function.h"
 #include "value/dictionary.h"
+#include "value/exception.h"
 #include "value/file.h"
 #include "value/function.h"
 #include "value/object.h"
@@ -387,6 +389,7 @@ gc::managed_ptr type::boolean;
 gc::managed_ptr type::character;
 gc::managed_ptr type::custom_type;
 gc::managed_ptr type::dictionary;
+gc::managed_ptr type::exception;
 gc::managed_ptr type::file;
 gc::managed_ptr type::floating_point;
 gc::managed_ptr type::function;
@@ -399,6 +402,18 @@ gc::managed_ptr type::regex_result;
 gc::managed_ptr type::string;
 gc::managed_ptr type::string_iterator;
 gc::managed_ptr type::symbol;
+
+gc::managed_ptr type::invalid_regex_error;
+gc::managed_ptr type::name_error;
+gc::managed_ptr type::redeclaration_error;
+gc::managed_ptr type::not_implemented_error;
+
+gc::managed_ptr type::runtime_error;
+
+gc::managed_ptr type::divide_by_zero_error;
+gc::managed_ptr type::file_not_found_error;
+gc::managed_ptr type::range_error;
+gc::managed_ptr type::type_error;
 
 // }}}
 // init {{{
@@ -513,6 +528,75 @@ void init_dictionary()
       },
       type::object,
       vv::symbol{"Dictionary"});
+}
+
+void init_exception()
+{
+  const auto init = gc::alloc<value::opt_binop>( exception::init );
+  const auto message = gc::alloc<value::opt_monop>( exception::message );
+
+  builtin::type::exception = gc::alloc<value::type>(
+      gc::alloc<value::exception>,
+      hash_map<vv::symbol, gc::managed_ptr>{
+        { {"init"}, init },
+        { {"message"}, message }
+      },
+      type::object,
+      vv::symbol{"Exception"});
+
+  builtin::type::invalid_regex_error = gc::alloc<value::type>(
+      nullptr,
+      hash_map<vv::symbol, gc::managed_ptr>{ },
+      type::exception,
+      vv::symbol{"InvalidRegexError"});
+
+  builtin::type::name_error = gc::alloc<value::type>(
+      nullptr,
+      hash_map<vv::symbol, gc::managed_ptr>{ },
+      type::exception,
+      vv::symbol{"NameError"});
+
+  builtin::type::redeclaration_error = gc::alloc<value::type>(
+      nullptr,
+      hash_map<vv::symbol, gc::managed_ptr>{ },
+      type::exception,
+      vv::symbol{"RedeclarationError"});
+
+  builtin::type::not_implemented_error = gc::alloc<value::type>(
+      nullptr,
+      hash_map<vv::symbol, gc::managed_ptr>{ },
+      type::exception,
+      vv::symbol{"NotImplementedError"});
+
+  builtin::type::runtime_error = gc::alloc<value::type>(
+      nullptr,
+      hash_map<vv::symbol, gc::managed_ptr>{ },
+      type::exception,
+      vv::symbol{"RuntimeError"});
+
+  builtin::type::divide_by_zero_error = gc::alloc<value::type>(
+      nullptr,
+      hash_map<vv::symbol, gc::managed_ptr>{ },
+      type::runtime_error,
+      vv::symbol{"DivideByZeroError"});
+
+  builtin::type::file_not_found_error = gc::alloc<value::type>(
+      nullptr,
+      hash_map<vv::symbol, gc::managed_ptr>{ },
+      type::runtime_error,
+      vv::symbol{"FileNotFoundError"});
+
+  builtin::type::range_error = gc::alloc<value::type>(
+      nullptr,
+      hash_map<vv::symbol, gc::managed_ptr>{ },
+      type::runtime_error,
+      vv::symbol{"RangeError"});
+
+  builtin::type::type_error = gc::alloc<value::type>(
+      nullptr,
+      hash_map<vv::symbol, gc::managed_ptr>{ },
+      type::runtime_error,
+      vv::symbol{"TypeError"});
 }
 
 void init_file()
@@ -933,6 +1017,7 @@ void builtin::init()
   init_boolean();
   init_character();
   init_dictionary();
+  init_exception();
   init_file();
   init_floating_point();
   init_integer();
@@ -967,6 +1052,7 @@ void builtin::init()
   vv_builtin_type_bool            = cast_to(type::boolean);
   vv_builtin_type_char            = cast_to(type::character);
   vv_builtin_type_dictionary      = cast_to(type::dictionary);
+  vv_builtin_type_exception       = cast_to(type::exception);
   vv_builtin_type_file            = cast_to(type::file);
   vv_builtin_type_float           = cast_to(type::floating_point);
   vv_builtin_type_function        = cast_to(type::function);
@@ -984,34 +1070,44 @@ void builtin::init()
 void builtin::make_base_env(gc::managed_ptr base)
 {
   value::get<vm::environment>(base).members = {
-    { {"print"},          builtin::function::print },
-    { {"puts"},           builtin::function::puts },
-    { {"gets"},           builtin::function::gets },
-    { {"count"},          builtin::function::count },
-    { {"filter"},         builtin::function::filter },
-    { {"map"},            builtin::function::map },
-    { {"reduce"},         builtin::function::reduce },
-    { {"sort"},           builtin::function::sort },
-    { {"any"},            builtin::function::any },
-    { {"all"},            builtin::function::all },
-    { {"quit"},           builtin::function::quit },
-    { {"reverse"},        builtin::function::reverse },
-    { {"Array"},          builtin::type::array },
-    { {"ArrayIterator"},  builtin::type::array_iterator },
-    { {"Bool"},           builtin::type::boolean },
-    { {"Char"},           builtin::type::character },
-    { {"Dictionary"},     builtin::type::dictionary },
-    { {"File"},           builtin::type::file },
-    { {"Float"},          builtin::type::floating_point },
-    { {"Integer"},        builtin::type::integer },
-    { {"Nil"},            builtin::type::nil },
-    { {"Object"},         builtin::type::object },
-    { {"Range"},          builtin::type::range },
-    { {"RegEx"},          builtin::type::regex },
-    { {"RegExResult"},    builtin::type::regex_result },
-    { {"String"},         builtin::type::string },
-    { {"StringIterator"}, builtin::type::string_iterator },
-    { {"Symbol"},         builtin::type::symbol },
-    { {"Type"},           builtin::type::custom_type }
+    { {"print"},               builtin::function::print },
+    { {"puts"},                builtin::function::puts },
+    { {"gets"},                builtin::function::gets },
+    { {"count"},               builtin::function::count },
+    { {"filter"},              builtin::function::filter },
+    { {"map"},                 builtin::function::map },
+    { {"reduce"},              builtin::function::reduce },
+    { {"sort"},                builtin::function::sort },
+    { {"any"},                 builtin::function::any },
+    { {"all"},                 builtin::function::all },
+    { {"quit"},                builtin::function::quit },
+    { {"reverse"},             builtin::function::reverse },
+    { {"Array"},               builtin::type::array },
+    { {"ArrayIterator"},       builtin::type::array_iterator },
+    { {"Bool"},                builtin::type::boolean },
+    { {"Char"},                builtin::type::character },
+    { {"Dictionary"},          builtin::type::dictionary },
+    { {"Exception"},           builtin::type::exception },
+    { {"File"},                builtin::type::file },
+    { {"Float"},               builtin::type::floating_point },
+    { {"Integer"},             builtin::type::integer },
+    { {"Nil"},                 builtin::type::nil },
+    { {"Object"},              builtin::type::object },
+    { {"Range"},               builtin::type::range },
+    { {"RegEx"},               builtin::type::regex },
+    { {"RegExResult"},         builtin::type::regex_result },
+    { {"String"},              builtin::type::string },
+    { {"StringIterator"},      builtin::type::string_iterator },
+    { {"Symbol"},              builtin::type::symbol },
+    { {"Type"},                builtin::type::custom_type },
+    { {"InvalidRegexError"},   builtin::type::invalid_regex_error },
+    { {"NameError"},           builtin::type::name_error },
+    { {"RedeclarationError"},  builtin::type::redeclaration_error },
+    { {"NotImplementedError"}, builtin::type::not_implemented_error },
+    { {"RuntimeError"},        builtin::type::runtime_error },
+    { {"DivideByZeroError"},   builtin::type::divide_by_zero_error },
+    { {"FileNotFoundError"},   builtin::type::file_not_found_error },
+    { {"RangeError"},          builtin::type::range_error },
+    { {"TypeError"},           builtin::type::type_error }
   };
 }

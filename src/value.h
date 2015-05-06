@@ -19,7 +19,7 @@ struct array_iterator;
 struct blob;
 struct builtin_function;
 struct dictionary;
-struct object;
+struct exception;
 struct file;
 struct floating_point;
 struct function;
@@ -131,6 +131,8 @@ template <>
 struct tag_for<value::character> : std::integral_constant<tag, tag::character> {};
 template <>
 struct tag_for<value::dictionary> : std::integral_constant<tag, tag::dictionary> {};
+template <>
+struct tag_for<value::exception> : std::integral_constant<tag, tag::exception> {};
 template <>
 struct tag_for<value::file> : std::integral_constant<tag, tag::file> {};
 template <>

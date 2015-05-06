@@ -16,6 +16,7 @@ add_library(vivaldi_lib
   ${vivaldi_SOURCE_DIR}/src/builtins/array.cpp
   ${vivaldi_SOURCE_DIR}/src/builtins/character.cpp
   ${vivaldi_SOURCE_DIR}/src/builtins/dictionary.cpp
+  ${vivaldi_SOURCE_DIR}/src/builtins/exception.cpp
   ${vivaldi_SOURCE_DIR}/src/builtins/file.cpp
   ${vivaldi_SOURCE_DIR}/src/builtins/floating_point.cpp
   ${vivaldi_SOURCE_DIR}/src/builtins/function.cpp
@@ -75,6 +76,7 @@ add_library(vivaldi_lib
   ${vivaldi_SOURCE_DIR}/src/value/blob.cpp
   ${vivaldi_SOURCE_DIR}/src/value/builtin_function.cpp
   ${vivaldi_SOURCE_DIR}/src/value/dictionary.cpp
+  ${vivaldi_SOURCE_DIR}/src/value/exception.cpp
   ${vivaldi_SOURCE_DIR}/src/value/file.cpp
   ${vivaldi_SOURCE_DIR}/src/value/floating_point.cpp
   ${vivaldi_SOURCE_DIR}/src/value/function.cpp

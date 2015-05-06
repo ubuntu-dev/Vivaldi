@@ -78,6 +78,7 @@ extern gc::managed_ptr boolean;
 extern gc::managed_ptr character;
 extern gc::managed_ptr dictionary;
 extern gc::managed_ptr custom_type;
+extern gc::managed_ptr exception;
 extern gc::managed_ptr file;
 extern gc::managed_ptr floating_point;
 extern gc::managed_ptr function;
@@ -90,6 +91,20 @@ extern gc::managed_ptr regex_result;
 extern gc::managed_ptr string;
 extern gc::managed_ptr string_iterator;
 extern gc::managed_ptr symbol;
+
+// Exception subclasses
+extern gc::managed_ptr invalid_regex_error;
+extern gc::managed_ptr name_error;
+extern gc::managed_ptr redeclaration_error;
+extern gc::managed_ptr not_implemented_error;
+
+// RuntimeErrors
+extern gc::managed_ptr runtime_error;
+
+extern gc::managed_ptr divide_by_zero_error;
+extern gc::managed_ptr file_not_found_error;
+extern gc::managed_ptr range_error;
+extern gc::managed_ptr type_error;
 
 }
 

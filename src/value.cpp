@@ -9,6 +9,7 @@
 #include "value/blob.h"
 #include "value/builtin_function.h"
 #include "value/dictionary.h"
+#include "value/exception.h"
 #include "value/file.h"
 #include "value/floating_point.h"
 #include "value/function.h"
@@ -47,6 +48,7 @@ size_t vv::size_for(const tag type)
   case tag::builtin_function: return sizeof(value::builtin_function);
   case tag::character:        return sizeof(value::character);
   case tag::dictionary:       return sizeof(value::dictionary);
+  case tag::exception:        return sizeof(value::exception);
   case tag::file:             return sizeof(value::file);
   case tag::floating_point:   return sizeof(value::floating_point);
   case tag::function:         return sizeof(value::function);
@@ -94,6 +96,16 @@ std::string dictionary_val(const dictionary::value_type& dict)
   return str += '}';
 }
 
+std::string exception_val(gc::managed_ptr exception)
+{
+  const auto str = value_for(exception.type());
+  const auto& exc_str = get<value::exception>(exception).message;
+  if (exc_str.empty())
+    return str;
+
+  return str + ": " + exc_str;
+}
+
 std::string range_val(const range::value_type& rng)
 {
   return vv::value_for(rng.start) += " to " + vv::value_for(rng.end);
@@ -109,6 +121,7 @@ std::string vv::value_for(gc::managed_ptr ptr)
   case tag::boolean:         return get<boolean>(ptr) ? "true" : "false";
   case tag::character:       return get_escaped_name(get<character>(ptr));
   case tag::dictionary:      return dictionary_val(get<dictionary>(ptr));
+  case tag::exception:       return exception_val(ptr);
   case tag::file:            return "File: " + get<file>(ptr).name;
   case tag::floating_point:  return std::to_string(get<floating_point>(ptr));
   case tag::integer:         return std::to_string(get<integer>(ptr));

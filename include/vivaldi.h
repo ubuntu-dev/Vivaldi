@@ -55,6 +55,7 @@ extern vv_object_t vv_builtin_type_array_iterator;
 extern vv_object_t vv_builtin_type_bool;
 extern vv_object_t vv_builtin_type_char;
 extern vv_object_t vv_builtin_type_dictionary;
+extern vv_object_t vv_builtin_type_exception;
 extern vv_object_t vv_builtin_type_file;
 extern vv_object_t vv_builtin_type_float;
 extern vv_object_t vv_builtin_type_function;
