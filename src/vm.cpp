@@ -797,6 +797,14 @@ void vm::machine::run_single_command(const vm::command& command)
 void vm::machine::except_until(const size_t stack_pos)
 {
   const auto except_val = top();
+  if (except_val.tag() != tag::exception) {
+    pop(1);
+    pstr("Only objects of types descended from Exception can be thrown");
+    push(builtin::type::type_error);
+    pobj(1);
+    except_until(stack_pos);
+    return;
+  }
 
   const auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - stack_pos,
                             [](const auto& i) { return i.catcher; });
