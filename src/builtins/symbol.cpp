@@ -15,12 +15,17 @@ using namespace builtin;
 
 gc::managed_ptr builtin::symbol::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  if (arg.tag() == tag::symbol)
+  if (arg.tag() == tag::symbol) {
     value::get<value::symbol>(self) = value::get<value::symbol>(arg);
-  else if (arg.tag() == tag::string)
+  }
+  else if (arg.tag() == tag::string) {
     value::get<value::symbol>(self) = vv::symbol{value::get<value::string>(arg)};
-  else
-    return throw_exception(message::init_multi_type_error(type::symbol, arg.type()));
+  }
+  else {
+    return throw_exception(type::type_error,
+                           message::init_multi_type_error(type::symbol,
+                                                          arg.type()));
+  }
   return self;
 }
 

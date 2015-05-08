@@ -15,10 +15,15 @@ using namespace builtin;
 
 gc::managed_ptr builtin::exception::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  if (arg.tag() == tag::string)
+  if (arg.tag() == tag::string) {
     value::get<value::exception>(self).message = value::get<value::string>(arg);
-  else
-    return throw_exception(message::init_multi_type_error(type::string, arg.type()));
+  }
+  else {
+    return throw_exception(type::type_error,
+                           message::init_multi_type_error(type::string,
+                                                          arg.type()));
+  }
+
   return self;
 }
 

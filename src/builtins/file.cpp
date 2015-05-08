@@ -15,14 +15,18 @@ using namespace builtin;
 gc::managed_ptr file::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::string) {
-    return throw_exception(message::init_type_error(type::file,
-                                                    type::string,
-                                                    arg.type()));
+    return throw_exception(type::type_error, message::init_type_error(type::file,
+                                                                      type::string,
+                                                                      arg.type()));
   }
 
   const auto& filename = value::get<value::string>(arg);
 
   value::get<value::file>(self).val = std::fstream{filename};
+  if (!value::get<value::file>(self).val) {
+    return throw_exception(type::file_not_found_error,
+                           "Error opening file \"" + filename + '"');
+  }
   value::get<value::file>(self).name = filename;
   std::getline(value::get<value::file>(self).val,
                value::get<value::file>(self).cur_line);
@@ -55,7 +59,8 @@ gc::managed_ptr file::increment(gc::managed_ptr self)
   auto& file = value::get<value::file>(self);
   if (file.val.peek() == EOF) {
     if (file.cur_line.empty())
-      return throw_exception(message::iterator_at_end(type::file));
+      return throw_exception(type::range_error,
+                             message::iterator_at_end(type::file));
     file.cur_line.clear();
     return self;
   }

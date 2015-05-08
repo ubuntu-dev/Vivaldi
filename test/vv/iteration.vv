@@ -16,8 +16,10 @@ class Inverted
   let init(x) = @x = x
 
   let greater(y) =
-    try: except "hello"
-    catch e: @x < y.get_x()
+    try:
+      except new Exception("hello")
+    catch e:
+      @x < y.get_x()
 
   let add(x) = new Inverted(@x - x)
 
@@ -40,11 +42,8 @@ let range_test() = do
     for i in new Inverted(10) to new Inverted(5): inv_arr.append(i.get_x())
   catch e:
     assert(false, "failed to catch exception inside of Range")
-  assert(inv_arr[0] == 10, "inv_arr[0] == 10")
-  assert(inv_arr[1] == 9, "inv_arr[1] == 9")
-  assert(inv_arr[2] == 8, "inv_arr[2] == 8")
-  assert(inv_arr[3] == 7, "inv_arr[3] == 7")
-  assert(inv_arr[4] == 6, "inv_arr[4] == 6")
+
+  assert(inv_arr == [10, 9, 8, 7, 6], "inv_arr == [10, 9, 8, 7, 6]")
 end
 
 let range_persistence_test() = do

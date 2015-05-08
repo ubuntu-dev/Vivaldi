@@ -1,7 +1,8 @@
 #include "builtins/integer.h"
 
-#include "gc/alloc.h"
+#include "builtins.h"
 #include "messages.h"
+#include "gc/alloc.h"
 #include "utils/lang.h"
 #include "value/floating_point.h"
 #include "value/string.h"
@@ -25,8 +26,11 @@ auto fn_int_or_flt_op(const F& op)
     if (arg.tag() == tag::floating_point)
       return gc::alloc<value::floating_point>( op(left, value::get<value::floating_point>(arg)) );
 
-    if (arg.tag() != tag::integer)
-      return throw_exception("Right-hand argument is not an Integer");
+    if (arg.tag() != tag::integer) {
+      return throw_exception(type::type_error,
+                             "Right-hand argument is not an Integer");
+    }
+
     return gc::alloc<value::integer, int>( op(left, value::get<value::integer>(arg)) );
   };
 }
@@ -36,11 +40,13 @@ auto fn_integer_op(const F& op)
 {
   return [=](gc::managed_ptr self, gc::managed_ptr arg) -> gc::managed_ptr
   {
-    auto left = value::get<value::integer>(self);
-    if (arg.tag() != tag::integer)
-      return throw_exception("Right-hand argument is not an Integer");
-    auto right = value::get<value::integer>(arg);
+    if (arg.tag() != tag::integer) {
+      return throw_exception(type::type_error,
+                             "Right-hand argument is not an Integer");
+    }
 
+    auto left = value::get<value::integer>(self);
+    auto right = value::get<value::integer>(arg);
     return gc::alloc<value::integer, int>( op(left, right) );
   };
 }
@@ -73,8 +79,10 @@ auto fn_int_bool_op(const F& op)
       auto right = value::get<value::floating_point>(arg);
       return gc::alloc<value::boolean>( op(left, right) );
     }
-    if (arg.tag() != tag::integer)
-      return throw_exception("Right-hand argument is not an Integer");
+    if (arg.tag() != tag::integer) {
+      return throw_exception(type::type_error,
+                             "Right-hand argument is not an Integer");
+    }
 
     auto left = value::get<value::integer>(self);
     auto right = value::get<value::integer>(arg);
@@ -121,14 +129,17 @@ gc::managed_ptr integer::divides(gc::managed_ptr self, gc::managed_ptr arg)
   auto left = value::get<value::integer>(self);
   if (arg.tag() == tag::floating_point) {
     if (value::get<value::floating_point>(arg) == 0.0)
-      return throw_exception(message::divide_by_zero);
+      return throw_exception(type::divide_by_zero_error, message::divide_by_zero);
     return gc::alloc<value::floating_point>( left / value::get<value::floating_point>(arg) );
   }
 
-  if (arg.tag() != tag::integer)
-    return throw_exception("Right-hand argument is not an Integer");
+  if (arg.tag() != tag::integer) {
+    return throw_exception(type::type_error,
+                           "Right-hand argument is not an Integer");
+  }
+
   if (value::get<value::integer>(arg) == 0)
-    return throw_exception(message::divide_by_zero);
+    return throw_exception(type::divide_by_zero_error, message::divide_by_zero);
   return gc::alloc<value::integer>( left / value::get<value::integer>(arg));
 }
 
@@ -145,9 +156,12 @@ gc::managed_ptr integer::pow(gc::managed_ptr self, gc::managed_ptr arg)
     return gc::alloc<value::floating_point>( std::pow(left, right) );
   }
 
+  if (arg.tag() != tag::integer) {
+    return throw_exception(type::type_error,
+                           "Right-hand argument is not an Integer");
+  }
+
   auto left = value::get<value::integer>(self);
-  if (arg.tag() != tag::integer)
-    return throw_exception("Right-hand argument is not an Integer");
   auto right = value::get<value::integer>(arg);
 
   if (right < 0)
@@ -243,7 +257,10 @@ gc::managed_ptr integer::tan(gc::managed_ptr self)
 gc::managed_ptr integer::chr(gc::managed_ptr self)
 {
   auto ord = value::get<value::integer>(self);
-  if (ord < 0 || ord > 255)
-    return throw_exception(message::out_of_range(0, 256, ord));
+  if (ord < 0 || ord > 255) {
+    return throw_exception(type::range_error,
+                           message::out_of_range(0, 256, ord));
+  }
+
   return gc::alloc<value::character>( static_cast<char>(ord) );
 }

@@ -10,10 +10,11 @@ end
 let used_try_catch() = do
   let i = false
   try: do
-    except 55
+    except new RuntimeError("foo")
     assert(false, "except")
-  end catch e: i = e
-  assert(i == 55, "assigning from catch body")
+  end
+  catch e: i = e.message()
+  assert(i == "foo", "assigning from catch body")
 end
 
 let builtin_exception() = do

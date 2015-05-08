@@ -24,7 +24,8 @@ auto fn_string_cmp(const F& cmp)
   return [cmp](gc::managed_ptr self, gc::managed_ptr arg) -> gc::managed_ptr
   {
     if (arg.tag() != tag::string)
-      return throw_exception("Strings can only be compared to other Strings");
+      return throw_exception(type::type_error,
+                             "Strings can only be compared to other Strings");
     return gc::alloc<value::boolean>( cmp(value::get<value::string>(self),
                                           value::get<value::string>(arg)) );
   };
@@ -103,13 +104,15 @@ gc::managed_ptr string::add(gc::managed_ptr self, gc::managed_ptr arg)
     return gc::alloc<value::string>( value::get<value::string>(self) + chr );
   }
 
-  return throw_exception(message::add_type_error(type::string, type::string));
+  return throw_exception(type::type_error,
+                         message::add_type_error(type::string, type::string));
 }
 
 gc::managed_ptr string::times(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::integer)
-    return throw_exception("Strings can only be multiplied by Integers");
+    return throw_exception(type::type_error,
+                           "Strings can only be multiplied by Integers");
 
   const auto& val = value::get<value::string>(self);
   std::string new_str{};
@@ -131,13 +134,15 @@ gc::managed_ptr string::to_flt(gc::managed_ptr self)
 gc::managed_ptr string::at(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::integer)
-    return throw_exception(message::at_type_error(type::string, type::integer));
+    return throw_exception(type::range_error,
+                           message::at_type_error(type::string, type::integer));
 
   const auto val = value::get<value::integer>(arg);
   const auto& str = value::get<value::string>(self);
 
   if (str.size() <= static_cast<unsigned>(val) || val < 0)
-    return throw_exception(message::out_of_range(0, str.size(), val));
+    return throw_exception(type::range_error,
+                           message::out_of_range(0, str.size(), val));
 
   return gc::alloc<value::character>( str[static_cast<unsigned>(val)] );
 }
@@ -171,7 +176,8 @@ gc::managed_ptr string::to_lower(gc::managed_ptr self)
 gc::managed_ptr string::starts_with(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::string)
-    return throw_exception("Strings can only start with other Strings");
+    return throw_exception(type::type_error,
+                           "Strings can only start with other Strings");
 
   const auto& str = value::get<value::string>(self);
   const auto& other = value::get<value::string>(arg);
@@ -185,7 +191,8 @@ gc::managed_ptr string::ord(gc::managed_ptr self)
 {
   const auto& str = value::get<value::string>(self);
   if (str.empty())
-    return throw_exception("Cannot call ord on an empty string");
+    return throw_exception(type::range_error,
+                           "Cannot call ord on an empty string");
   return gc::alloc<value::integer, int>( str[0] );
 }
 
@@ -195,7 +202,8 @@ gc::managed_ptr string::split(vm::machine& vm)
   boost::string_ref str{value::get<value::string>(vm.top())};
   vm.arg(0);
   if (vm.top().tag() != tag::string)
-    return throw_exception("Strings can only be split by other Strings");
+    return throw_exception(type::type_error,
+                           "Strings can only be split by other Strings");
   const auto& sep = value::get<value::string>(vm.top());
 
   size_t substrs{};
@@ -223,12 +231,14 @@ gc::managed_ptr string::replace(vm::machine& vm)
 {
   vm.arg(1);
   if (vm.top().tag() != tag::string)
-    return throw_exception("Replacements must be other Strings");
+    return throw_exception(type::type_error,
+                           "Replacements must be other Strings");
   const auto& replacement = value::get<value::string>(vm.top());
 
   vm.arg(0);
   if (vm.top().tag() != tag::regex)
-    return throw_exception("Strings can only be replaced by RegExes");
+    return throw_exception(type::type_error,
+                           "Strings can only be replaced by RegExes");
   const auto& re = value::get<value::regex>(vm.top()).val;
 
   vm.self();
@@ -258,7 +268,8 @@ gc::managed_ptr string_iterator::get(gc::managed_ptr self)
 {
   const auto& iter = value::get<value::string_iterator>(self);
   if (iter.idx == value::get<value::string>(iter.str).size())
-    return throw_exception(message::iterator_at_end(type::string_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_at_end(type::string_iterator));
 
   const auto chr = value::get<value::string>(iter.str)[iter.idx];
   return gc::alloc<value::character>( chr );
@@ -268,7 +279,8 @@ gc::managed_ptr string_iterator::increment(gc::managed_ptr self)
 {
   auto& iter = value::get<value::string_iterator>(self);
   if (iter.idx == value::get<value::string>(iter.str).size())
-    return throw_exception(message::iterator_past_end(type::string_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_end(type::string_iterator));
 
   ++iter.idx;
   return self;
@@ -278,7 +290,8 @@ gc::managed_ptr string_iterator::decrement(gc::managed_ptr self)
 {
   auto& iter = value::get<value::string_iterator>(self);
   if (iter.idx == 0)
-    return throw_exception(message::iterator_past_start(type::string_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_start(type::string_iterator));
 
   --iter.idx;
   return self;
@@ -288,15 +301,20 @@ gc::managed_ptr string_iterator::add(gc::managed_ptr self, gc::managed_ptr arg)
 {
   const auto& iter = value::get<value::string_iterator>(self);
 
-  if (arg.tag() != tag::integer)
-    return throw_exception(message::add_type_error(type::string_iterator,
+  if (arg.tag() != tag::integer) {
+    return throw_exception(type::type_error,
+                           message::add_type_error(type::string_iterator,
                                                    type::integer));
+  }
+
   const auto offset = value::get<value::integer>(arg);
 
   if (static_cast<int>(iter.idx) + offset < 0)
-    return throw_exception(message::iterator_past_start(type::string_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_start(type::string_iterator));
   if (iter.idx + offset > value::get<value::string>(iter.str).size())
-    return throw_exception(message::iterator_past_end(type::string_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_end(type::string_iterator));
 
   const auto other = gc::alloc<value::string_iterator>( iter.str );
   value::get<value::string_iterator>(other).idx = iter.idx + offset;
@@ -308,14 +326,17 @@ gc::managed_ptr string_iterator::subtract(gc::managed_ptr self, gc::managed_ptr 
   const auto& iter = value::get<value::string_iterator>(self);
 
   if (arg.tag() != tag::integer)
-    return throw_exception("Only Integers can be subtracted from StringIterators");
+    return throw_exception(type::type_error,
+                           "Only Integers can be subtracted from StringIterators");
   const auto offset = value::get<value::integer>(arg);
 
   if (static_cast<int>(iter.idx) - offset < 0)
-    return throw_exception(message::iterator_past_start(type::string_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_start(type::string_iterator));
   const auto str_sz = value::get<value::string>(iter.str).size();
   if (static_cast<int>(iter.idx) - offset > static_cast<int>(str_sz))
-    return throw_exception(message::iterator_past_end(type::string_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_end(type::string_iterator));
 
   const auto other = gc::alloc<value::string_iterator>( iter.str );
   value::get<value::string_iterator>(other).idx = iter.idx - offset;

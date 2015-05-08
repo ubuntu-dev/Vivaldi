@@ -18,17 +18,16 @@ std::pair<const std::smatch&, size_t> get_match_idx(gc::managed_ptr self,
                                                     gc::managed_ptr arg)
 {
   if (arg.tag() != tag::integer) {
-    auto str = gc::alloc<value::string>(message::at_type_error(type::regex_result,
-                                        type::integer));
-    throw vm_error{str};
+    auto str = message::at_type_error(type::regex_result, type::integer);
+    throw_exception(type::type_error, str);
   }
 
   auto idx = static_cast<size_t>(value::get<value::integer>(arg));
   auto& match = value::get<value::regex_result>(self).val;
 
   if (idx >= match.size()) {
-    auto str = gc::alloc<value::string>(message::out_of_range(0, match.size(), idx));
-    throw vm_error{str};
+    const auto str = message::out_of_range(0, match.size(), idx);
+    throw_exception(type::range_error, str);
   }
 
   return {match, idx};
@@ -50,15 +49,18 @@ gc::managed_ptr regex::init(vm::machine& vm)
     value::get<value::regex>(regex) = value::get<value::regex>(vm.top());
   }
   else {
-    return throw_exception("RegExes can only be constructed from Strings or other RegExes");
+    return throw_exception(type::type_error,
+                           "RegExes can only be constructed from Strings or other RegExes");
   }
   return regex;
 }
 
 gc::managed_ptr regex::match(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  if (arg.tag() != tag::string)
-    return throw_exception("RegExes can only be matched against Strings");
+  if (arg.tag() != tag::string) {
+    return throw_exception(type::type_error,
+                           "RegExes can only be matched against Strings");
+  }
 
   const auto& regex = value::get<value::regex>(self).val;
   const auto& str = value::get<value::string>(arg);
@@ -71,8 +73,10 @@ gc::managed_ptr regex::match(gc::managed_ptr self, gc::managed_ptr arg)
 
 gc::managed_ptr regex::match_index(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  if (arg.tag() != tag::string)
-    return throw_exception("RegExes can only be matched against Strings");
+  if (arg.tag() != tag::string) {
+    return throw_exception(type::type_error,
+                           "RegExes can only be matched against Strings");
+  }
 
   const auto& regex = value::get<value::regex>(self).val;
   const auto& str = value::get<value::string>(arg);

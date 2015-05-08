@@ -2,6 +2,7 @@
 
 #include "gc/alloc.h"
 #include "utils/error.h"
+#include "value/exception.h"
 #include "value/string.h"
 
 bool vv::truthy(gc::managed_ptr val)
@@ -14,15 +15,12 @@ bool vv::truthy(gc::managed_ptr val)
 }
 
 [[noreturn]]
-vv::gc::managed_ptr vv::throw_exception(const std::string& value)
+vv::gc::managed_ptr vv::throw_exception(const gc::managed_ptr type,
+                                        const std::string& value)
 {
-  throw vm_error{gc::alloc<value::string>( value )};
-}
-
-[[noreturn]]
-vv::gc::managed_ptr vv::throw_exception(gc::managed_ptr value)
-{
-  throw vm_error{value};
+  const auto exc = gc::alloc<value::exception>( value );
+  exc.get()->type = type;
+  throw vm_error{exc};
 }
 
 std::string vv::pretty_print(gc::managed_ptr object, vm::machine& vm)

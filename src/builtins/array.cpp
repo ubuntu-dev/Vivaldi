@@ -15,7 +15,8 @@ using namespace builtin;
 gc::managed_ptr array::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::array)
-    return throw_exception(message::init_type_error(type::array,
+    return throw_exception(type::type_error,
+                           message::init_type_error(type::array,
                                                     type::array,
                                                     arg.type()));
   value::get<value::array>(self) = value::get<value::array>(arg);
@@ -45,13 +46,15 @@ gc::managed_ptr array::pop(gc::managed_ptr self)
 gc::managed_ptr array::at(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::integer)
-    return throw_exception(message::at_type_error(type::array, type::integer));
+    return throw_exception(type::type_error,
+                           message::at_type_error(type::array, type::integer));
 
   const auto val = value::get<value::integer>(arg);
   const auto& arr = value::get<value::array>(self);
 
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
-    return throw_exception(message::out_of_range(0, arr.size(), val));
+    return throw_exception(type::range_error,
+                           message::out_of_range(0, arr.size(), val));
 
   return arr[static_cast<unsigned>(val)];
 }
@@ -62,7 +65,8 @@ gc::managed_ptr array::set_at(vm::machine& vm)
   auto arg = vm.top();
 
   if (arg.tag() != tag::integer)
-    return throw_exception(message::at_type_error(type::array, type::integer));
+    return throw_exception(type::type_error,
+                           message::at_type_error(type::array, type::integer));
 
   const auto val = value::get<value::integer>(arg);
 
@@ -70,7 +74,8 @@ gc::managed_ptr array::set_at(vm::machine& vm)
   auto& arr = value::get<value::array>(vm.top());
 
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
-    return throw_exception(message::out_of_range(0, arr.size(), val));
+    return throw_exception(type::range_error,
+                           message::out_of_range(0, arr.size(), val));
 
   vm.arg(1);
   return arr[static_cast<unsigned>(val)] = vm.top();
@@ -94,7 +99,8 @@ gc::managed_ptr array::add(gc::managed_ptr self, gc::managed_ptr arg)
   auto arr = value::get<value::array>(self);
 
   if (arg.tag() != tag::array)
-    return throw_exception(message::add_type_error(type::array, type::array));
+    return throw_exception(type::type_error,
+                           message::add_type_error(type::array, type::array));
   const auto& other = value::get<value::array>(arg);
 
   copy(begin(other), end(other), back_inserter(arr));
@@ -157,7 +163,8 @@ gc::managed_ptr array_iterator::get(gc::managed_ptr self)
 {
   const auto& iter = value::get<value::array_iterator>(self);
   if (iter.idx >= value::get<value::array>(iter.arr).size())
-    return throw_exception(message::iterator_at_end(type::array_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_at_end(type::array_iterator));
   return value::get<value::array>(iter.arr)[iter.idx];
 }
 
@@ -165,7 +172,8 @@ gc::managed_ptr array_iterator::increment(gc::managed_ptr self)
 {
   auto& iter = value::get<value::array_iterator>(self);
   if (iter.idx >= value::get<value::array>(iter.arr).size())
-    return throw_exception(message::iterator_past_end(type::array_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_end(type::array_iterator));
 
   ++iter.idx;
   return self;
@@ -175,7 +183,8 @@ gc::managed_ptr array_iterator::decrement(gc::managed_ptr self)
 {
   auto& iter = value::get<value::array_iterator>(self);
   if (iter.idx == 0)
-    return throw_exception(message::iterator_past_start(type::array_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_start(type::array_iterator));
   --iter.idx;
   return self;
 }
@@ -185,13 +194,19 @@ gc::managed_ptr array_iterator::add(gc::managed_ptr self, gc::managed_ptr arg)
   const auto& iter = value::get<value::array_iterator>(self);
 
   if (arg.tag() != tag::integer)
-    return throw_exception(message::add_type_error(type::array, type::integer));
+    return throw_exception(type::type_error,
+                           message::add_type_error(type::array, type::integer));
   auto offset = value::get<value::integer>(arg);
 
-  if (static_cast<int>(iter.idx) + offset < 0)
-    return throw_exception(message::iterator_past_start(type::array_iterator));
-  if (iter.idx + offset > value::get<value::array>(iter.arr).size())
-    return throw_exception(message::iterator_past_end(type::array_iterator));
+  if (static_cast<int>(iter.idx) + offset < 0) {
+    return throw_exception(type::range_error,
+                           message::iterator_past_start(type::array_iterator));
+  }
+
+  if (iter.idx + offset > value::get<value::array>(iter.arr).size()) {
+    return throw_exception(type::range_error,
+                           message::iterator_past_end(type::array_iterator));
+  }
 
   auto other = gc::alloc<value::array_iterator>( iter.arr );
   value::get<value::array_iterator>(other).idx = iter.idx + offset;
@@ -203,15 +218,18 @@ gc::managed_ptr array_iterator::subtract(gc::managed_ptr self, gc::managed_ptr a
   const auto& iter = value::get<value::array_iterator>(self);
 
   if (arg.tag() != tag::integer) {
-    return throw_exception(message::add_type_error(self.type(), type::integer));
+    return throw_exception(type::type_error,
+                           message::add_type_error(self.type(), type::integer));
   }
 
   const auto offset = value::get<value::integer>(arg);
 
   if (static_cast<int>(iter.idx) - offset < 0)
-    return throw_exception(message::iterator_past_start(type::array_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_start(type::array_iterator));
   if (iter.idx - offset > value::get<value::array>(iter.arr).size())
-    return throw_exception(message::iterator_past_end(type::array_iterator));
+    return throw_exception(type::range_error,
+                           message::iterator_past_end(type::array_iterator));
 
   const auto other = gc::alloc<value::array_iterator>( iter.arr );
   value::get<value::array_iterator>(other).idx = iter.idx - offset;
@@ -237,7 +255,8 @@ gc::managed_ptr array_iterator::greater(gc::managed_ptr self, gc::managed_ptr ar
   const auto& iter = value::get<value::array_iterator>(self);
   const auto& other = value::get<value::array_iterator>(arg);
   if (iter.arr != other.arr)
-    return throw_exception(message::iterator_owner_error(type::array));
+    return throw_exception(type::exception,
+                           message::iterator_owner_error(type::array));
   return gc::alloc<value::boolean>(iter.idx > other.idx );
 }
 
@@ -246,6 +265,7 @@ gc::managed_ptr array_iterator::less(gc::managed_ptr self, gc::managed_ptr arg)
   const auto& iter = value::get<value::array_iterator>(self);
   const auto& other = value::get<value::array_iterator>(arg);
   if (iter.arr != other.arr)
-    return throw_exception(message::iterator_owner_error(type::array));
+    return throw_exception(type::exception,
+                           message::iterator_owner_error(type::array));
   return gc::alloc<value::boolean>(iter.idx < other.idx );
 }

@@ -32,19 +32,24 @@ gc::managed_ptr object::type(gc::managed_ptr self)
 gc::managed_ptr object::member(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::symbol) {
-    return throw_exception(message::type_error(type::symbol, arg.type()));
+    return throw_exception(type::type_error,
+                           message::type_error(type::symbol, arg.type()));
   }
   const auto mem = get_member(self, value::get<value::symbol>(arg));
   if (mem) {
     return mem;
   }
-  return throw_exception("Member variable " + to_string(value::get<value::symbol>(arg)) + " does not exist");
+  return throw_exception(type::name_error,
+                         "Member variable " +
+                         to_string(value::get<value::symbol>(arg)) +
+                         " does not exist");
 }
 
 gc::managed_ptr object::has_member(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::symbol) {
-    return throw_exception(message::type_error(type::symbol, arg.type()));
+    return throw_exception(type::type_error,
+                           message::type_error(type::symbol, arg.type()));
   }
   const auto mem = get_member(self, value::get<value::symbol>(arg));
   return gc::alloc<value::boolean>( mem ? true : false );
@@ -62,7 +67,8 @@ gc::managed_ptr object::set_member(vm::machine& vm)
   const auto value = vm.top();
   vm.pop(1);
   if (name.tag() != tag::symbol) {
-    return throw_exception(message::type_error(type::symbol, name.type()));
+    return throw_exception(type::type_error,
+                           message::type_error(type::symbol, name.type()));
   }
   set_member(self, value::get<value::symbol>(name), value);
   return self;

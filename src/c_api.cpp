@@ -35,7 +35,8 @@ std::function<vv_object_t(Args...)> fn_with_err_check(vv_object_t(*orig)(Args...
   {
     const auto res = orig(std::forward<Args>(args)...);
     if (!res)
-      throw_exception("Error calling C extension");
+      throw_exception(builtin::type::runtime_error,
+                      "Error calling C extension");
     return res;
   };
 }

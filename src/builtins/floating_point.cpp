@@ -1,7 +1,8 @@
 #include "builtins/floating_point.h"
 
-#include "gc/alloc.h"
+#include "builtins.h"
 #include "messages.h"
+#include "gc/alloc.h"
 #include "utils/lang.h"
 #include "value/floating_point.h"
 #include "value/type.h"
@@ -30,8 +31,11 @@ auto fn_float_op(const F& op)
 {
   return [=](gc::managed_ptr self, gc::managed_ptr arg)
   {
-    if (!is_float(arg))
-      return throw_exception("Right-hand argument is not a Float");
+    if (!is_float(arg)) {
+      return throw_exception(type::type_error,
+                             "Right-hand argument is not a Float");
+    }
+
     auto res = gc::alloc<value::floating_point>(op(to_float(self), to_float(arg)));
     return static_cast<gc::managed_ptr>(res);
   };
@@ -42,8 +46,11 @@ auto fn_float_bool_op(const F& op)
 {
   return [=](gc::managed_ptr self, gc::managed_ptr arg)
   {
-    if (!is_float(arg))
-      return throw_exception("Right-hand argument is not a Float");
+    if (!is_float(arg)) {
+      return throw_exception(type::type_error,
+                             "Right-hand argument is not a Float");
+    }
+
     auto res = gc::alloc<value::boolean>( op(to_float(self), to_float(arg)) );
     return static_cast<gc::managed_ptr>(res);
   };
@@ -79,10 +86,13 @@ gc::managed_ptr floating_point::times(gc::managed_ptr self, gc::managed_ptr arg)
 
 gc::managed_ptr floating_point::divides(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  if (!is_float(arg))
-    return throw_exception("Right-hand argument is not a Float");
+  if (!is_float(arg)) {
+    return throw_exception(type::type_error,
+                           "Right-hand argument is not a Float");
+  }
+
   if (to_float(arg) == 0)
-    return throw_exception(message::divide_by_zero);
+    return throw_exception(type::divide_by_zero_error, message::divide_by_zero);
   return gc::alloc<value::floating_point>( to_float(self) / to_float(arg) );
 }
 

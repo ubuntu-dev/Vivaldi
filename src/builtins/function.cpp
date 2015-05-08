@@ -1,5 +1,6 @@
 #include "function.h"
 
+#include "builtins.h"
 #include "gc/alloc.h"
 #include "utils/lang.h"
 #include "value/builtin_function.h"
@@ -27,7 +28,8 @@ size_t get_argc(gc::managed_ptr fn)
 gc::managed_ptr function::bind(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (get_argc(self) == 0) {
-    return throw_exception("Function takes no arguments to bind to");
+    return throw_exception(type::range_error,
+                           "Function takes no arguments to bind to");
   }
 
   return gc::alloc<value::partial_function>( self, arg );

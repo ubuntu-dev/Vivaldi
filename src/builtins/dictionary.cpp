@@ -12,7 +12,8 @@ using namespace builtin;
 gc::managed_ptr dictionary::init(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::dictionary) {
-    return throw_exception(message::init_type_error(type::dictionary,
+    return throw_exception(type::type_error,
+                           message::init_type_error(type::dictionary,
                                                     type::dictionary,
                                                     arg.type()));
   }
