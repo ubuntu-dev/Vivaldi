@@ -105,6 +105,7 @@ private:
   void run_single_command(const vm::command& command);
 
   void except_until(size_t stack_pos);
+  void except(gc::managed_ptr type, const std::string& message);
 
   call_frame& frame();
 

@@ -41,6 +41,11 @@ std::string message::has_no_member(gc::managed_ptr obj, vv::symbol mem)
   return value_for(obj) += " has no member " + to_string(mem);
 }
 
+std::string message::has_no_method(gc::managed_ptr obj, vv::symbol mem)
+{
+  return value_for(obj) += " has no method " + to_string(mem);
+}
+
 std::string message::not_callable(gc::managed_ptr callee)
 {
   return "Object " + value_for(callee) += " of type " +

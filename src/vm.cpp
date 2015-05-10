@@ -26,8 +26,6 @@
 #include "value/symbol.h"
 #include "value/type.h"
 
-#include <iostream>
-
 using namespace vv;
 
 vm::machine::machine(call_frame&& frame)
@@ -146,10 +144,7 @@ void vm::machine::ptype(const type_t& type)
   read(type.parent);
   const auto parent_arg = top();
   if (parent_arg.tag() != tag::type) {
-    pstr(message::inheritance_type_err);
-    push(builtin::type::type_error);
-    pobj(1);
-    exc();
+    except(builtin::type::type_error, message::inheritance_type_err);
     return;
   }
   const auto parent = parent_arg;
@@ -171,10 +166,8 @@ void vm::machine::pre(const std::string& val)
   try {
     push(gc::alloc<value::regex>( std::regex{val}, val ));
   } catch (const std::regex_error& e) {
-    pstr(message::invalid_regex(e.what()));
-    push(builtin::type::invalid_regex_error);
-    pobj(1);
-    exc();
+    except(builtin::type::invalid_regex_error,
+                    message::invalid_regex(e.what()));
   }
 }
 
@@ -211,10 +204,7 @@ void vm::machine::read(const symbol sym)
       return;
     }
   }
-  pstr(message::no_such_variable(sym));
-  push(builtin::type::name_error);
-  pobj(1);
-  exc();
+  except(builtin::type::name_error, message::no_such_variable(sym));
 }
 
 void vm::machine::write(const symbol sym)
@@ -231,19 +221,14 @@ void vm::machine::write(const symbol sym)
       return;
     }
   }
-  pstr(message::no_such_variable(sym));
-  push(builtin::type::name_error);
-  pobj(1);
-  exc();
+  except(builtin::type::name_error, message::no_such_variable(sym));
 }
 
 void vm::machine::let(const symbol sym)
 {
   if (frame().env().members.count(sym)) {
-    pstr(message::already_exists(sym));
-    push(builtin::type::redeclaration_error);
-    pobj(1);
-    exc();
+    except(builtin::type::redeclaration_error,
+                     message::already_exists(sym));
   }
   else {
     frame().env().members.insert(sym, top());
@@ -256,10 +241,7 @@ void vm::machine::self()
     push(frame().env().self);
   }
   else {
-    pstr(message::invalid_self_access);
-    push(builtin::type::runtime_error);
-    pobj(1);
-    exc();
+    except(builtin::type::runtime_error, message::invalid_self_access);
   }
 }
 
@@ -278,10 +260,8 @@ void vm::machine::method(const symbol sym)
     push(fn_obj);
   }
   else {
-    pstr(message::has_no_member(m_transient_self, sym));
-    push(builtin::type::name_error);
-    pobj(1);
-    exc();
+    except(builtin::type::name_error,
+                    message::has_no_method(m_transient_self, sym));
   }
 }
 
@@ -289,20 +269,15 @@ void vm::machine::readm(const symbol sym)
 {
   const auto self = frame().env().self;
   if (!self) {
-    pstr(message::invalid_self_access);
-    push(builtin::type::runtime_error);
-    pobj(1);
-    exc();
+    except(builtin::type::runtime_error, message::invalid_self_access);
   }
 
   if (has_member(self, sym)) {
     push(get_member(self, sym));
   }
   else {
-    pstr(message::has_no_member(self, sym));
-    push(builtin::type::name_error);
-    pobj(1);
-    exc();
+    except(builtin::type::name_error,
+                    message::has_no_member(self, sym));
   }
 }
 
@@ -313,10 +288,7 @@ void vm::machine::writem(const symbol sym)
     set_member(self, sym, top());
   }
   else {
-    pstr(message::invalid_self_access);
-    push(builtin::type::runtime_error);
-    pobj(1);
-    exc();
+    except(builtin::type::runtime_error, message::invalid_self_access);
   }
 }
 
@@ -345,10 +317,7 @@ void vm::machine::call(const int argc)
 
   if (top().tag() != tag::function && top().tag() != tag::builtin_function &&
       top().tag() != tag::opt_monop && top().tag() != tag::opt_binop) {
-    pstr(message::not_callable(top()));
-    push(builtin::type::type_error);
-    pobj(1);
-    exc();
+    except(builtin::type::type_error, message::not_callable(top()));
     return;
   }
 
@@ -357,10 +326,8 @@ void vm::machine::call(const int argc)
   try {
     if (func.tag() == tag::opt_monop) {
       if (argc != 0) {
-        pstr(message::wrong_argc(0, argc));
-        push(builtin::type::range_error);
-        pobj(1);
-        exc();
+        except(builtin::type::range_error,
+                        message::wrong_argc(0, argc));
         return;
       }
 
@@ -373,10 +340,8 @@ void vm::machine::call(const int argc)
     }
     else if (func.tag() == tag::opt_binop) {
       if (argc != 1) {
-        pstr(message::wrong_argc(1, argc));
-        push(builtin::type::range_error);
-        pobj(1);
-        exc();
+        except(builtin::type::range_error,
+                        message::wrong_argc(1, argc));
         return;
       }
       m_call_stack.push_back({body_shim, {}, {}, 1, m_stack.size() - 2});
@@ -390,10 +355,8 @@ void vm::machine::call(const int argc)
     else if (func.tag() == tag::builtin_function) {
       const auto expected = value::get<value::builtin_function>(func).argc;
       if (expected != static_cast<unsigned>(argc)) {
-        pstr(message::wrong_argc(expected, argc));
-        push(builtin::type::range_error);
-        pobj(1);
-        exc();
+        except(builtin::type::range_error,
+                        message::wrong_argc(expected, argc));
         return;
       }
       m_call_stack.push_back({body_shim, {}, m_transient_self, expected, m_stack.size() - 2});
@@ -402,13 +365,11 @@ void vm::machine::call(const int argc)
       push(value::get<value::builtin_function>(func).body(*this));
 
     }
-    else {
+    else { // VV function
       const auto expected = value::get<value::function>(func).argc;
       if (expected != argc) {
-        pstr(message::wrong_argc(expected, argc));
-        push(builtin::type::range_error);
-        pobj(1);
-        exc();
+        except(builtin::type::range_error,
+                        message::wrong_argc(expected, argc));
         return;
       }
       m_call_stack.emplace_back(value::get<value::function>(func).body,
@@ -428,10 +389,7 @@ void vm::machine::call(const int argc)
 void vm::machine::pobj(const int argc)
 {
   if (top().tag() != tag::type) {
-    pstr(message::construction_type_err);
-    push(builtin::type::type_error);
-    pobj(1);
-    exc();
+    except(builtin::type::type_error, message::construction_type_err);
     return;
   }
 
@@ -446,10 +404,8 @@ void vm::machine::pobj(const int argc)
   // nullptr
   if (!top()) {
     m_stack.pop_back();
-    pstr(message::nonconstructible(ctor_type));
-    push(builtin::type::type_error);
-    pobj(1);
-    exc();
+    except(builtin::type::type_error,
+                    message::nonconstructible(ctor_type));
     return;
   }
   static_cast<value::basic_object*>(top().get())->type = type;
@@ -469,12 +425,10 @@ void vm::machine::pobj(const int argc)
     }
     m_stack.pop_back();
     push(self);
+    m_transient_self = {};
   }
   else if (argc != 0) {
-    pstr(message::wrong_argc(0, argc));
-    push(builtin::type::range_error);
-    pobj(1);
-    exc();
+    except(builtin::type::range_error, message::wrong_argc(0, argc));
   }
 }
 
@@ -530,10 +484,8 @@ void vm::machine::req(const std::string& filename)
     // TODO: Support actual error handling for C extensions
     const auto err = read_c_lib(name);
     if (err) {
-      pstr("Unable to load C extension: " + *err);
-      push(builtin::type::file_not_found_error);
-      pobj(1);
-      exc();
+      except(builtin::type::file_not_found_error,
+                      "Unable to load C extension: " + *err);
       return;
     }
     pnil();
@@ -543,10 +495,8 @@ void vm::machine::req(const std::string& filename)
 
     auto contents = get_file_contents(name, m_req_path);
     if (!contents.successful()) {
-      pstr(contents.error());
-      push(builtin::type::file_not_found_error);
-      pobj(1);
-      exc();
+      except(builtin::type::file_not_found_error,
+                      contents.error());
       return;
     }
     contents.result().emplace_back(instruction::pnil);
@@ -632,10 +582,8 @@ void vm::machine::opt_tmpm(const symbol sym)
     push(method);
   }
   else {
-    pstr(message::has_no_member(m_transient_self, sym));
-    push(builtin::type::name_error);
-    pobj(1);
-    exc();
+    except(builtin::type::name_error,
+                    message::has_no_method(m_transient_self, sym));
   }
 }
 
@@ -773,11 +721,6 @@ void vm::machine::run_single_command(const vm::command& command)
   if (instr != instruction::call)
     m_transient_self = {};
 
-  //std::cerr << "[ ";
-  //for (const auto i : m_stack)
-    //std::cerr << value_for(i) << ' ';
-  //std::cerr << "]\n";
-
   switch (instr) {
   case instruction::pbool: pbool(arg.as_bool());  break;
   case instruction::pchar: pchar(arg.as_int());   break;
@@ -855,8 +798,6 @@ void vm::machine::except_until(const size_t stack_pos)
     except_until(stack_pos);
     return;
   }
-  std::cerr << "exc until " << stack_pos << " - "
-            << value::get<value::exception>(except_val).message << '\n';
 
   const auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - stack_pos,
                             [](const auto& i) { return i.catcher; });
@@ -878,6 +819,14 @@ void vm::machine::except_until(const size_t stack_pos)
   else {
     throw vm_error{except_val};
   }
+}
+
+void vm::machine::except(gc::managed_ptr type, const std::string& message)
+{
+  pstr(message);
+  push(type);
+  pobj(1);
+  exc();
 }
 
 vm::call_frame& vm::machine::frame()

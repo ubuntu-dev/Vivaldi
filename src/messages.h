@@ -26,6 +26,8 @@ std::string no_such_variable(vv::symbol var);
 std::string already_exists(vv::symbol var);
 // Attempted to read an basic_object member that doesn't exist
 std::string has_no_member(gc::managed_ptr obj, vv::symbol mem);
+// Attempted to read an basic_object method that doesn't exist
+std::string has_no_method(gc::managed_ptr obj, vv::symbol mem);
 // Attempted to call something other than a function
 std::string not_callable(gc::managed_ptr callee);
 // Function called with the wrong number of arguments
