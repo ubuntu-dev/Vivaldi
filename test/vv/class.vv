@@ -25,7 +25,7 @@ end
 
 let instantiation() = do
   class Uninstantiable
-    let init() = except nil
+    let init() = throw nil
   end
 
   let instantiated = true

@@ -17,7 +17,7 @@ class Inverted
 
   let greater(y) =
     try:
-      except new Exception("hello")
+      throw new Exception("hello")
     catch e:
       @x < y.get_x()
 

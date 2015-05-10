@@ -547,13 +547,15 @@ Blocks have nested scope:
 
 #### Exceptions ####
 
-Like in C++, exceptions in Vivaldi don't have any special type (in fact at the
-moment there is no builtin exception type; strings are used instead). Otherwise
-they work pretty much as you'd expect:
+Vivaldi exceptions follow a fairly typical heirarchy based on the class
+`Exception`. At the moment the heirarchy is fairly incomplete and undocumented,
+and there's no way to specify a type in a `catch` statement (that, as well as a
+more fleshed-out heirarchy, is coming soon). Otherwise they work pretty much as
+you'd expect:
 
-    let i = try: except 5
-    catch e: e + 1
-    i == 6
+    let i = try: throw new Exception("foo")
+    catch e: e.message() + "bar"
+    i == "foobar"
 
 As everywhere else in Vivaldi, the pieces of code following `try` and `catch`
 are expressions.

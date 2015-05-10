@@ -39,7 +39,8 @@ class Lambda
 
   let eval(args, env) = do
     let nenv = new Dictionary(env)
-    if args.length() != @args.length(): except "wrong number of arguments"
+    if args.length() != @args.length():
+      throw new RangeError("wrong number of arguments")
 
     let argnames = @args
     while argnames: do
@@ -63,7 +64,7 @@ let parse_atom(x) = cond
   true:                                         new Symbol(x)
 
 let parse(tokens) = do
-  if tokens.at_end(): except "premature end of file"
+  if tokens.at_end(): throw new Exception("premature end of file")
 
   let token = tokens.get()
   tokens.increment()
@@ -79,7 +80,8 @@ let parse(tokens) = do
     return list.cdr()
   end
 
-  if token == ")": except "unexpected ')'"
+  if token == ")":
+    throw new Exception("unexpected ')'")
 
   parse_atom(token)
 end
@@ -168,7 +170,8 @@ end
 // }}}
 // Running files {{{
 
-if argv.size() != 1: except "expected one file as command-line argument"
+if argv.size() != 1:
+  throw new Exception("expected one file as command-line argument")
 let file = new File(argv[0])
 let exprs = []
 let raw = ""

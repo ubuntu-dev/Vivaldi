@@ -10,7 +10,7 @@ end
 let used_try_catch() = do
   let i = false
   try: do
-    except new RuntimeError("foo")
+    throw new RuntimeError("foo")
     assert(false, "except")
   end
   catch e: i = e.message()

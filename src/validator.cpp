@@ -36,7 +36,7 @@ val_res val_array_literal(token_string tokens);
 val_res val_block(token_string tokens);
 val_res val_cond_statement(token_string tokens);
 val_res val_dictionary_literal(token_string tokens);
-val_res val_except(token_string tokens);
+val_res val_throw(token_string tokens);
 val_res val_for_loop(token_string tokens);
 val_res val_function_definition(token_string tokens);
 val_res val_lambda(token_string tokens);
@@ -263,7 +263,7 @@ val_res val_nonop_expression(const token_string tokens)
                     val_block,
                     val_cond_statement,
                     val_dictionary_literal,
-                    val_except,
+                    val_throw,
                     val_for_loop,
                     val_function_definition,
                     val_lambda,
@@ -363,14 +363,14 @@ val_res val_dictionary_literal(const token_string tokens)
   }, "'}'", "list of 'key: value' pairs");
 }
 
-val_res val_except(const token_string tokens)
+val_res val_throw(const token_string tokens)
 {
-  if (tokens.empty() || tokens.front().which != token::type::key_except)
+  if (tokens.empty() || tokens.front().which != token::type::key_throw)
     return {};
-  const auto expr_res = val_expression(tokens.subvec(1)); // 'except'
+  const auto expr_res = val_expression(tokens.subvec(1)); // 'throw'
   if (expr_res || expr_res.invalid())
     return expr_res;
-  return {tokens.subvec(1), "expected expression"}; // 'except'
+  return {tokens.subvec(1), "expected expression"}; // 'throw'
 }
 
 val_res val_for_loop(const token_string tokens)

@@ -342,7 +342,7 @@ token::type type_for(const std::string& name)
 
   if (name == "try")    return token::type::key_try;
   if (name == "catch")  return token::type::key_catch;
-  if (name == "except") return token::type::key_except;
+  if (name == "throw") return token::type::key_throw;
 
   if (name == "true")  return token::type::boolean;
   if (name == "false") return token::type::boolean;

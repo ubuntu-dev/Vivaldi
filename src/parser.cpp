@@ -522,7 +522,7 @@ parse_res<> parse_cond_statement(token_string tokens)
 
 parse_res<> parse_except(token_string tokens)
 {
-  if (tokens.empty() || tokens.front().which != token::type::key_except)
+  if (tokens.empty() || tokens.front().which != token::type::key_throw)
     return {};
   std::unique_ptr<ast::expression> expr;
   tie(expr, tokens) = *parse_expression(tokens.subvec(1)); // 'except'

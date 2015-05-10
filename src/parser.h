@@ -77,7 +77,7 @@ struct token {
 
     key_try,
     key_catch,
-    key_except,
+    key_throw,
 
     member,
     name,
