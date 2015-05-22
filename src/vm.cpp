@@ -8,6 +8,7 @@
 #include "builtins/dictionary.h"
 #include "builtins/string.h"
 #include "builtins/range.h"
+#include "builtins/type.h"
 #include "gc/alloc.h"
 #include "utils/error.h"
 #include "utils/lang.h"
@@ -92,7 +93,8 @@ void vm::machine::mark()
 
   for (auto& i : m_call_stack) {
     gc::mark(i.caller);
-    gc::mark(i.catcher);
+    for (const auto& c : i.catchers)
+      gc::mark(c.second);
     i.mark_env();
   }
 }
@@ -523,15 +525,15 @@ void vm::machine::jt(const int offset)
     jmp(offset);
 }
 
-void vm::machine::pushc()
+void vm::machine::pushc(const symbol type)
 {
-  frame().catcher = top();
+  frame().catchers[type] = top();
   m_stack.pop_back();
 }
 
-void vm::machine::popc()
+void vm::machine::popc(const symbol type)
 {
-  frame().catcher = {};
+  frame().catchers.erase(type);
 }
 
 void vm::machine::exc()
@@ -762,9 +764,9 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::jf:  jf(arg.as_int());  break;
   case instruction::jt:  jt(arg.as_int());  break;
 
-  case instruction::pushc: pushc(); break;
-  case instruction::popc:  popc();  break;
-  case instruction::exc:   exc();   break;
+  case instruction::pushc: pushc(arg.as_sym()); break;
+  case instruction::popc:  popc(arg.as_sym());  break;
+  case instruction::exc:   exc();               break;
 
   case instruction::chreqp: chreqp(arg.as_str()); break;
 
@@ -787,10 +789,27 @@ void vm::machine::run_single_command(const vm::command& command)
   }
 }
 
+namespace {
+
+std::pair<gc::managed_ptr, vv::symbol> catcher_for(const vm::call_frame& frame,
+                                                   gc::managed_ptr exc)
+{
+  const auto obj = builtin::type::object;
+  for (auto t = exc.type(); t != obj; t = builtin::custom_type::parent(t)) {
+    if (frame.catchers.count(value::get<value::type>(t).name)) {
+      return { frame.catchers.at(value::get<value::type>(t).name),
+               value::get<value::type>(t).name };
+    }
+  }
+  return {};
+}
+
+}
+
 void vm::machine::except_until(const size_t stack_pos)
 {
-  const auto except_val = top();
-  if (except_val.tag() != tag::exception) {
+  const auto exc_val = top();
+  if (exc_val.tag() != tag::exception) {
     pop(1);
     pstr("Only objects of types descended from Exception can be thrown");
     push(builtin::type::type_error);
@@ -800,7 +819,10 @@ void vm::machine::except_until(const size_t stack_pos)
   }
 
   const auto last = find_if(rbegin(m_call_stack), rend(m_call_stack) - stack_pos,
-                            [](const auto& i) { return i.catcher; });
+                            [exc_val](const auto& i)
+  {
+    return catcher_for(i, exc_val).first;
+  });
 
   if (last != rbegin(m_call_stack)) {
     const auto last_erased = last.base();
@@ -808,16 +830,17 @@ void vm::machine::except_until(const size_t stack_pos)
                   end(m_stack));
   }
   m_call_stack.erase(last.base(), end(m_call_stack));
-  push(except_val);
+  push(exc_val);
 
 
-  if (frame().catcher) {
-    push(frame().catcher);
-    popc();
+  const auto catcher = catcher_for(frame(), exc_val);
+  if (catcher.first) {
+    push(catcher.first);
+    popc(catcher.second);
     call(1);
   }
   else {
-    throw vm_error{except_val};
+    throw vm_error{exc_val};
   }
 }
 

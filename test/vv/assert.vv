@@ -10,5 +10,5 @@ let test(code, name) = do
     code()
     puts("\033[92m✓\033[39m " + name)
   end
-  catch e: assert(false, "caught exception: " + new String(e))
+  catch Exception e: assert(false, "caught exception: " + new String(e))
 end

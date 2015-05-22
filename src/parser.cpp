@@ -76,7 +76,7 @@ parse_res<> parse_dict_literal(token_string tokens);
 parse_res<> parse_assignment(token_string tokens);
 parse_res<> parse_block(token_string tokens);
 parse_res<> parse_cond_statement(token_string tokens);
-parse_res<> parse_except(token_string tokens);
+parse_res<> parse_throw(token_string tokens);
 parse_res<> parse_for_loop(token_string tokens);
 parse_res<> parse_function_definition(token_string tokens);
 parse_res<> parse_lambda(token_string tokens);
@@ -422,7 +422,6 @@ parse_res<> parse_nonop_expression(token_string tokens)
   if ((res = parse_block(tokens)))                return res;
   if ((res = parse_cond_statement(tokens)))       return res;
   if ((res = parse_dict_literal(tokens)))         return res;
-  if ((res = parse_except(tokens)))               return res;
   if ((res = parse_for_loop(tokens)))             return res;
   if ((res = parse_function_definition(tokens)))  return res;
   if ((res = parse_lambda(tokens)))               return res;
@@ -430,6 +429,7 @@ parse_res<> parse_nonop_expression(token_string tokens)
   if ((res = parse_new_obj(tokens)))              return res;
   if ((res = parse_require(tokens)))              return res;
   if ((res = parse_return(tokens)))               return res;
+  if ((res = parse_throw(tokens)))                return res;
   if ((res = parse_try_catch(tokens)))            return res;
   if ((res = parse_type_definition(tokens)))      return res;
   if ((res = parse_variable_declaration(tokens))) return res;
@@ -518,15 +518,6 @@ parse_res<> parse_cond_statement(token_string tokens)
   tokens = pairs_res->second;
 
   return {{ std::make_unique<cond_statement>(move(pairs)), tokens }};
-}
-
-parse_res<> parse_except(token_string tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::key_throw)
-    return {};
-  std::unique_ptr<ast::expression> expr;
-  tie(expr, tokens) = *parse_expression(tokens.subvec(1)); // 'except'
-  return {{ std::make_unique<except>( move(expr) ), tokens }};
 }
 
 parse_res<> parse_for_loop(token_string tokens)
@@ -671,6 +662,15 @@ parse_res<> parse_return(token_string tokens)
   return {{ std::make_unique<return_statement>( move(expr) ), tokens }};
 }
 
+parse_res<> parse_throw(token_string tokens)
+{
+  if (tokens.empty() || tokens.front().which != token::type::key_throw)
+    return {};
+  std::unique_ptr<ast::expression> expr;
+  tie(expr, tokens) = *parse_expression(tokens.subvec(1)); // 'throw'
+  return {{ std::make_unique<except>( move(expr) ), tokens }};
+}
+
 parse_res<> parse_try_catch(token_string tokens)
 {
   if (tokens.empty() || tokens.front().which != token::type::key_try)
@@ -682,15 +682,30 @@ parse_res<> parse_try_catch(token_string tokens)
 
   tokens = ltrim_if(tokens, newline_test);
   tokens = tokens.subvec(1); // 'catch'
-  const symbol exception_name{tokens.front().str};
-  std::vector<symbol> exception_arg{exception_name};
-  tokens = ltrim_if(tokens.subvec(2), newline_test); // name ':
 
-  std::unique_ptr<ast::expression> catcher;
-  tie(catcher, tokens) = *parse_expression(tokens);
+  auto catch_bodies_res = parse_comma_separated_list(tokens, [](const auto str)
+  {
+    if (str.size() < 4
+        || str[0].which != token::type::name
+        || str[1].which != token::type::name
+        || str[2].which != token::type::colon) {
+      return parse_res<ast::catch_stmt>{};
+    }
+    symbol type{str[0].str};
+    symbol name{str[1].str};
 
-  return {{std::make_unique<try_catch>(move(body),exception_name,move(catcher)),
-           tokens}};
+    const auto expr_str = ltrim_if(str.subvec(3), trim_test); // type name ':'
+    auto expr = parse_expression(expr_str);
+
+    ast::catch_stmt stmt{name, type, std::move(expr->first)};
+    return parse_res<ast::catch_stmt>{{ std::move(stmt), expr->second }};
+  });
+
+  auto catch_bodies = std::move(catch_bodies_res->first);
+
+  return {{ std::make_unique<ast::try_catch>( std::move(body),
+                                              std::move(catch_bodies) ),
+            catch_bodies_res->second }};
 }
 
 parse_res<> parse_type_definition(token_string tokens)

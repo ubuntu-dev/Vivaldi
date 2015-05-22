@@ -57,8 +57,8 @@ struct call_frame {
   // The calling function, if there is one; stored here only for GC purposes.
   gc::managed_ptr caller;
 
-  // The local catch function, if we're in a try...catch block.
-  gc::managed_ptr catcher;
+  // The local catch functions, if we're in a try...catch block.
+  std::unordered_map<vv::symbol, gc::managed_ptr> catchers;
 
   // Pointer to the current VM instruction we're executing.
   vector_ref<vm::command> instr_ptr;

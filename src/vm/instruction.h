@@ -98,9 +98,12 @@ enum class instruction {
   jf,
   // jump the provided number of commands if the top value is truthy.
   jt,
-  // pushes top value as a new function for catching exceptions.
+  // pushes top value as a new function for catching exceptions; type-matching
+  // is done by comparing the exception's type's name to the symbol argument
+  // provided to pushc.
   pushc,
-  // pops an exception catcher and discards it, leaving top value unchanged.
+  // pops the exception catcher whose type matches the provided symbol argument
+  // and discards it, leaving top value unchanged.
   popc,
   // throws top value as an exception.
   exc,

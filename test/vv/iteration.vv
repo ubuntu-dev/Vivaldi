@@ -18,7 +18,7 @@ class Inverted
   let greater(y) =
     try:
       throw new Exception("hello")
-    catch e:
+    catch Exception e:
       @x < y.get_x()
 
   let add(x) = new Inverted(@x - x)
@@ -40,7 +40,7 @@ let range_test() = do
   let inv_arr = []
   try:
     for i in new Inverted(10) to new Inverted(5): inv_arr.append(i.get_x())
-  catch e:
+  catch Exception e:
     assert(false, "failed to catch exception inside of Range")
 
   assert(inv_arr == [10, 9, 8, 7, 6], "inv_arr == [10, 9, 8, 7, 6]")

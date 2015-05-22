@@ -14,7 +14,7 @@ let indexing() = do
 
   let excepted = false
   try: str[128]
-  catch e: excepted = true
+  catch Exception e: excepted = true
   assert(excepted, "string accepted index past end")
 end
 

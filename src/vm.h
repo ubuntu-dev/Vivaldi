@@ -76,8 +76,8 @@ public:
   void jf(int offset);
   void jt(int offset);
 
-  void pushc();
-  void popc();
+  void pushc(symbol type);
+  void popc(symbol type);
   void exc();
 
   void chreqp(const std::string& new_path);

@@ -31,7 +31,7 @@ let instantiation() = do
   let instantiated = true
   let i = nil
   try: new Uninstantiable()
-  catch e: instantiated = false
+  catch Exception e: instantiated = false
   assert(!instantiated && i == nil, "returned object from exception in init")
 end
 
@@ -54,7 +54,7 @@ let non_object_classes() = do
 
   let excepted = false
   try: f.member('bar)
-  catch e: excepted = true
+  catch Exception e: excepted = true
   assert(excepted, "except on accessing nonexistent member variable")
 
   f.set_member('bar, 120)

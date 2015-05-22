@@ -25,7 +25,7 @@ vm::call_frame::call_frame(vector_ref<vm::command> instr_ptr,
   : argc       {argc},
     frame_ptr  {frame_ptr},
     caller     {},
-    catcher    {},
+    catchers   {},
     instr_ptr  {instr_ptr},
     m_env      {enclosing, self},
     m_heap_env {}

@@ -3,7 +3,7 @@ require "assert"
 let unused_try_catch() = do
   let i = false
   try: i = true
-  catch _: assert(false, "exceptionless try body")
+  catch Exception _: assert(false, "exceptionless try body")
   assert(i, "assigning from try body")
 end
 
@@ -13,14 +13,14 @@ let used_try_catch() = do
     throw new RuntimeError("foo")
     assert(false, "except")
   end
-  catch e: i = e.message()
+  catch Exception e: i = e.message()
   assert(i == "foo", "assigning from catch body")
 end
 
 let builtin_exception() = do
   let i = false
   try: 1 + "foo"
-  catch _: i = 12
+  catch Exception _: i = 12
   assert(i == 12, "triggering builtin exception")
 end
 

@@ -555,19 +555,28 @@ val_res val_try_catch(const token_string tokens)
   if (!try_res)
     return {try_str, "expected expression"};
 
+
   const auto catch_str = trim_newline_group(*try_res);
   if (catch_str.empty() || catch_str.front().which != token::type::key_catch)
     return {catch_str, "expected 'catch'"};
-  if (catch_str.size() < 2 || catch_str[1].which != token::type::name)
-    return {catch_str.subvec(1), "expected variable name"}; // 'catch'
-  if (catch_str.size() < 3 || catch_str[2].which != token::type::colon)
-    return {catch_str.subvec(2), "expected ':'"}; // 'catch', name
+  const auto after_str = trim_newline_group(catch_str.subvec(1)); // 'catch'
 
-  const auto catch_body_str = trim_newline_group(catch_str.subvec(3));
-  const auto catch_body_res = val_expression(catch_body_str);
-  if (catch_body_res || catch_body_res.invalid())
-    return catch_body_res;
-  return {catch_body_str, "expected expression"};
+  const auto after_res = val_separated_list(after_str,
+                                            val_single_comma,
+                                            [](const auto& tokens)
+  {
+    if (tokens.size() < 2 || tokens[0].which != token::type::name)
+      return val_res{};
+    if (tokens.size() < 2 || tokens[1].which != token::type::name)
+      return val_res{tokens.subvec(1), "expected variable name"}; // 'catch'
+    if (tokens.size() < 3 || tokens[2].which != token::type::colon)
+      return val_res{tokens.subvec(2), "expected ':'"}; // 'catch', name
+    return val_expression(trim_newline_group(tokens.subvec(3)));
+  }, "'type name: expression'");
+
+  if (after_res || after_res.invalid())
+    return after_res;
+  return {after_str, "expected list of catch expressions"};
 }
 
 val_res val_type_definition(const token_string tokens)

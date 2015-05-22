@@ -6,7 +6,7 @@ let test_regex_creation() = do
 
   let excepted = false
   try: `foo(`
-  catch e: excepted = true
+  catch Exception e: excepted = true
   assert(excepted, "Excepting on invalid regex literal")
 end
 
@@ -22,7 +22,7 @@ end
 let test_regex_result() = do
   let excepted = false
   try: new RegExResult()
-  catch _: excepted = true
+  catch Exception _: excepted = true
   assert(excepted, "nonconstructability in RegExResult")
 end
 

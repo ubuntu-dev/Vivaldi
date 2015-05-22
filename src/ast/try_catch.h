@@ -7,18 +7,22 @@ namespace vv {
 
 namespace ast {
 
+struct catch_stmt {
+  symbol exception_name;
+  symbol exception_type;
+  std::unique_ptr<expression> catcher;
+};
+
 class try_catch : public expression {
 public:
   try_catch(std::unique_ptr<expression>&& body,
-            symbol exception_name,
-            std::unique_ptr<expression>&& catcher);
+            std::vector<catch_stmt>&& catchers);
 
   std::vector<vm::command> generate() const override;
 
 private:
   std::unique_ptr<expression> m_body;
-  symbol m_exception_name;
-  std::unique_ptr<expression> m_catcher;
+  std::vector<catch_stmt> m_catchers;
 };
 
 }
