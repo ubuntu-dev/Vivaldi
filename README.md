@@ -548,16 +548,24 @@ Blocks have nested scope:
 #### Exceptions ####
 
 Vivaldi exceptions follow a fairly typical heirarchy based on the class
-`Exception`. At the moment the heirarchy is fairly incomplete and undocumented,
-and there's no way to specify a type in a `catch` statement (that, as well as a
-more fleshed-out heirarchy, is coming soon). Otherwise they work pretty much as
+`Exception`. At the moment the heirarchy is fairly incomplete and undocumented
+(this should be fixed pretty soon).  Otherwise they work pretty much as
 you'd expect:
 
     let i = try: throw new Exception("foo")
-    catch e: e.message() + "bar"
+    catch Exception e: e.message() + "bar"
     i == "foobar"
 
-As everywhere else in Vivaldi, the pieces of code following `try` and `catch`
+To specify more than one type, just stick a comma after each successive catch
+statement:
+
+    let i = try: throw new RuntimeError("hello")
+    catch TypeError t: "wut",
+          RangeError r: "wat",
+          RuntimeError r: r.message() + " world!"
+
+As everywhere else in Vivaldi, the pieces of code following `try:` and `catch
+<type> <name>:`
 are expressions.
 
 #### Operators ####
