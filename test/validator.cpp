@@ -148,9 +148,9 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "{\n\n\n1:\n\n2,\n\nfoo:\n\nbar\n\n}",
 
     // Except
-    "except 1",
-    "except 1 + 23",
-    "except bar",
+    "throw 1",
+    "throw 1 + 23",
+    "throw bar",
 
     // For loops
     "for i in 1 to 10: puts(i)",
@@ -190,9 +190,11 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "return foo + bar",
 
     // Try/catch blocks
-    "try: 5 catch e: 6",
-    "try:\n\n\n5\n\n\ncatch e:\n\n\n6",
-    "try:\n\n\nbar + baz\n\n\ncatch e:\n\n\n6 + qux",
+    "try: 5 catch Exception e: 6",
+    "try:\n\n\n5\n\n\ncatch Integer e:\n\n\n6",
+    "try:\n\n\nbar + baz\n\n\ncatch Foo e:\n\n\n6 + qux",
+    "try: 5 catch Exception e: 6, RuntimeError r: 12",
+    "try: 5 catch Exception e: 6,\n\n\nRuntimeError r: 12",
 
     // Type definitions
     "class Foo end",
@@ -335,9 +337,10 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "{a:b\n,c:d}",
     "{a\n:b}",
 
-    // Except
-    "except",
-    "except\nfoo",
+    // Throw
+    "throw",
+    "throw\nfoo",
+    "except foo",
 
     // For loops
     "for i in a b",
@@ -402,6 +405,9 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "try\n: a catch b: c",
     "try: a catch\nb: c",
     "try: a catch b\n: c",
+    "try: a catch b: c",
+    "try: a catch Type b: c\n, OtherType d: e",
+    "try: a catch Type b: c,;;; OtherType d: e",
 
     // Type definitions
     "class",
