@@ -106,6 +106,9 @@ val_res val_colon_separated_pair(token_string tokens);
 // Validates a method definition inside a type definition.
 val_res val_method_definition(token_string tokens);
 
+// Validates an argument list for a function, method, or lambda.
+val_res val_arglist(token_string tokens);
+
 // }}}
 
 // }}}
@@ -417,15 +420,7 @@ val_res val_function_definition(const token_string tokens)
   const auto arglist_res = val_delimited_expression(arglist_str,
                                                     token::type::open_paren,
                                                     token::type::close_paren,
-                                                    [](const auto inner_str)
-  {
-    return val_separated_list(inner_str, val_single_comma, [](const auto var_str)
-    {
-      if (var_str.empty() || var_str.front().which != token::type::name)
-        return val_res{};
-      return val_res{var_str.subvec(1)}; // name
-    }, "variable name");
-  }, "')'", "argument list");
+                                                    val_arglist);
 
   if (arglist_res.invalid())
     return arglist_res;
@@ -454,15 +449,7 @@ val_res val_lambda(const token_string tokens)
   const auto arglist_res = val_delimited_expression(arglist_str,
                                                     token::type::open_paren,
                                                     token::type::close_paren,
-                                                    [](const auto inner_str)
-  {
-    return val_separated_list(inner_str, val_single_comma, [](const auto var_str)
-    {
-      if (var_str.empty() || var_str.front().which != token::type::name)
-        return val_res{};
-      return val_res{var_str.subvec(1)}; // name
-    }, "variable name");
-  }, "')'", "argument list");
+                                                    val_arglist);
 
   if (arglist_res.invalid())
     return arglist_res;
@@ -805,15 +792,7 @@ val_res val_method_definition(const token_string tokens)
   const auto arglist_res = val_delimited_expression(arglist_str,
                                                     token::type::open_paren,
                                                     token::type::close_paren,
-                                                    [](const auto inner_str)
-  {
-    return val_separated_list(inner_str, val_single_comma, [](const auto var_str)
-    {
-      if (var_str.empty() || var_str.front().which != token::type::name)
-        return val_res{};
-      return val_res{var_str.subvec(1)}; // name
-    }, "variable name");
-  }, "')'", "argument list");
+                                                    val_arglist);
 
   if (arglist_res.invalid())
     return arglist_res;
@@ -830,6 +809,38 @@ val_res val_method_definition(const token_string tokens)
     return body_res;
 
   return  {body_str, "expected expression"};
+}
+
+val_res val_arglist(token_string tokens)
+{
+  if (tokens.size() && tokens.front().which == token::type::open_bracket) {
+    if (tokens.size() < 3 || tokens[1].which != token::type::name
+                          || tokens[2].which != token::type::close_bracket) {
+      return {tokens, "expected variable name enclosed in brackets"};
+    }
+    return tokens.subvec(3);
+  }
+
+  if (tokens.front().which != token::type::name)
+    return tokens;
+
+  while (tokens.size() && tokens.front().which == token::type::name) {
+    tokens = trim_newline_group(tokens.subvec(1));
+    if (tokens.size() && tokens.front().which == token::type::comma) {
+      tokens = trim_newline_group(tokens.subvec(1));
+      if (tokens.size() && tokens.front().which == token::type::open_bracket) {
+        if (tokens.size() < 3 || tokens[1].which != token::type::name
+                              || tokens[2].which != token::type::close_bracket) {
+          return {tokens, "expected variable name enclosed in brackets"};
+        }
+        return tokens.subvec(3);
+      }
+    }
+    else {
+      return tokens;
+    }
+  }
+  return {tokens, "expected ','"};
 }
 
 // }}}
