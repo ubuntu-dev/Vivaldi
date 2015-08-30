@@ -159,7 +159,10 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 
     // Function definitions
     "let foo() = nil",
+    "let foo([a]) = nil",
+    "let foo(a, [b]) = nil",
     "let foo(a, b, c, d, e, f, g, h, i, j, k, l) = a + b + c - d",
+    "let foo(a, b, c, d, e, f, g, h, i, j, k, [l]) = a + b + c - d",
     "let foo(\na,\nb,\nc\n) =\nnil",
 
     // Lambdas

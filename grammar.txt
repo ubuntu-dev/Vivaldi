@@ -90,7 +90,12 @@
 <for_loop> ::= 'for' <variable> 'in' <expression> ':' <expression>
 
 <function_definition> ::= 'fn' '(' <arg_list> ')' ':' <expression>
-                        | 'fn' <variable> '(' <arg_list> ')' ':' <expression>
+                        | 'let' <variable> '(' <arg_list> ')' '=' <expression>
+
+<arg_list> ::= ''
+             | <variable>
+             | '[' <variable> ']'
+             | <variable> ',' <arg_list>
 
 <literal> ::= <bool>
             | <float>
