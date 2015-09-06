@@ -16,6 +16,7 @@ public:
   struct value_type {
     std::function<gc::managed_ptr(vm::machine&)> body;
     size_t argc;
+    bool takes_varargs;
   };
 
   value_type value;

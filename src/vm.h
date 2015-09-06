@@ -57,6 +57,7 @@ public:
 
   void self();
   void arg(int idx);
+  void varg(int idx);
   void method(symbol sym);
   void readm(symbol sym);
   void writem(symbol sym);

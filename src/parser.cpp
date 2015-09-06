@@ -28,6 +28,12 @@
 
 // Implements a fairly simple recursive-descent parser
 
+// XXX: A lot of this code will look *really* wonky if you're following along
+// according to the grammar. This is because all of it is assuming that whatever
+// it's parsing is valid code (since otherwise it wouldn't make it through the
+// validator), and takes shortcuts all over the place. Look in validator.cpp for
+// code that reflects the grammar more closely.
+
 using namespace vv;
 using namespace ast;
 using namespace parser;
@@ -115,6 +121,10 @@ parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
   parse_cond_pair(token_string tokens);
 parse_res<std::pair<symbol, function_definition>>
   parse_method_definition(token_string tokens);
+
+parse_res<std::pair<std::vector<symbol>, boost::optional<symbol>>>
+  parse_arglist(token_string tokens);
+
 // }}}
 // Individual parsing functions {{{
 
@@ -549,22 +559,18 @@ parse_res<> parse_function_definition(token_string tokens)
   if (tokens.empty() || tokens.front().which != token::type::open_paren)
     return {};
 
-  auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
-  {
-    return parse_comma_separated_list(tokens, [](auto t)
-    {
-      if (t.front().which == token::type::close_paren)
-        return parse_res<symbol>{};
-      return parse_res<symbol>{{ t.front().str, t.subvec(1) }}; // argname
-    });
-  }, token::type::open_paren, token::type::close_paren);
-  auto args = move(arg_res->first);
+  auto arg_res = parse_bracketed_subexpr(tokens,
+                                         parse_arglist,
+                                         token::type::open_paren,
+                                         token::type::close_paren);
+  auto args = move(arg_res->first.first);
+  auto vararg = arg_res->first.second; // just a symbol, no need for move
   tokens = arg_res->second;
 
   std::unique_ptr<ast::expression> body;
   tie(body, tokens) = *parse_expression(ltrim_if(tokens.subvec(1), newline_test)); // '='
 
-  return {{ std::make_unique<function_definition>( name, move(body), args ),
+  return {{ std::make_unique<function_definition>( name, move(body), args, vararg ),
             tokens }};
 }
 
@@ -936,6 +942,31 @@ parse_res<std::pair<symbol, function_definition>>
 
   return {{ std::make_pair( name,function_definition{ {}, move(body), args} ),
             tokens}};
+}
+
+// XXX: this code will look *really* wonky, by
+parse_res<std::pair<std::vector<symbol>, boost::optional<symbol>>>
+  parse_arglist(token_string tokens)
+{
+  if (tokens.empty())
+    return {};
+
+  std::vector<symbol> args;
+  while (tokens.front().which == token::type::name) {
+    args.push_back(tokens.front().str);
+    tokens = ltrim_if(tokens.subvec(1), newline_test); // arg
+    if (tokens.empty() || tokens.front().which != token::type::comma)
+      return {{ {move(args), {}}, tokens }};
+    tokens = ltrim_if(tokens.subvec(1), newline_test); // ','
+  }
+  boost::optional<symbol> vararg;
+  if (!tokens.empty() && tokens.front().which == token::type::open_bracket) {
+    tokens = ltrim_if(tokens.subvec(1), newline_test); // '['
+    vararg = tokens.front().str;
+    tokens = ltrim_if(tokens.subvec(1), newline_test); // 'argname'
+    tokens = ltrim_if(tokens.subvec(1), newline_test); // ']'
+  }
+  return {{ {move(args), vararg}, tokens }};
 }
 
 // }}}

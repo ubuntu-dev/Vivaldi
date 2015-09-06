@@ -118,7 +118,10 @@ void vm::machine::pflt(double val)
 
 void vm::machine::pfn(const function_t& val)
 {
-  push(gc::alloc<value::function>(val.argc, val.body, frame().env_ptr()));
+  push(gc::alloc<value::function>(val.argc,
+                                  val.body,
+                                  frame().env_ptr(),
+                                  val.takes_varargs));
 }
 
 void vm::machine::pint(int val)
@@ -228,13 +231,10 @@ void vm::machine::write(const symbol sym)
 
 void vm::machine::let(const symbol sym)
 {
-  if (frame().env().members.count(sym)) {
-    except(builtin::type::redeclaration_error,
-                     message::already_exists(sym));
-  }
-  else {
+  if (frame().env().members.count(sym))
+    except(builtin::type::redeclaration_error, message::already_exists(sym));
+  else
     frame().env().members.insert(sym, top());
-  }
 }
 
 void vm::machine::self()
@@ -250,6 +250,13 @@ void vm::machine::self()
 void vm::machine::arg(const int idx)
 {
   push(*(begin(m_stack) + frame().frame_ptr - idx));
+}
+
+void vm::machine::varg(const int idx)
+{
+  for (auto i = idx; i != static_cast<int>(frame().argc); ++i)
+    arg(i);
+  parr(frame().argc - idx);
 }
 
 void vm::machine::method(const symbol sym)
@@ -355,21 +362,28 @@ void vm::machine::call(const int argc)
 
     }
     else if (func.tag() == tag::builtin_function) {
+      const auto takes_varargs = value::get<value::builtin_function>(func).takes_varargs;
       const auto expected = value::get<value::builtin_function>(func).argc;
-      if (expected != static_cast<unsigned>(argc)) {
+      if (static_cast<unsigned>(argc) < expected ||
+          (!takes_varargs && expected != static_cast<unsigned>(argc))) {
         except(builtin::type::range_error,
                         message::wrong_argc(expected, argc));
         return;
       }
-      m_call_stack.push_back({body_shim, {}, m_transient_self, expected, m_stack.size() - 2});
+      m_call_stack.emplace_back(body_shim,
+                                gc::managed_ptr{},
+                                m_transient_self,
+                                static_cast<unsigned>(argc),
+                                m_stack.size() - 2);
       frame().caller = func;
       m_stack.pop_back();
       push(value::get<value::builtin_function>(func).body(*this));
 
     }
     else { // VV function
+      const auto takes_varargs = value::get<value::function>(func).takes_varargs;
       const auto expected = value::get<value::function>(func).argc;
-      if (expected != argc) {
+      if (argc < expected || (!takes_varargs && expected != argc)) {
         except(builtin::type::range_error,
                         message::wrong_argc(expected, argc));
         return;
@@ -377,7 +391,7 @@ void vm::machine::call(const int argc)
       m_call_stack.emplace_back(value::get<value::function>(func).body,
                                 value::get<value::function>(func).enclosure,
                                 m_transient_self,
-                                expected,
+                                static_cast<unsigned>(argc),
                                 m_stack.size() - 2);
       frame().caller = func;
       m_stack.pop_back();
@@ -745,6 +759,7 @@ void vm::machine::run_single_command(const vm::command& command)
 
   case instruction::self:   self();                  break;
   case instruction::arg:    this->arg(arg.as_int()); break;
+  case instruction::varg:   varg(arg.as_int());      break;
   case instruction::method: method(arg.as_sym());    break;
   case instruction::readm:  readm(arg.as_sym());     break;
   case instruction::writem: writem(arg.as_sym());    break;

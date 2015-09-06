@@ -16,6 +16,7 @@ struct command;
 struct function_t {
   int argc;
   std::vector<command> body;
+  bool takes_varargs{false};
 };
 
 // Simple struct for passing around Vivaldi types.
@@ -65,6 +66,9 @@ enum class instruction {
   self,
   // retrieves the nth passed argument, where n is the provided integer.
   arg,
+  // makes an array out of all arguments past provider index n, and places it on
+  // top of the stack
+  varg,
   // reads a method onto the stock, replacing the current top value.
   method,
   // reads a member onto the stack, replacing the current top value.
