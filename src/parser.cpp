@@ -936,7 +936,6 @@ parse_res<std::pair<symbol, function_definition>>
             tokens}};
 }
 
-// XXX: this code will look *really* wonky, by
 parse_res<std::pair<std::vector<symbol>, boost::optional<symbol>>>
   parse_arglist(token_string tokens)
 {
