@@ -583,22 +583,18 @@ parse_res<> parse_lambda(token_string tokens)
   if (tokens.empty() || tokens.front().which != token::type::open_paren)
     return {};
 
-  auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
-  {
-    return parse_comma_separated_list(tokens, [](auto t)
-    {
-      if (t.front().which == token::type::close_paren)
-        return parse_res<symbol>{};
-      return parse_res<symbol>{{ t.front().str, t.subvec(1) }}; // arg name
-    });
-  }, token::type::open_paren, token::type::close_paren);
-  auto args = move(arg_res->first);
+  auto arg_res = parse_bracketed_subexpr(tokens,
+                                         parse_arglist,
+                                         token::type::open_paren,
+                                         token::type::close_paren);
+  auto args = move(arg_res->first.first);
+  auto vararg = arg_res->first.second; // just a symbol, no need for move
   tokens = arg_res->second;
 
   std::unique_ptr<ast::expression> body;
   tie(body, tokens) = *parse_expression(ltrim_if(tokens.subvec(1), newline_test)); // ':'
 
-  return {{ std::make_unique<function_definition>( symbol{}, move(body), args ),
+  return {{ std::make_unique<function_definition>( symbol{}, move(body), args, vararg ),
             tokens }};
 }
 
