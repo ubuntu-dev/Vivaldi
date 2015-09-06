@@ -324,6 +324,14 @@ Vivaldi code):
 
     let three?(x) = x == 3
 
+If the last argument in a function definition is placed in [brackets], it puts
+any extra arguments passed to the function in an Array:
+
+    let takes_two_or_more_args(a, b, [c]) = c
+    takes_two_or_more_args(1, 2) // []
+    takes_two_or_more_args(1, 2, 3) // [3]
+    takes_two_or_more_args(1, 2, 3, 4, 5) // [3, 4, 5]
+
 A lambda is like a function, but with somewhat different syntax:
 
     fn (<arguments>): <body>
