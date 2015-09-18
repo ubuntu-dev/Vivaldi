@@ -684,7 +684,9 @@ void init_function()
   // Have to allocate function after defining type, since the opt_binop
   // constructor references builtin::type::function.
   const auto bind = gc::alloc<value::opt_binop>( function::bind );
+  const auto apply = gc::alloc<value::builtin_function>( function::apply, size_t{1} );
   value::get<value::type>(builtin::type::function).methods[{"bind"}] = bind;
+  value::get<value::type>(builtin::type::function).methods[{"apply"}] = apply;
 
 }
 

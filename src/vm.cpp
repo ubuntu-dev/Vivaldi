@@ -254,6 +254,7 @@ void vm::machine::arg(const int idx)
 
 void vm::machine::varg(const int idx)
 {
+  // TODO: make less stupid
   for (auto i = idx; i != static_cast<int>(frame().argc); ++i)
     arg(i);
   parr(frame().argc - idx);
@@ -270,7 +271,7 @@ void vm::machine::method(const symbol sym)
   }
   else {
     except(builtin::type::name_error,
-                    message::has_no_method(m_transient_self, sym));
+           message::has_no_method(m_transient_self, sym));
   }
 }
 
@@ -285,8 +286,7 @@ void vm::machine::readm(const symbol sym)
     push(get_member(self, sym));
   }
   else {
-    except(builtin::type::name_error,
-                    message::has_no_member(self, sym));
+    except(builtin::type::name_error, message::has_no_member(self, sym));
   }
 }
 
@@ -335,8 +335,7 @@ void vm::machine::call(const int argc)
   try {
     if (func.tag() == tag::opt_monop) {
       if (argc != 0) {
-        except(builtin::type::range_error,
-                        message::wrong_argc(0, argc));
+        except(builtin::type::range_error, message::wrong_argc(0, argc));
         return;
       }
 
@@ -349,8 +348,7 @@ void vm::machine::call(const int argc)
     }
     else if (func.tag() == tag::opt_binop) {
       if (argc != 1) {
-        except(builtin::type::range_error,
-                        message::wrong_argc(1, argc));
+        except(builtin::type::range_error, message::wrong_argc(1, argc));
         return;
       }
       m_call_stack.push_back({body_shim, {}, {}, 1, m_stack.size() - 2});
@@ -366,8 +364,7 @@ void vm::machine::call(const int argc)
       const auto expected = value::get<value::builtin_function>(func).argc;
       if (static_cast<unsigned>(argc) < expected ||
           (!takes_varargs && expected != static_cast<unsigned>(argc))) {
-        except(builtin::type::range_error,
-                        message::wrong_argc(expected, argc));
+        except(builtin::type::range_error, message::wrong_argc(expected, argc));
         return;
       }
       m_call_stack.emplace_back(body_shim,
@@ -384,8 +381,7 @@ void vm::machine::call(const int argc)
       const auto takes_varargs = value::get<value::function>(func).takes_varargs;
       const auto expected = value::get<value::function>(func).argc;
       if (argc < expected || (!takes_varargs && expected != argc)) {
-        except(builtin::type::range_error,
-                        message::wrong_argc(expected, argc));
+        except(builtin::type::range_error, message::wrong_argc(expected, argc));
         return;
       }
       m_call_stack.emplace_back(value::get<value::function>(func).body,
@@ -420,8 +416,7 @@ void vm::machine::pobj(const int argc)
   // nullptr
   if (!top()) {
     m_stack.pop_back();
-    except(builtin::type::type_error,
-                    message::nonconstructible(ctor_type));
+    except(builtin::type::type_error, message::nonconstructible(ctor_type));
     return;
   }
   static_cast<value::basic_object*>(top().get())->type = type;
@@ -598,8 +593,7 @@ void vm::machine::opt_tmpm(const symbol sym)
     push(method);
   }
   else {
-    except(builtin::type::name_error,
-                    message::has_no_method(m_transient_self, sym));
+    except(builtin::type::name_error, message::has_no_method(m_transient_self, sym));
   }
 }
 

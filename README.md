@@ -380,6 +380,12 @@ wrapped in a block):
 
        [1, 2, 3, 4, 5]->filter(fn (x): x % 2)
 
+* `apply(x)` Calls `self` with each of the objects in Array `x` as an argument:
+
+        let foo(a, b, c) = (a + b) / c
+        foo(1, 3, 2) // 2
+        foo.apply([1, 3, 2]) // 2
+
 #### Types ####
 Everything in Vivaldi is an object, and has
 

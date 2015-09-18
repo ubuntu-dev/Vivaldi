@@ -11,6 +11,8 @@ namespace function {
 
 gc::managed_ptr bind(gc::managed_ptr self, gc::managed_ptr arg);
 
+gc::managed_ptr apply(vm::machine& vm);
+
 }
 
 }
