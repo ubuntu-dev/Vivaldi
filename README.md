@@ -115,7 +115,7 @@ Simple, immutable string class. Currently supports:
 * `size()`&mdash; returns the size of the string.
 * `at(x)`&mdash; Returns the Char at index `x` in `self` (unless `x` is either
   negative or past the end of `self`, which results in an exception).
-* `add(x)`&mdash; Returns a string formed form concatenating `self` and the String
+* `add(x)`&mdash; Returns a string formed from concatenating `self` and the String
   `x`, leaving `self` unchanged.
 * `times(x)`&mdash; Returns a string formed by concatenating `x` copies of `self`,
   leaving `self` unchanged.
@@ -378,7 +378,7 @@ wrapped in a block):
   have any relation to the C meaning; think more like Clojure). This can read
   more naturally for some range-based functions:
 
-       [1, 2, 3, 4, 5]->filter(fn (x): x % 2)
+       [1, 2, 3, 4, 5]->filter(fn (x): x % 2 == 0)
 
 * `apply(x)` Calls `self` with each of the objects in Array `x` as an argument:
 
@@ -460,9 +460,9 @@ type supports three methods:
 
 A range is even simpler; it only needs to support one method, `start()`, that
 returns an iterator pointing to its first element. In the standard library, both
-`Array` and `String` are ranges, and `ArrayIterator` and `String` are their
-corresponding iterators. `Range` is both a range (natch!) and an iterator&mdash;
-calling `start()` on a range just returns a copy of itself.
+`Array` and `String` are ranges, and `ArrayIterator` and `StringIterator` are
+their corresponding iterators. `Range` is both a range (natch!) and an
+iterator&mdash; calling `start()` on a range just returns a copy of itself.
 
 Iterators are used to implement for loops:
 
@@ -585,8 +585,8 @@ are expressions.
 #### Operators ####
 
 Vivaldi operators, aside from `&&`, `||`, `to` (which is syntax sugar for
-Range), and `=` (which isn't actually an operator at all&mdash; it just looks like
-one), are all just syntax sugar for method calls. Here they are in order of
+Range), and `=` (which isn't actually an operator at all&mdash; it just looks
+like one), are all just syntax sugar for method calls. Here they are in order of
 precedence (basically C precedence, with the bitwise mistake fixed and `->`,
 `**`, and `to` inserted where appropriate):
 
@@ -633,7 +633,7 @@ In addition to the above types, Vivaldi has a select few miscellaneous builtins:
 
 * `gets()`&mdash; returns a String containing a single line of user input.
 
-* `argv`&mdash; when run from a file, contains an Array of all commend-line
+* `argv`&mdash; when run from a file, contains an Array of all command-line
   arguments as Strings. The executable and script names are left off; `argv[0]`
   is the first command-line argument explicitly provided by the user:
 

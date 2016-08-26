@@ -7,5 +7,5 @@ std::vector<vv::vm::command> vv::ast::expression::code() const
 {
   auto vec = generate();
   optimize(vec);
-  return move(vec);
+  return vec;
 }

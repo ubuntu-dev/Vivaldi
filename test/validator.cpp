@@ -8,7 +8,7 @@ using namespace std::string_literals;
 
 void check_if_valid(const char* i)
 {
-  BOOST_MESSAGE('"' << vv::escape_chars(i) << '"');
+  BOOST_TEST_MESSAGE('"' << vv::escape_chars(i) << '"');
   std::stringstream str{};
   str << i;
   const auto tokenized = vv::parser::tokenize(str);

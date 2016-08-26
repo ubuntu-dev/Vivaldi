@@ -1,26 +1,26 @@
 <toplevel> ::= <expression>
              | <expression> <division> <toplevel>
 
-<expression> ::= <prec12>
+<expression> ::= <prec13>
 
 <nonop_expression> ::= <array_literal>
-                       | <assignment>
-                       | <block>
-                       | <cond_statement>
-                       | <except>
-                       | <for_loop>
-                       | <function_definition>
-                       | <literal>
-                       | <new_obj>
-                       | <require>
-                       | <return>
-                       | <try_catch>
-                       | <type_definition>
-                       | <variable_declaration>
-                       | <variable>
-                       | <member_variable>
-                       | <member_variable_assignment>
-                       | <while_loop>
+                     | <assignment>
+                     | <block>
+                     | <cond_statement>
+                     | <except>
+                     | <for_loop>
+                     | <function_definition>
+                     | <literal>
+                     | <new_obj>
+                     | <require>
+                     | <return>
+                     | <try_catch>
+                     | <type_definition>
+                     | <variable_declaration>
+                     | <variable>
+                     | <member_variable>
+                     | <member_variable_assignment>
+                     | <while_loop>
 
 <prec0> ::= <nonop_expression>
           | <prec0> '.' <variable>

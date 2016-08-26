@@ -2,7 +2,6 @@
 #define VV_UTILS_VECTOR_REF_H
 
 #include <vector>
-#include <boost/utility/string_ref.hpp>
 
 namespace vv {
 

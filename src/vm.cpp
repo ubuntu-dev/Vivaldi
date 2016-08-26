@@ -588,6 +588,7 @@ void vm::machine::opt_tmpm(const symbol sym)
 {
   m_transient_self = top();
   m_stack.pop_back();
+  // pointer, so get by value
   const auto method = get_method(m_transient_self.type(), sym);
   if (method) {
     push(method);

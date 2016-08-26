@@ -3,7 +3,7 @@
 
 #include "vm/call_frame.h"
 
-#include <boost/optional/optional.hpp>
+#include <boost/optional.hpp>
 #include <string>
 
 namespace vv {

@@ -2,13 +2,16 @@ cmake_minimum_required (VERSION 3.0)
 project (vivaldi)
 
 set(CMAKE_CXX_COMPILER "clang++")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversion -O3 -std=c++1y -stdlib=libc++ -ggdb")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversion -O3 -std=c++14 -stdlib=libc++")
 set(CMAKE_EXE_LINKER_FLAGS "-rdynamic -flat_namespace -lc++abi")
 
 add_subdirectory(src)
 add_subdirectory(test)
 
-include_directories(${vivaldi_SOURCE_DIR}/src)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+
+include_directories(${vivaldi_SOURCE_DIR}/src
+                    SYSTEM ${Boost_INCLUDE_DIRS})
 
 add_executable(vivaldi
   ${vivaldi_SOURCE_DIR}/src/main.cpp)

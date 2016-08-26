@@ -216,6 +216,9 @@ void call_dtor(T& obj)
 
 }
 
+// TODO: figure out why this is taking up any runtime since it's the least
+// computationally expensive thing imaginable. Maybe it's just because of the
+// lack of inlining in debug builds?
 void vv::destroy(gc::managed_ptr obj)
 {
   switch (obj.tag()) {
@@ -287,6 +290,7 @@ void vv::mark_members(gc::managed_ptr object)
   }
 }
 
+// TODO: optimize this
 gc::managed_ptr vv::get_method(gc::managed_ptr type, vv::symbol name)
 {
   for (auto i = type; true; i = value::get<value::type>(i).parent) {

@@ -8,6 +8,7 @@
 #include "vm.h"
 
 #include <boost/filesystem.hpp>
+#include <boost/utility/string_ref.hpp>
 
 #include <dlfcn.h>
 
