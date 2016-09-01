@@ -2,8 +2,6 @@
 
 #include "gc/managed_ptr.h"
 
-#include <boost/optional/optional.hpp>
-
 using namespace vv;
 using namespace gc;
 
@@ -52,9 +50,9 @@ I circular_find(const I& begin, const I& start, const I& end, const P& pred)
 }
 
 template <typename V>
-boost::optional<char*> get_allocated_space(V& blk,
-                                            typename V::iterator& cur_pos,
-                                            const size_t sz)
+char* get_allocated_space(V& blk,
+                         typename V::iterator& cur_pos,
+                         const size_t sz)
 {
   auto it = circular_find(begin(blk), cur_pos, end(blk),
                           [sz](auto blk) { return blk.size >= sz; });
@@ -74,7 +72,7 @@ boost::optional<char*> get_allocated_space(V& blk,
     cur_pos = it;
     return ptr;
   }
-  return {};
+  return nullptr;
 }
 
 }
@@ -82,26 +80,22 @@ boost::optional<char*> get_allocated_space(V& blk,
 gc::managed_ptr block_list::allocate(const size_t size)
 {
   for (auto i = m_cur_pos; i != end(m_list); ++i) {
-    const auto ptr = get_allocated_space((*i)->free_list,
-                                         (*i)->free_pos,
-                                         size);
+    const auto ptr = get_allocated_space((*i)->free_list, (*i)->free_pos, size);
     if (ptr) {
       m_cur_pos = i;
       const auto block_idx = i - begin(m_list);
-      const auto block_os = *ptr - (*i)->block.data();
+      const auto block_os = ptr - (*i)->block.data();
       return { static_cast<uint32_t>(block_idx),
                static_cast<uint16_t>(block_os),
                tag::nil, 1 };
     }
   }
   for (auto i = begin(m_list); i != m_cur_pos; ++i) {
-    const auto ptr = get_allocated_space((*i)->free_list,
-                                         (*i)->free_pos,
-                                         size);
+    const auto ptr = get_allocated_space((*i)->free_list, (*i)->free_pos, size);
     if (ptr) {
       m_cur_pos = i;
       const auto block_idx = i - begin(m_list);
-      const auto block_os = *ptr - (*i)->block.data();
+      const auto block_os = ptr - (*i)->block.data();
       return { static_cast<uint32_t>(block_idx),
                static_cast<uint16_t>(block_os),
                tag::nil, 1 };

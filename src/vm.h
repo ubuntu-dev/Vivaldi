@@ -32,7 +32,7 @@ public:
   // GC interface; mark all basic_objects immediately reachable from within the VM.
   void mark();
 
-  // VM Instructions (publicly accessible, since value::builtin_funciton needs
+  // VM Instructions (publicly accessible, since value::builtin_function needs
   // to be able to manipulate the VM). Documentation for all the instructions is
   // in vm/instruction.h.
 

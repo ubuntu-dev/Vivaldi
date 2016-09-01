@@ -804,12 +804,11 @@ namespace {
 std::pair<gc::managed_ptr, vv::symbol> catcher_for(const vm::call_frame& frame,
                                                    gc::managed_ptr exc)
 {
-  const auto obj = builtin::type::object;
+  const auto& obj = builtin::type::object;
   for (auto t = exc.type(); t != obj; t = builtin::custom_type::parent(t)) {
-    if (frame.catchers.count(value::get<value::type>(t).name)) {
-      return { frame.catchers.at(value::get<value::type>(t).name),
-               value::get<value::type>(t).name };
-    }
+    const auto catcher = frame.catchers.find(value::get<value::type>(t).name);
+    if (catcher != end(frame.catchers))
+      return { catcher->second, value::get<value::type>(t).name };
   }
   return {};
 }

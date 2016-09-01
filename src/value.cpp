@@ -258,7 +258,8 @@ bool vv::has_member(gc::managed_ptr object, const symbol sym)
 {
   if (object.tag() == tag::object)
     return value::get<value::object>(object).count(sym);
-  return g_generic_members.count(object) && g_generic_members[object].count(sym);
+  const auto mem = g_generic_members.find(object);
+  return mem != end(g_generic_members) && mem->second.count(sym);
 }
 
 gc::managed_ptr vv::get_member(gc::managed_ptr object, const symbol sym)
@@ -284,9 +285,11 @@ void vv::mark_members(gc::managed_ptr object)
     for (auto i : value::get<value::object>(object))
       gc::mark(i.second);
   }
-  else if (g_generic_members.count(object)) {
-    for (auto i : g_generic_members[object])
-      gc::mark(i.second);
+  else {
+    const auto mem = g_generic_members.find(object);
+    if (mem != end(g_generic_members))
+      for (auto i : mem->second)
+        gc::mark(i.second);
   }
 }
 

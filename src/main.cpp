@@ -53,8 +53,8 @@ int main(int argc, char** argv)
               back_inserter(vv::value::get<vv::value::array>(arg_array)),
               vv::gc::alloc<vv::value::string, std::string>);
 
-    // Actuall run the VM; if an uncaught Vivaldi exception is thrown, print the
-    // error to stderr and exit with status 65
+    // Actually run the VM; if an uncaught Vivaldi exception is thrown, print
+    // the error to stderr and exit with status 65
     try {
       vm.run();
     } catch (vv::vm_error& err) {

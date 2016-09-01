@@ -30,9 +30,10 @@ gc::managed_ptr dictionary::size(gc::managed_ptr self)
 gc::managed_ptr dictionary::at(gc::managed_ptr self, gc::managed_ptr arg)
 {
   auto& dict = value::get<value::dictionary>(self);
-  if (!dict.count(arg))
+  const auto& mem = dict.find(arg);
+  if (mem == end(dict))
     dict[arg] = gc::alloc<value::nil>( );
-  return dict[arg];
+  return mem->second;
 }
 
 gc::managed_ptr dictionary::set_at(vm::machine& vm)
