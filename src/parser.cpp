@@ -164,6 +164,9 @@ parse_res<> parse_operator_expr(token_string tokens,
   return left_res;
 }
 
+// numbers 13 and 12 can't be done as parse_operator_expr calls because && and
+// || aren't method calls, and have a AST type
+
 parse_res<> parse_prec13(token_string tokens)
 {
   auto left_res = parse_prec12(tokens);
@@ -360,9 +363,9 @@ parse_res<> parse_prec0(token_string tokens)
 
   auto expr = move(expr_res->first);
   while (!tokens.empty() && (tokens.front().which == token::type::open_paren
-                        || tokens.front().which == token::type::dot
-                        || tokens.front().which == token::type::arrow
-                        || tokens.front().which == token::type::open_bracket)) {
+                          || tokens.front().which == token::type::dot
+                          || tokens.front().which == token::type::arrow
+                          || tokens.front().which == token::type::open_bracket)) {
     if (tokens.front().which == token::type::open_paren) {
       auto list_res = parse_function_call(tokens);
       auto list = move(list_res->first);

@@ -25,7 +25,7 @@ val_res val_expression(token_string tokens);
 // Low-granularity precedence, since in most cases it doesn't matter
 val_res val_prec2_expression(token_string tokens); // // most infixes
 val_res val_prec1_expression(token_string tokens); // prefixes
-val_res val_prec0_expression(token_string tokens); // postfixes, a.b, a->b
+val_res val_prec0_expression(token_string tokens); // brackets/parens, a.b, a->b
 
 // }}}
 // Complex expression validators {{{

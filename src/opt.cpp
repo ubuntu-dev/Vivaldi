@@ -221,7 +221,7 @@ bool optimize_blocks(std::vector<vm::command>& code)
         --imbalance;
     }
 
-    if (!any_of(i, match, affects_env)) {
+    if (none_of(i, match, affects_env)) {
       changed = true;
 
       i->instr = vm::instruction::noop;

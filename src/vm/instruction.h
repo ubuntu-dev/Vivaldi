@@ -150,7 +150,7 @@ enum class instruction {
 // instruction and, optionally, an argument (either an int, a symbol, a bool,
 // an std::string, a double, a function_t, or a type_t); all these possible
 // values are represented by this class.
-// As a side not, each type in this union is repeated in *quintuplicate*:
+// As a side note, each type in this union is repeated in *quintuplicate*:
 // - ctor
 // - getter
 // - union member
