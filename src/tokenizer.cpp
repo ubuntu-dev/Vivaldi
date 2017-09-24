@@ -227,7 +227,10 @@ tok_res char_token(boost::string_ref line)
 {
   line = line.substr(1);
 
-  if (line.empty() || line[0] == '\n')
+  if (line.empty())
+    return { {token::type::invalid, "\\"}, line };
+
+  if (isspace(line[0]))
     return { {token::type::invalid, "\\"}, line.substr(1) };
 
   if (line.starts_with("nul")) {
