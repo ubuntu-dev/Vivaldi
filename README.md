@@ -245,8 +245,8 @@ from&mdash; which is based on object ID if you derive from Object:
 
 * `init(x)`&mdash; Returns a copy of the Dictionary `x`.
 * `size()`&mdash; Returns the size of `self`.
-* `at(x)`&mdash; Returns the value at key `x`; if no such value exists, inserts (and
-  returns) `nil` at `x`.
+* `at(x)`&mdash; Returns the value at key `x`; if no such value exists, returns
+  `nil` at `x`.
 * `set_at(x, y)`&mdash; Sets the value at key `x` to `y`, returning `y`.
 
 #### Ranges ####

@@ -32,7 +32,7 @@ gc::managed_ptr dictionary::at(gc::managed_ptr self, gc::managed_ptr arg)
   auto& dict = value::get<value::dictionary>(self);
   const auto& mem = dict.find(arg);
   if (mem == end(dict))
-    dict[arg] = gc::alloc<value::nil>( );
+    return gc::alloc<value::nil>( );
   return mem->second;
 }
 
