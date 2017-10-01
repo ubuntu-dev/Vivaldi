@@ -271,6 +271,8 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "a..b",
     "a->->b",
     "a.->b",
+    "a.4",
+    "a.[]",
 
     // Low-prec infix operators
     "foo +",
