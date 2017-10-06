@@ -22,6 +22,7 @@ std::ostream& std::operator<<(std::ostream& stm, const vv::tag tag)
   case vv::tag::builtin_function: return stm << "builtin_function";
   case vv::tag::character: return stm << "character";
   case vv::tag::dictionary: return stm << "dictionary";
+  case vv::tag::exception: return stm << "exception";
   case vv::tag::file: return stm << "file";
   case vv::tag::floating_point: return stm << "floating_point";
   case vv::tag::function: return stm << "function";

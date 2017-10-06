@@ -19,9 +19,10 @@ add_executable(vivaldi
 target_link_libraries(vivaldi vivaldi_lib)
 
 enable_testing()
+add_test(NAME hash_map COMMAND test_hash_map)
+add_test(NAME string_helpers COMMAND test_string_helpers)
 add_test(NAME validator COMMAND test_validator)
 add_test(NAME values COMMAND test_values)
-add_test(NAME string_helpers COMMAND test_string_helpers)
 add_test(NAME vector_ref COMMAND test_vector_ref)
 add_test(NAME vm_instrs COMMAND test_vm_instrs)
 
