@@ -18,7 +18,6 @@ template <typename K, typename V>
 class hash_map {
   struct bucket {
     std::forward_list<std::pair<K, V>> slots;
-    size_t size;
   };
 
 public:
@@ -85,7 +84,8 @@ public:
   size_t size() const
   {
     return accumulate(std::begin(m_buckets), std::end(m_buckets), size_t{},
-                      [](auto sz, const auto& b) { return sz + b.size; });
+                      [](auto sz, const auto& b)
+                        { return sz + distance(std::begin(b.slots), std::end(b.slots)); });
   }
 
   // Returns 1 if hash_map contains an element with key item, and 0 otherwise.
@@ -141,22 +141,22 @@ public:
     // 4. empty; need to allocate space
     if (!empty()) {
       auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
-      const auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
-                                [&](const auto& i) { return i.first == item; });
+      auto sz = 1;
+      auto slot = std::begin(bucket.slots);
+      for (;slot != std::end(bucket.slots) && slot->first != item; ++slot)
+        ++sz;
       if (slot != std::end(bucket.slots)) {
         // Case 1
         slot->second = std::move(val);
       }
-      else if (bucket.size < 6) {
+      else if (sz < 6) {
         // Case 2
-        ++bucket.size;
         bucket.slots.emplace_front(std::move(item), std::move(val));
       }
       else {
         // Case 3
         rehash();
         auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
-        ++nbucket.size;
         nbucket.slots.emplace_front(std::move(item), std::move(val));
       }
     }
@@ -164,7 +164,6 @@ public:
       // Case 4
       m_buckets.resize(3);
       auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
-      ++nbucket.size;
       nbucket.slots.emplace_front(std::move(item), std::move(val));
     }
   }
@@ -182,15 +181,15 @@ public:
     if (!empty()) {
       auto& bucket = m_buckets[s_hash(item) % m_buckets.size()];
 
-      const auto slot = find_if(std::begin(bucket.slots), std::end(bucket.slots),
-                                [&](const auto& i) { return i.first == item; });
-      if (slot != std::end(bucket.slots)) {
+      auto sz = 0;
+      for (auto&& i : bucket.slots) {
         // Case 1
-        return slot->second;
+        if (i.first == item)
+          return i.second;
+        ++sz;
       }
-      else if (bucket.size < 6) {
+      if (sz < 6) {
         // Case 2
-        ++bucket.size;
         bucket.slots.emplace_front(item, V{});
         return bucket.slots.front().second;
       }
@@ -198,7 +197,6 @@ public:
         // Case 3
         rehash();
         auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
-        ++nbucket.size;
         nbucket.slots.emplace_front(item, V{});
         return nbucket.slots.front().second;
       }
@@ -207,7 +205,6 @@ public:
       // Case 4
       m_buckets.resize(3);
       auto& nbucket = m_buckets[s_hash(item) % m_buckets.size()];
-      ++nbucket.size;
       nbucket.slots.emplace_front(item, V{});
       return nbucket.slots.front().second;
     }
@@ -253,13 +250,11 @@ private:
     std::forward_list<std::pair<K, V>> members;
     for (auto& i : m_buckets) {
       members.splice_after(members.before_begin(), std::move(i.slots));
-      i.size = 0;
     }
     m_buckets.resize(m_buckets.size() + 3);
 
     for (auto& i : members) {
       auto& bucket = m_buckets[s_hash(i.first) % m_buckets.size()];
-      ++bucket.size;
       bucket.slots.emplace_front(std::move(i));
     }
   }

@@ -126,7 +126,7 @@ call_result fake_for_loop(vm::machine& vm, const F& inner)
 template <typename F>
 call_result transformed_range(vm::machine& vm, const F& inner)
 {
-  return fake_for_loop(vm, [&](auto& vm, auto transform, auto orig)
+  return fake_for_loop(vm, [&](auto& vm, const auto transform, const auto orig)
   {
     vm.push(orig);
 
@@ -179,7 +179,7 @@ gc::managed_ptr fn_filter(vm::machine& vm)
   vm.parr(0);
   const auto array = vm.top();
 
-  transformed_range(vm, [array](auto item, auto pred)
+  transformed_range(vm, [array](const auto item, const auto pred)
   {
     if (truthy(pred))
       value::get<value::array>(array).push_back(item);
@@ -191,11 +191,18 @@ gc::managed_ptr fn_filter(vm::machine& vm)
 
 gc::managed_ptr fn_map(vm::machine& vm)
 {
-  // Get pointer to empty Array
+  // Get pointer to empty Array; needs to be via VM for GC reasons
   vm.parr(0);
   const auto mapped = vm.top();
 
-  transformed_range(vm, [mapped](auto, auto val)
+  // if orig is an Array, reserve space AOT
+  vm.arg(0);
+  const auto orig = vm.top();
+  vm.pop(1);
+  if (orig.tag() == tag::array)
+    value::get<value::array>(mapped).reserve(value::get<value::array>(orig).size());
+
+  transformed_range(vm, [mapped](const auto, const auto val)
   {
     value::get<value::array>(mapped).push_back(val);
     return false;
@@ -281,26 +288,34 @@ gc::managed_ptr fn_sort(vm::machine& vm)
   vm.arg(0);
   const auto range = vm.top();
   vm.pop(1);
-  const auto iter = call_method(vm, range, sym::start).value;
-  vm.push(iter);
 
-  for (;;) {
+  // If range is an Array, we can just copy it; otherwise we need to do it
+  // through the VM
+  if (range.tag() == tag::array) {
+    value::get<value::array>(array) = value::get<value::array>(range);
+  }
+  else {
+    const auto iter = call_method(vm, range, sym::start).value;
     vm.push(iter);
-    vm.opt_at_end();
-    const auto at_end = vm.top();
-    vm.pop(1);
-    if (truthy(at_end))
-      break;
 
-    vm.push(iter);
-    vm.opt_get();
-    const auto next_item = vm.top();
-    vm.pop(1);
-    value::get<value::array>(array).push_back(next_item);
+    for (;;) {
+      vm.push(iter);
+      vm.opt_at_end();
+      const auto at_end = vm.top();
+      vm.pop(1);
+      if (truthy(at_end))
+        break;
 
-    vm.push(iter);
-    vm.opt_incr();
-    vm.pop(1);
+      vm.push(iter);
+      vm.opt_get();
+      const auto next_item = vm.top();
+      vm.pop(1);
+      value::get<value::array>(array).push_back(next_item);
+
+      vm.push(iter);
+      vm.opt_incr();
+      vm.pop(1);
+    }
   }
 
   std::sort(begin(value::get<value::array>(array)),
@@ -333,11 +348,20 @@ gc::managed_ptr fn_reverse(vm::machine& vm)
   // Get iterator from range
   vm.arg(0);
   const auto range = vm.top();
+
+  // if range is an Array, we can just copy it and skip everything else
+  if (range.tag() == tag::array) {
+    vm.parr(0);
+    const auto arr = vm.top();
+    value::get<value::array>(arr) = value::get<value::array>(range);
+    reverse(begin(value::get<value::array>(arr)), end(value::get<value::array>(arr)));
+    return arr;
+  }
+
   const auto iter = call_method(vm, range, sym::start).value;
 
   vm.parr(0);
   const auto arr = vm.top();
-
   for (;;) {
     vm.push(iter);
     vm.opt_at_end();
