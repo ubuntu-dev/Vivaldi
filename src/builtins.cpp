@@ -199,7 +199,7 @@ gc::managed_ptr fn_map(vm::machine& vm)
   vm.arg(0);
   const auto orig = vm.top();
   vm.pop(1);
-  if (orig.tag() == tag::array)
+  if (orig.type() == builtin::type::array)
     value::get<value::array>(mapped).reserve(value::get<value::array>(orig).size());
 
   transformed_range(vm, [mapped](const auto, const auto val)
@@ -291,7 +291,7 @@ gc::managed_ptr fn_sort(vm::machine& vm)
 
   // If range is an Array, we can just copy it; otherwise we need to do it
   // through the VM
-  if (range.tag() == tag::array) {
+  if (range.type() == builtin::type::array) {
     value::get<value::array>(array) = value::get<value::array>(range);
   }
   else {
@@ -350,7 +350,7 @@ gc::managed_ptr fn_reverse(vm::machine& vm)
   const auto range = vm.top();
 
   // if range is an Array, we can just copy it and skip everything else
-  if (range.tag() == tag::array) {
+  if (range.type() == builtin::type::array) {
     vm.parr(0);
     const auto arr = vm.top();
     value::get<value::array>(arr) = value::get<value::array>(range);
