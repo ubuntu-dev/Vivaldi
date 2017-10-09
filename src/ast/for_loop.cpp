@@ -1,5 +1,6 @@
 #include "for_loop.h"
 
+#include "value.h"
 #include "vm/instruction.h"
 
 using namespace vv;
@@ -19,11 +20,11 @@ std::vector<vm::command> ast::for_loop::generate() const
   vec.emplace_back(vm::instruction::method, symbol{"start"});
   vec.emplace_back(vm::instruction::call, 0);
 
-  const auto test_idx = static_cast<int>(vec.size() - 1);
+  const auto test_idx = static_cast<value::integer>(vec.size() - 1);
   vec.emplace_back(vm::instruction::dup);
   vec.emplace_back(vm::instruction::opt_at_end);
   vec.emplace_back(vm::instruction::jt);
-  const auto jmp_to_end_idx = static_cast<int>(vec.size() - 1);
+  const auto jmp_to_end_idx = static_cast<value::integer>(vec.size() - 1);
 
   vec.emplace_back(vm::instruction::eblk); // enter new scope for iterator var
   vec.emplace_back(vm::instruction::pop, 1); // clear result of at_end test
@@ -42,9 +43,9 @@ std::vector<vm::command> ast::for_loop::generate() const
   vec.emplace_back(vm::instruction::pop, 1); // clear garbage returned by incr
 
   vec.emplace_back(vm::instruction::jmp);
-  const auto jmp_back_idx = static_cast<int>(vec.size() - 1);
+  const auto jmp_back_idx = static_cast<value::integer>(vec.size() - 1);
 
-  const auto end_idx = static_cast<int>(vec.size() - 1);
+  const auto end_idx = static_cast<value::integer>(vec.size() - 1);
   vec.emplace_back(vm::instruction::pop, 2); // clear iterator and at_end result
   vec.emplace_back(vm::instruction::pnil);
 

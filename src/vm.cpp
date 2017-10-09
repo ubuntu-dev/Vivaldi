@@ -124,7 +124,7 @@ void vm::machine::pfn(const function_t& val)
                                   val.takes_varargs));
 }
 
-void vm::machine::pint(int val)
+void vm::machine::pint(value::integer val)
 {
   push(gc::alloc<value::integer>( val ));
 }
@@ -600,22 +600,22 @@ void vm::machine::opt_tmpm(const symbol sym)
 
 void vm::machine::opt_add()
 {
-  int_optimization(*this, std::plus<int>{}, builtin::sym::add);
+  int_optimization(*this, std::plus<value::integer>{}, builtin::sym::add);
 }
 
 void vm::machine::opt_sub()
 {
-  int_optimization(*this, std::minus<int>{}, builtin::sym::subtract);
+  int_optimization(*this, std::minus<value::integer>{}, builtin::sym::subtract);
 }
 
 void vm::machine::opt_mul()
 {
-  int_optimization(*this, std::multiplies<int>{}, builtin::sym::times);
+  int_optimization(*this, std::multiplies<value::integer>{}, builtin::sym::times);
 }
 
 void vm::machine::opt_div()
 {
-  int_optimization(*this, std::divides<int>{}, builtin::sym::divides);
+  int_optimization(*this, std::divides<value::integer>{}, builtin::sym::divides);
 }
 
 void vm::machine::opt_not()
@@ -623,7 +623,10 @@ void vm::machine::opt_not()
   const static symbol sym{"not"};
 
   const auto val = top();
-  if (get_method(val.type(), sym) == get_method(builtin::type::object, sym)) {
+  if (val.tag() == tag::boolean ||
+      val.tag() == tag::integer ||
+      val.tag() == tag::nil     ||
+      get_method(val.type(), sym) == get_method(builtin::type::object, sym)) {
     const auto res = !truthy(val);
     m_stack.pop_back();
     pbool(res);

@@ -87,7 +87,7 @@ all override them).
 64-bit floating-point values.
 
 #### Integers ####
-32-bit signed integers. Integer literals can be written in decimal, hexadecimal,
+48-bit signed integers. Integer literals can be written in decimal, hexadecimal,
 octal, or binary:
 
     let eighteen = 18

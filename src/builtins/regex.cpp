@@ -85,7 +85,7 @@ gc::managed_ptr regex::match_index(gc::managed_ptr self, gc::managed_ptr arg)
   auto matched = regex_search(str, results, regex);
   if (!matched)
     return gc::alloc<value::nil>( );
-  return gc::alloc<value::integer>( static_cast<int>(results.position()) );
+  return gc::alloc<value::integer>( static_cast<value::integer>(results.position()) );
 }
 
 // regex_result
@@ -100,11 +100,11 @@ gc::managed_ptr regex_result::at(gc::managed_ptr self, gc::managed_ptr arg)
 gc::managed_ptr regex_result::index(gc::managed_ptr self, gc::managed_ptr arg)
 {
   auto res = get_match_idx(self, arg);
-  return gc::alloc<value::integer>( static_cast<int>(res.first.position(res.second)) );
+  return gc::alloc<value::integer>( static_cast<value::integer>(res.first.position(res.second)) );
 }
 
 gc::managed_ptr regex_result::size(gc::managed_ptr self)
 {
   auto sz = value::get<value::regex_result>(self).val.size();
-  return gc::alloc<value::integer>( static_cast<int>(sz) );
+  return gc::alloc<value::integer>( static_cast<value::integer>(sz) );
 }

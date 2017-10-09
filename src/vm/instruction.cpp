@@ -3,7 +3,7 @@
 using namespace vv;
 
 vm::argument::argument(const argument& other)
-  : m_val   {0},
+  : m_val   {int64_t{}},
     m_which {other.m_which}
 {
   // Just assign normally, unless type has nontrivial destructor/copy ctor, in
@@ -21,7 +21,7 @@ vm::argument::argument(const argument& other)
 }
 
 vm::argument::argument(argument&& other)
-  : m_val   {0},
+  : m_val   {int64_t{}},
     m_which {other.m_which}
 {
   // as per above, this time with std::move for added movement
@@ -73,7 +73,12 @@ vm::argument::~argument()
   }
 }
 
-vm::command::command(instruction new_instr, int new_arg)
+vm::command::command(instruction new_instr, int32_t new_arg)
+  : instr {new_instr},
+    arg   {int64_t{new_arg}}
+{ }
+
+vm::command::command(instruction new_instr, int64_t new_arg)
   : instr {new_instr},
     arg   {new_arg}
 { }

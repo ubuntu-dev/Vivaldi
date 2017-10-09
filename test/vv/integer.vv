@@ -51,7 +51,7 @@ let multiplication() =
 let bitwise() =
   for i in 0 to 1000: do
     assert(i & i == i, "i & i == i")
-    assert(i & 0 == 0, "i & i == i")
+    assert(i & 0 == 0, "i & 0 == 0")
     assert(i | i == i, "i | i == i")
     assert(i | 0 == i, "i | 0 == i")
     assert(i ^ i == 0, "i ^ i == 0")

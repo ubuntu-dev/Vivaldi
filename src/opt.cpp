@@ -1,6 +1,7 @@
 #include "opt.h"
 
 #include "builtins.h"
+#include "value.h"
 #include "vm/instruction.h"
 
 using namespace vv;
@@ -318,7 +319,7 @@ bool optimize_constants(std::vector<vm::command>& code)
       if (a2->instr == vm::instruction::pint && a1->instr == vm::instruction::pint) {
         changed = true;
 
-        int result;
+        value::integer result;
         const auto val1 = a1->arg.as_int();
         const auto val2 = a2->arg.as_int();
         switch (i->instr) {

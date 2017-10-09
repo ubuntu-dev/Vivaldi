@@ -31,7 +31,7 @@ auto fn_int_or_flt_op(const F& op)
                              "Right-hand argument is not an Integer");
     }
 
-    return gc::alloc<value::integer, int>( op(left, value::get<value::integer>(arg)) );
+    return gc::alloc<value::integer>( op(left, value::get<value::integer>(arg)) );
   };
 }
 
@@ -47,7 +47,7 @@ auto fn_integer_op(const F& op)
 
     auto left = value::get<value::integer>(self);
     auto right = value::get<value::integer>(arg);
-    return gc::alloc<value::integer, int>( op(left, right) );
+    return gc::alloc<value::integer>( op(left, right) );
   };
 }
 
@@ -56,7 +56,7 @@ auto fn_integer_monop(const F& op)
 {
   return [=](gc::managed_ptr self)
   {
-    return gc::alloc<value::integer, int>( op(value::get<value::integer>(self)) );
+    return gc::alloc<value::integer, value::integer>( op(value::get<value::integer>(self)) );
   };
 }
 
@@ -166,7 +166,7 @@ gc::managed_ptr integer::pow(gc::managed_ptr self, gc::managed_ptr arg)
 
   if (right < 0)
     return gc::alloc<value::floating_point>( std::pow(left, right) );
-  return gc::alloc<value::integer>( static_cast<int>(std::pow(left, right)) );
+  return gc::alloc<value::integer>( static_cast<value::integer>(std::pow(left, right)) );
 }
 
 gc::managed_ptr integer::lshift(gc::managed_ptr self, gc::managed_ptr arg)

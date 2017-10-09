@@ -1,5 +1,6 @@
 #include "while_loop.h"
 
+#include "value.h"
 #include "vm/instruction.h"
 
 using namespace vv;
@@ -23,9 +24,9 @@ std::vector<vm::command> ast::while_loop::generate() const
     vec.push_back(std::move(i));
 
   vec.emplace_back(vm::instruction::pop, 1); // expr result
-  vec.emplace_back(vm::instruction::jmp, -static_cast<int>(vec.size() + 1));
+  vec.emplace_back(vm::instruction::jmp, -static_cast<value::integer>(vec.size() + 1));
 
-  vec[test_idx].arg = static_cast<int>(vec.size() - test_idx) - 1;
+  vec[test_idx].arg = static_cast<value::integer>(vec.size() - test_idx) - 1;
   vec.emplace_back(vm::instruction::pop, 1); // failed test
   vec.emplace_back(vm::instruction::pnil);
 

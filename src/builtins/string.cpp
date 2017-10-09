@@ -51,7 +51,7 @@ gc::managed_ptr string::init(gc::managed_ptr self, gc::managed_ptr arg)
 gc::managed_ptr string::size(gc::managed_ptr self)
 {
   const auto sz = value::get<value::string>(self).size();
-  return gc::alloc<value::integer>( static_cast<int>(sz) );
+  return gc::alloc<value::integer>( static_cast<value::integer>(sz) );
 }
 
 gc::managed_ptr string::equals(gc::managed_ptr self, gc::managed_ptr arg)
@@ -193,7 +193,7 @@ gc::managed_ptr string::ord(gc::managed_ptr self)
   if (str.empty())
     return throw_exception(type::range_error,
                            "Cannot call ord on an empty string");
-  return gc::alloc<value::integer, int>( str[0] );
+  return gc::alloc<value::integer, value::integer>( str[0] );
 }
 
 gc::managed_ptr string::split(vm::machine& vm)

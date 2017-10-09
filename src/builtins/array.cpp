@@ -26,7 +26,7 @@ gc::managed_ptr array::init(gc::managed_ptr self, gc::managed_ptr arg)
 gc::managed_ptr array::size(gc::managed_ptr self)
 {
   const auto sz = value::get<value::array>(self).size();
-  return gc::alloc<value::integer>( static_cast<int>(sz) );
+  return gc::alloc<value::integer>( static_cast<value::integer>(sz) );
 }
 
 gc::managed_ptr array::append(gc::managed_ptr self, gc::managed_ptr arg)

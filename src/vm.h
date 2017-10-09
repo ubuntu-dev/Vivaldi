@@ -40,7 +40,7 @@ public:
   void pchar(int val);
   void pflt(double val);
   void pfn(const function_t& val);
-  void pint(int val);
+  void pint(value::integer val);
   void pnil();
   void pstr(const std::string& val);
   void psym(symbol val);

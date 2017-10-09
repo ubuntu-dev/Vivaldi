@@ -1,5 +1,6 @@
 #include "array.h"
 
+#include "value.h"
 #include "vm/instruction.h"
 
 using namespace vv;
@@ -17,6 +18,6 @@ std::vector<vm::command> ast::array::generate() const
     copy(begin(arg), end(arg), back_inserter(vec));
   }
 
-  vec.emplace_back(vm::instruction::parr, static_cast<int>(m_members.size()));
+  vec.emplace_back(vm::instruction::parr, static_cast<value::integer>(m_members.size()));
   return vec;
 }

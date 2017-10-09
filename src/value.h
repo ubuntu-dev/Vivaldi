@@ -37,7 +37,7 @@ struct symbol;
 struct type;
 using boolean = bool;
 using character = char;
-using integer = int32_t;
+using integer = int64_t;
 using nil = void;
 
 template <typename T>
@@ -81,7 +81,7 @@ inline result_type<character>::type get<character>(gc::managed_ptr ptr)
 template <>
 inline result_type<integer>::type get<integer>(gc::managed_ptr ptr)
 {
-  return static_cast<int>(ptr.m_block);
+  return (static_cast<int64_t>(static_cast<int32_t>(ptr.m_block)) << 16) | static_cast<int64_t>(ptr.m_offset);
 }
 
 }

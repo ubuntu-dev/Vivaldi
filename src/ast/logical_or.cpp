@@ -1,5 +1,6 @@
 #include "logical_or.h"
 
+#include "value.h"
 #include "vm/instruction.h"
 
 using namespace vv;
@@ -35,6 +36,6 @@ std::vector<vm::command> ast::logical_or::generate() const
   vec.emplace_back(vm::instruction::pbool, true);
 
   const auto false_idx = vec.size() - 1;
-  vec[jmp_to_false_idx].arg = static_cast<int>(false_idx - jmp_to_false_idx);
+  vec[jmp_to_false_idx].arg = static_cast<value::integer>(false_idx - jmp_to_false_idx);
   return vec;
 }

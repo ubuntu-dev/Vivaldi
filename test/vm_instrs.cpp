@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(check_parr)
 BOOST_AUTO_TEST_CASE(check_read)
 {
   vv::vm::call_frame frame{};
-  frame.env().members[vv::symbol{"foo"}] = vv::gc::alloc<vv::value::integer>(1);
+  frame.env().members[vv::symbol{"foo"}] = vv::gc::alloc<vv::value::integer>(vv::value::integer{1});
   vv::vm::machine vm{std::move(frame)};
   vm.read(vv::symbol{"foo"});
   const auto foo = vm.top();
@@ -160,7 +160,7 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 {
   vv::builtin::init();
 
-  std::array<int32_t, 1002> ints;
+  std::array<int64_t, 1002> ints;
   ints[0] = std::numeric_limits<int32_t>::min();
   ints[1] = std::numeric_limits<int32_t>::max();
   std::iota(begin(ints) + 2, end(ints), -500);
@@ -180,7 +180,7 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
   doubles[2] = 0.125;
   std::iota(begin(doubles) + 3, end(doubles), -500.0);
 
-  std::array<int32_t, 1002> argcs;
+  std::array<int64_t, 1002> argcs;
   argcs[0] = std::numeric_limits<int32_t>::min();
   argcs[1] = std::numeric_limits<int32_t>::max();
   std::iota(begin(argcs) + 2, end(argcs), -500);

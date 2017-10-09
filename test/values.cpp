@@ -12,7 +12,7 @@
 
 #include <numeric>
 
-void check_int(const int orig)
+void check_int(const vv::value::integer orig)
 {
   const auto ptr = vv::gc::alloc<vv::value::integer>( orig );
   BOOST_CHECK_EQUAL(ptr.tag(), vv::tag::integer);
@@ -23,7 +23,7 @@ void check_int(const int orig)
   BOOST_CHECK_EQUAL(orig, val);
 }
 
-void check_bool(const bool orig)
+void check_bool(const vv::value::boolean orig)
 {
   const auto ptr = vv::gc::alloc<vv::value::boolean>( orig );
   BOOST_CHECK_EQUAL(ptr.tag(), vv::tag::boolean);
@@ -85,7 +85,7 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 {
   vv::builtin::init();
 
-  std::array<int32_t, 1002> ints;
+  std::array<int64_t, 1002> ints;
   ints[0] = std::numeric_limits<int32_t>::min();
   ints[1] = std::numeric_limits<int32_t>::max();
   std::iota(begin(ints) + 2, end(ints), -500);

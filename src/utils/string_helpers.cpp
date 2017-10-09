@@ -9,7 +9,7 @@ boost::string_ref vv::ltrim(boost::string_ref str)
   return str;
 }
 
-int vv::to_int(const std::string& str)
+vv::value::integer vv::to_int(const std::string& str)
 {
   if (str.front() == '0' && str.size() > 1) {
     switch (str[1]) {

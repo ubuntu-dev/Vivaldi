@@ -160,14 +160,14 @@ enum class instruction {
 // bottleneck, so here we are.
 class argument {
 public:
-  argument()                       : m_val{0},   m_which{arg_type::nil} { }
-  argument(int num)                : m_val{num}, m_which{arg_type::num} { }
-  argument(symbol sym)             : m_val{sym}, m_which{arg_type::sym} { }
-  argument(bool bol)               : m_val{bol}, m_which{arg_type::bol} { }
-  argument(const std::string& str) : m_val{str}, m_which{arg_type::str} { }
-  argument(double flt)             : m_val{flt}, m_which{arg_type::flt} { }
-  argument(const function_t& fnc)  : m_val{fnc}, m_which{arg_type::fnc} { }
-  argument(const type_t& typ)      : m_val{typ}, m_which{arg_type::typ} { }
+  argument()                       : m_val{false}, m_which{arg_type::nil} { }
+  argument(int64_t num)            : m_val{num},   m_which{arg_type::num} { }
+  argument(symbol sym)             : m_val{sym},   m_which{arg_type::sym} { }
+  argument(bool bol)               : m_val{bol},   m_which{arg_type::bol} { }
+  argument(const std::string& str) : m_val{str},   m_which{arg_type::str} { }
+  argument(double flt)             : m_val{flt},   m_which{arg_type::flt} { }
+  argument(const function_t& fnc)  : m_val{fnc},   m_which{arg_type::fnc} { }
+  argument(const type_t& typ)      : m_val{typ},   m_which{arg_type::typ} { }
 
   argument(const argument& other);
   argument(argument&& other);
@@ -175,7 +175,7 @@ public:
   argument& operator=(const argument& other);
   argument& operator=(argument&& other);
 
-  int                as_int()    const { return m_val.num; }
+  int64_t            as_int()    const { return m_val.num; }
   symbol             as_sym()    const { return m_val.sym; }
   bool               as_bool()   const { return m_val.bol; }
   const std::string& as_str()    const { return m_val.str; }
@@ -187,7 +187,7 @@ public:
 
 private:
   union arg_val {
-    int         num;
+    int64_t     num;
     symbol      sym;
     bool        bol;
     std::string str;
@@ -195,7 +195,7 @@ private:
     function_t  fnc;
     type_t      typ;
 
-    arg_val(int num)                : num{num} { }
+    arg_val(int64_t num)            : num{num} { }
     arg_val(symbol sym)             : sym{sym} { }
     arg_val(bool bol)               : bol{bol} { }
     arg_val(const std::string& str) : str{str} { }
@@ -221,7 +221,8 @@ private:
 // Represents a VM command (instruction + optional arg).
 struct command {
 public:
-  command(instruction instr, int arg);
+  command(instruction instr, int32_t arg);
+  command(instruction instr, int64_t arg);
   command(instruction instr, symbol arg);
   command(instruction instr, bool arg);
   command(instruction instr, const std::string& arg);

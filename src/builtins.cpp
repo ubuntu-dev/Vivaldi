@@ -214,7 +214,7 @@ gc::managed_ptr fn_map(vm::machine& vm)
 
 gc::managed_ptr fn_count(vm::machine& vm)
 {
-  int count{};
+  value::integer count{};
   transformed_range(vm, [&](auto, auto pred)
                            { if (truthy(pred)) ++count; return false; });
   return gc::alloc<value::integer>( count );

@@ -140,7 +140,7 @@ gc::managed_ptr floating_point::greater_equals(gc::managed_ptr self, gc::managed
 gc::managed_ptr floating_point::to_int(gc::managed_ptr self)
 {
   const auto float_val = value::get<value::floating_point>(self);
-  return gc::alloc<value::integer>( static_cast<int32_t>(float_val) );
+  return gc::alloc<value::integer>( static_cast<value::integer>(float_val) );
 }
 
 gc::managed_ptr floating_point::negative(gc::managed_ptr self)

@@ -85,27 +85,33 @@ inline gc::managed_ptr alloc<value::nil>()
 }
 
 template <>
-inline gc::managed_ptr alloc<value::integer, int>(int&& val)
+inline gc::managed_ptr alloc<value::integer, value::integer>(value::integer&& val)
 {
-  return {static_cast<uint32_t>(val), 0, tag::integer, 1};
+  return {static_cast<uint32_t>(val >> 16),
+          static_cast<uint16_t>(val & 0xffff),
+          tag::integer, 1};
 }
 
 template <>
-inline gc::managed_ptr alloc<value::integer, int&>(int& val)
+inline gc::managed_ptr alloc<value::integer, value::integer&>(value::integer& val)
 {
-  return {static_cast<uint32_t>(val), 0, tag::integer, 1};
+  return {static_cast<uint32_t>(val >> 16),
+          static_cast<uint16_t>(val & 0xffff),
+          tag::integer, 1};
 }
 
 template <>
-inline gc::managed_ptr alloc<value::integer, const int&>(const int& val)
+inline gc::managed_ptr alloc<value::integer, const value::integer&>(const value::integer& val)
 {
-  return {static_cast<uint32_t>(val), 0, tag::integer, 1};
+  return {static_cast<uint32_t>(val >> 16),
+          static_cast<uint16_t>(val & 0xffff),
+          tag::integer, 1};
 }
 
 template <>
 inline gc::managed_ptr alloc<value::integer>()
 {
-  return alloc<value::integer, int>(0);
+  return alloc<value::integer, value::integer>(0);
 }
 
 // }}}
