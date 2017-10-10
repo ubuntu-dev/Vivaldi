@@ -62,7 +62,7 @@ vv_symbol_t vv_make_symbol(const char* string)
   return { to_string(symbol{string}).c_str() };
 }
 
-int vv_get_int(vv_object_t obj, int* readinto)
+int vv_get_int(vv_object_t obj, int64_t* readinto)
 {
   if (cast_from(obj).tag() != tag::integer)
     return -1;
@@ -205,7 +205,7 @@ vv_object_t vv_new_file(const char* filename)
   return cast_to(file);
 }
 
-vv_object_t vv_new_int(int val)
+vv_object_t vv_new_int(int64_t val)
 {
   cvm().pint(val);
   return cast_to(cvm().top());

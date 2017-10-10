@@ -429,7 +429,7 @@ xml_node_list_size(vv_object_t self)
 static vv_object_t
 xml_node_list_at(vv_object_t self, vv_object_t index)
 {
-  int idx;
+  int64_t idx;
   int success = vv_get_int(index, &idx);
   if (success == -1) {
     return vv_null;

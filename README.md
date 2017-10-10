@@ -724,7 +724,7 @@ use:
 
 * Any function beginning `vv_new_` will instantiate a new Vivaldi object with
   the passed value. For instance, `vv_new_int(quant)` defines a new Integer with
-  the int value `quant`. On success, they'll return a pointer to the
+  the int64\_t value `quant`. On success, they'll return a pointer to the
   instantiated Vivaldi object; on failure, they'll return `vv_null` (which is
   equal to `0` to simplify error checking).
 
@@ -805,7 +805,7 @@ x_plus_5(void)
   if (arg == vv_null)
     return vv_null;
 
-  int x;
+  int64_t x;
   int success = vv_get_int(arg, &x);
   if (success == -1)
     return vv_null;

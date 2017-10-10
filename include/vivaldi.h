@@ -27,7 +27,7 @@ vv_symbol_t vv_make_symbol(const char* string);
 
 // Access basic types. Each returns 0 on success and -1 on failure.
 
-int vv_get_int(vv_object_t obj, int* readinto);
+int vv_get_int(vv_object_t obj, int64_t* readinto);
 int vv_get_double(vv_object_t obj, double* readinto);
 int vv_get_bool(vv_object_t obj, int* readinto);
 int vv_get_str(vv_object_t obj, const char** readinto);
@@ -70,7 +70,7 @@ extern vv_object_t vv_builtin_type_symbol;
 vv_object_t vv_new_bool(int val);
 vv_object_t vv_new_float(double val);
 vv_object_t vv_new_file(const char* filename);
-vv_object_t vv_new_int(int quant);
+vv_object_t vv_new_int(int64_t quant);
 vv_object_t vv_new_nil(void);
 vv_object_t vv_new_regex(const char* reg);
 vv_object_t vv_new_string(const char* str);

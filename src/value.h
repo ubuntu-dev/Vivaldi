@@ -81,7 +81,11 @@ inline result_type<character>::type get<character>(gc::managed_ptr ptr)
 template <>
 inline result_type<integer>::type get<integer>(gc::managed_ptr ptr)
 {
-  return (static_cast<int64_t>(static_cast<int32_t>(ptr.m_block)) << 16) | static_cast<int64_t>(ptr.m_offset);
+  // first cast m_block to int32_t so the cast to int64_t knows to pad with the
+  // sign bit, not just 0s. m_offset *should* be padded with zeros, so cast
+  // directly from uint16_t to int64_t.
+  return (static_cast<int64_t>(static_cast<int32_t>(ptr.m_block)) << 16) |
+          static_cast<int64_t>(ptr.m_offset);
 }
 
 }
