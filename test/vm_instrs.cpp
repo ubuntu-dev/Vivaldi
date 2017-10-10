@@ -160,10 +160,12 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 {
   vv::builtin::init();
 
-  std::array<int64_t, 1002> ints;
+  std::array<int64_t, 1004> ints;
   ints[0] = std::numeric_limits<int32_t>::min();
   ints[1] = std::numeric_limits<int32_t>::max();
-  std::iota(begin(ints) + 2, end(ints), -500);
+  ints[2] = int64_t{-1} << 47;
+  ints[3] = (int64_t{1} << 47) - 1;
+  std::iota(begin(ints) + 4, end(ints), -500);
 
   boost::unit_test::framework::master_test_suite().add(
     BOOST_PARAM_TEST_CASE(&check_pint, begin(ints), end(ints)));

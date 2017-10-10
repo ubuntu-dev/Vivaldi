@@ -19,7 +19,7 @@ vv::value::integer vv::to_int(const std::string& str)
     }
   }
   if (isdigit(str.front()))
-     return stoi(str);
+     return stoll(str);
   return 0;
 }
 

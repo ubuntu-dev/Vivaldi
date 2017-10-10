@@ -35,10 +35,10 @@ private:
 
 class integer : public expression {
 public:
-  integer(int val) : m_val{val} { }
+  integer(int64_t val) : m_val{val} { }
   std::vector<vm::command> generate() const override;
 private:
-  int m_val;
+  int64_t m_val;
 };
 
 class nil : public expression {

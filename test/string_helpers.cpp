@@ -27,11 +27,13 @@ BOOST_AUTO_TEST_CASE(to_int)
   const auto hex_eighteen = "0x12"s;
   const auto oct_eighteen = "022"s;
   const auto bin_eighteen = "0b10010"s;
+  const auto large = "70000000000"s;
   BOOST_CHECK_EQUAL(vv::to_int(zero), 0);
   BOOST_CHECK_EQUAL(vv::to_int(dec_eighteen), 18);
   BOOST_CHECK_EQUAL(vv::to_int(hex_eighteen), 18);
   BOOST_CHECK_EQUAL(vv::to_int(oct_eighteen), 18);
   BOOST_CHECK_EQUAL(vv::to_int(bin_eighteen), 18);
+  BOOST_CHECK_EQUAL(vv::to_int(large), 70000000000ll);
 }
 
 BOOST_AUTO_TEST_CASE(isnamechar)
