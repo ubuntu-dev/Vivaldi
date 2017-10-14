@@ -176,7 +176,7 @@ void vm::machine::pre(const std::string& val)
   }
 }
 
-void vm::machine::parr(const int size)
+void vm::machine::parr(const value::integer size)
 {
   std::vector<gc::managed_ptr> vec{end(m_stack) - size, end(m_stack)};
   const auto val = gc::alloc<value::array>( move(vec) );
@@ -184,7 +184,7 @@ void vm::machine::parr(const int size)
   push(val);
 }
 
-void vm::machine::pdict(const int size)
+void vm::machine::pdict(const value::integer size)
 {
   value::dictionary::value_type dict;
   for (auto i = end(m_stack) - size; i != end(m_stack); i += 2)
@@ -247,12 +247,12 @@ void vm::machine::self()
   }
 }
 
-void vm::machine::arg(const int idx)
+void vm::machine::arg(const value::integer idx)
 {
   push(*(begin(m_stack) + frame().frame_ptr - idx));
 }
 
-void vm::machine::varg(const int idx)
+void vm::machine::varg(const value::integer idx)
 {
   // TODO: make less stupid
   for (auto i = idx; i != static_cast<int>(frame().argc); ++i)
@@ -301,7 +301,7 @@ void vm::machine::writem(const symbol sym)
   }
 }
 
-void vm::machine::call(const int argc)
+void vm::machine::call(const value::integer argc)
 {
   const static std::array<vm::command, 1> body_shim{{
     { instruction::ret, false }
@@ -398,7 +398,7 @@ void vm::machine::call(const int argc)
   }
 }
 
-void vm::machine::pobj(const int argc)
+void vm::machine::pobj(const value::integer argc)
 {
   if (top().tag() != tag::type) {
     except(builtin::type::type_error, message::construction_type_err);
@@ -419,7 +419,7 @@ void vm::machine::pobj(const int argc)
     except(builtin::type::type_error, message::nonconstructible(ctor_type));
     return;
   }
-  static_cast<value::basic_object*>(top().get())->type = type;
+  top().get()->type = type;
 
   const auto init = get_method(type, {"init"});
   if (init) {
@@ -448,7 +448,7 @@ void vm::machine::dup()
   push(top());
 }
 
-void vm::machine::pop(const int quant)
+void vm::machine::pop(const value::integer quant)
 {
   m_stack.erase(end(m_stack) - quant, end(m_stack));
 }
@@ -496,7 +496,7 @@ void vm::machine::req(const std::string& filename)
     const auto err = read_c_lib(name);
     if (err) {
       except(builtin::type::file_not_found_error,
-                      "Unable to load C extension: " + *err);
+             "Unable to load C extension: " + *err);
       return;
     }
     pnil();
@@ -506,8 +506,7 @@ void vm::machine::req(const std::string& filename)
 
     auto contents = get_file_contents(name, m_req_path);
     if (!contents.successful()) {
-      except(builtin::type::file_not_found_error,
-                      contents.error());
+      except(builtin::type::file_not_found_error, contents.error());
       return;
     }
     contents.result().emplace_back(instruction::pnil);
@@ -517,18 +516,18 @@ void vm::machine::req(const std::string& filename)
   }
 }
 
-void vm::machine::jmp(const int offset)
+void vm::machine::jmp(const value::integer offset)
 {
   frame().instr_ptr = frame().instr_ptr.shifted_by(offset);
 }
 
-void vm::machine::jf(const int offset)
+void vm::machine::jf(const value::integer offset)
 {
   if (!truthy(top()))
     jmp(offset);
 }
 
-void vm::machine::jt(const int offset)
+void vm::machine::jt(const value::integer offset)
 {
   if (truthy(top()))
     jmp(offset);

@@ -48,24 +48,24 @@ public:
 
   void pre(const std::string& val);
 
-  void parr(int size);
-  void pdict(int size);
+  void parr(value::integer size);
+  void pdict(value::integer size);
 
   void read(symbol sym);
   void write(symbol sym);
   void let(symbol sym);
 
   void self();
-  void arg(int idx);
-  void varg(int idx);
+  void arg(value::integer idx);
+  void varg(value::integer idx);
   void method(symbol sym);
   void readm(symbol sym);
   void writem(symbol sym);
-  void call(int args);
-  void pobj(int args);
+  void call(value::integer args);
+  void pobj(value::integer args);
 
   void dup();
-  void pop(int num);
+  void pop(value::integer num);
 
   void eblk();
   void lblk();
@@ -73,9 +73,9 @@ public:
 
   void req(const std::string& file);
 
-  void jmp(int offset);
-  void jf(int offset);
-  void jt(int offset);
+  void jmp(value::integer offset);
+  void jf(value::integer offset);
+  void jt(value::integer offset);
 
   void pushc(symbol type);
   void popc(symbol type);
