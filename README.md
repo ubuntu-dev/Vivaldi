@@ -140,7 +140,7 @@ as an Float.
 * `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a String equal in value
   to `self`, and `false` otherwise (vice versa for `unequal`).
 * `less(x)`, `greater(x)`, `less_equals(x)`, `greater_equals(x)`&mdash; Return
-  the result of the appropriate lexographical comparsion between `self` and
+  the result of the appropriate lexicographical comparison between `self` and
   String `x`.
 
 #### Chars ####
@@ -454,7 +454,7 @@ type supports three methods:
   If it is, the iterator doesn't point to anything valid&mdash; conceptually, it
   works like this:
 
-        { item 0, item 2 ... item n - 1, item n }
+        { item 0, item 1 ... item n - 1, item n }
           ^                                     ^
           start                                 end
 
@@ -561,8 +561,8 @@ Blocks have nested scope:
 
 #### Exceptions ####
 
-Vivaldi exceptions follow a fairly typical heirarchy based on the class
-`Exception`. At the moment the heirarchy is fairly incomplete and undocumented
+Vivaldi exceptions follow a fairly typical hierarchy based on the class
+`Exception`. At the moment the hierarchy is fairly incomplete and undocumented
 (this should be fixed pretty soon).  Otherwise they work pretty much as
 you'd expect:
 
@@ -684,7 +684,7 @@ More to come soon.
         >>> reverse(['foo, 'bar, 'baz])
         => ['baz, 'bar, 'foo]
         >> reverse("foo")
-        => ["o", "o", "f"]
+        => [\o, \o, \f]
 
 More to be added eventually.
 
@@ -715,9 +715,9 @@ use:
   library is loaded by Vivaldi. Define all your custom Vivaldi types, variables,
   and functions here.
 
-* Compile your exension as a shared library with arguments ` -undefined
+* Compile your extension as a shared library with arguments ` -undefined
   dynamic_lookup -shared -fPIC`. The resulting `so` or `dylib` will be available
-  to Vivaldi via `require`. For instance, an exension `example.dylib` can be
+  to Vivaldi via `require`. For instance, an extension `example.dylib` can be
   accessed via `require "example"`.
 
 #### Tips ####
@@ -840,6 +840,6 @@ vv_init_lib(void)
 
 * Add proper Unicode support
 
-* Add better syntastic support for partial application
+* Add better syntactic support for partial application
 
 Any and all contributions, questions, bug reports, and angry rants welcome!
