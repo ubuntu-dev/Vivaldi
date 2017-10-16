@@ -45,6 +45,9 @@ public:
   // providing free space if none exists.
   void expand();
 
+  // Tries to release unused memory.
+  void shrink_to_fit();
+
 private:
 
   void add_new_block();

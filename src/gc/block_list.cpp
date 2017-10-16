@@ -144,6 +144,17 @@ void block_list::expand()
   m_cur_pos = begin(m_list) + size;
 }
 
+void block_list::shrink_to_fit()
+{
+  // Can't defragment without invalidating pointers, unfortunately, so for now
+  // just remove unused blocks.
+  const auto valid_end = remove_if(begin(m_list), end(m_list), [](auto&& i)
+  {
+    return i->free_list.size() == 1 && i->free_list.front().size == i->block.size();
+  });
+  m_list.erase(valid_end, end(m_list));
+}
+
 void block_list::add_new_block()
 {
   auto block = std::make_unique<block_list::block>( );
