@@ -20,7 +20,7 @@ size_t get_argc(gc::managed_ptr fn)
   case tag::opt_binop:        return 1;
   case tag::builtin_function: return value::get<value::builtin_function>(fn).argc;
   case tag::function:         return value::get<value::function>(fn).argc;
-  default: return get_argc(value::get<value::partial_function>(fn).function) - 1;
+  default: return get_argc(value::get<value::partial_function>(fn).function) + 1;
   }
 }
 
