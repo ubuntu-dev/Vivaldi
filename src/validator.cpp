@@ -239,7 +239,7 @@ val_res val_prec0_expression(const token_string tokens)
       const auto name_str = trim_newline_group(cur_str.subvec(1)); // '.' or '->'
       if (name_str.size() == 0 || name_str[0].which != token::type::name)
         return {name_str, "expected function name"};
-      cur_str = trim_newline_group(name_str.subvec(1)); // function name
+      cur_str = name_str.subvec(1); // function name
     }
   }
   return cur_str;
