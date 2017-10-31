@@ -44,10 +44,10 @@ public:
   void pnil();
   void pstr(const std::string& val);
   void psym(symbol val);
-  void ptype(const type_t& type);
 
   void pre(const std::string& val);
 
+  void ptype(value::integer size);
   void parr(value::integer size);
   void pdict(value::integer size);
 

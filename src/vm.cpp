@@ -144,28 +144,6 @@ void vm::machine::psym(symbol val)
   push(gc::alloc<value::symbol>( val ));
 }
 
-void vm::machine::ptype(const type_t& type)
-{
-  read(type.parent);
-  const auto parent_arg = top();
-  if (parent_arg.tag() != tag::type) {
-    except(builtin::type::type_error, message::inheritance_type_err);
-    return;
-  }
-  const auto parent = parent_arg;
-
-  hash_map<symbol, gc::managed_ptr> methods;
-  for (const auto& i : type.methods) {
-    pfn(i.second);
-    methods.insert(i.first, top());
-  }
-  const auto newtype = gc::alloc<value::type>(nullptr, methods, parent, type.name);
-
-  pop(methods.size() + 1); // methods and parent
-  push(newtype);
-  let(type.name);
-}
-
 void vm::machine::pre(const std::string& val)
 {
   try {
@@ -174,6 +152,33 @@ void vm::machine::pre(const std::string& val)
     except(builtin::type::invalid_regex_error,
                     message::invalid_regex(e.what()));
   }
+}
+
+void vm::machine::ptype(const value::integer size)
+{
+  // Get type name and parent
+  const auto name = value::get<value::symbol>(top());
+  pop(1);
+  read(value::get<value::symbol>(top()));
+  const auto parent = top();
+  // I'm pretty sure we can safely pop the parent from the stack; since it was
+  // acquired via read(), it's clearly already reachable, so this won't be the
+  // only reference to it and it won't be GC'd.
+  pop(2);
+  if (parent.tag() != tag::type) {
+    except(builtin::type::type_error, message::inheritance_type_err);
+    return;
+  }
+
+  // Get methods; size is multiplied by 2 for {function, name} pairs
+  hash_map<vv::symbol, gc::managed_ptr> methods;
+  for (auto i = end(m_stack) - size * 2; i != end(m_stack); i += 2)
+    methods[value::get<value::symbol>(i[1])] = i[0];
+
+  const auto val = gc::alloc<value::type>( nullptr, methods, parent, name );
+  pop(size * 2);
+  push(val);
+  let(name);
 }
 
 void vm::machine::parr(const value::integer size)
@@ -743,7 +748,7 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::pnil:  pnil();                break;
   case instruction::pstr:  pstr(arg.as_str());    break;
   case instruction::psym:  psym(arg.as_sym());    break;
-  case instruction::ptype: ptype(arg.as_type());  break;
+  case instruction::ptype: ptype(arg.as_int());   break;
 
   case instruction::pre: pre(arg.as_str()); break;
 

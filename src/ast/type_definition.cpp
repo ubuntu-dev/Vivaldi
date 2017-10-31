@@ -17,11 +17,19 @@ ast::type_definition::type_definition(
 
 std::vector<vm::command> ast::type_definition::generate() const
 {
-  std::unordered_map<symbol, vm::function_t> methods;
+  std::vector<vm::command> vec;
   for (const auto& i : m_methods) {
-    const auto arg = i.second.code().front().arg;
-    methods[i.first] = arg.as_fn();
+    // the code returned is guaranteed atm to be a single pfn instruction, so
+    // just use it directly instead of copying the vector
+    vec.push_back(std::move(i.second.code().front()));
+    vec.emplace_back( vm::instruction::psym, i.first );
   }
 
-  return { { vm::instruction::ptype, vm::type_t{m_name, m_parent, methods} } };
+  vec.emplace_back( vm::instruction::psym, m_parent );
+  vec.emplace_back( vm::instruction::psym, m_name );
+
+  vec.emplace_back( vm::instruction::ptype,
+                    static_cast<value::integer>(m_methods.size()) );
+
+  return vec;
 }

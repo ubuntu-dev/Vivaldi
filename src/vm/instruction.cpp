@@ -16,7 +16,6 @@ vm::argument::argument(const argument& other)
   case arg_type::str: new (&m_val) std::string{other.m_val.str}; break;
   case arg_type::flt: m_val.flt = other.m_val.flt;               break;
   case arg_type::fnc: new (&m_val) function_t (other.m_val.fnc); break;
-  case arg_type::typ: new (&m_val) type_t     (other.m_val.typ); break;
   }
 }
 
@@ -33,7 +32,6 @@ vm::argument::argument(argument&& other)
   case arg_type::str: new (&m_val) std::string{std::move(other.m_val.str)}; break;
   case arg_type::flt: m_val.flt = other.m_val.flt;                          break;
   case arg_type::fnc: new (&m_val) function_t (std::move(other.m_val.fnc)); break;
-  case arg_type::typ: new (&m_val) type_t     (std::move(other.m_val.typ)); break;
   }
 }
 
@@ -57,7 +55,6 @@ vm::argument& vm::argument::operator=(argument&& other)
   case arg_type::str: new (&m_val) std::string{std::move(other.m_val.str)}; break;
   case arg_type::flt: m_val.flt = other.m_val.flt;                          break;
   case arg_type::fnc: new (&m_val) function_t (std::move(other.m_val.fnc)); break;
-  case arg_type::typ: new (&m_val) type_t     (std::move(other.m_val.typ)); break;
   }
   return *this;
 }
@@ -68,7 +65,6 @@ vm::argument::~argument()
   switch (m_which) {
   case arg_type::str: m_val.str.~string();     break;
   case arg_type::fnc: m_val.fnc.~function_t(); break;
-  case arg_type::typ: m_val.typ.~type_t();     break;
   default: ;
   }
 }
@@ -104,11 +100,6 @@ vm::command::command(instruction new_instr, double new_arg)
 { }
 
 vm::command::command(instruction new_instr, const function_t& new_arg)
-  : instr {new_instr},
-    arg   {new_arg}
-{ }
-
-vm::command::command(instruction new_instr, const type_t& new_arg)
   : instr {new_instr},
     arg   {new_arg}
 { }

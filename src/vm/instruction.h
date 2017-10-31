@@ -19,13 +19,6 @@ struct function_t {
   bool takes_varargs{false};
 };
 
-// Simple struct for passing around Vivaldi types.
-struct type_t {
-  symbol name;
-  symbol parent;
-  std::unordered_map<symbol, function_t> methods;
-};
-
 // Individual Vivaldi VM opcodes.
 enum class instruction {
   // pushes the provided Bool literal onto the stack.
@@ -44,12 +37,12 @@ enum class instruction {
   pstr,
   // pushes the provided Symbol literal onto the stack.
   psym,
-  // Pushes the provided Type literal onto the stack.
-  ptype,
 
   // creates a RegEx out of the provided string, and pushes it onto the stack.
   pre,
 
+  // Pushes a Type with the pushed name, parent, and provided number of methods
+  ptype,
   // pushes an Array made out of the provided number of pushed args.
   parr,
   // pushes a Dictionary made out of the provided number of pushed args.
@@ -167,7 +160,6 @@ public:
   argument(const std::string& str) : m_val{str},   m_which{arg_type::str} { }
   argument(double flt)             : m_val{flt},   m_which{arg_type::flt} { }
   argument(const function_t& fnc)  : m_val{fnc},   m_which{arg_type::fnc} { }
-  argument(const type_t& typ)      : m_val{typ},   m_which{arg_type::typ} { }
 
   argument(const argument& other);
   argument(argument&& other);
@@ -181,7 +173,6 @@ public:
   const std::string& as_str()    const { return m_val.str; }
   double             as_double() const { return m_val.flt; }
   const function_t&  as_fn()     const { return m_val.fnc; }
-  const type_t&      as_type()   const { return m_val.typ; }
 
   ~argument();
 
@@ -193,7 +184,6 @@ private:
     std::string str;
     double      flt;
     function_t  fnc;
-    type_t      typ;
 
     arg_val(int64_t num)            : num{num} { }
     arg_val(symbol sym)             : sym{sym} { }
@@ -201,7 +191,6 @@ private:
     arg_val(const std::string& str) : str{str} { }
     arg_val(double flt)             : flt{flt} { }
     arg_val(const function_t& fnc)  : fnc(fnc) { }
-    arg_val(const type_t& typ)      : typ(typ) { }
 
     ~arg_val() { }
   } m_val;
@@ -214,7 +203,6 @@ private:
     str,
     flt,
     fnc,
-    typ
   } m_which;
 };
 
@@ -228,7 +216,6 @@ public:
   command(instruction instr, const std::string& arg);
   command(instruction instr, double arg);
   command(instruction instr, const function_t& arg);
-  command(instruction instr, const type_t& arg);
   command(instruction instr);
   command();
 
