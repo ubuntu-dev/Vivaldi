@@ -12,14 +12,6 @@ namespace internal {
 
 managed_ptr get_next_empty(tag type);
 
-template <typename T>
-managed_ptr emplace(T&& item)
-{
-  auto slot = get_next_empty(tag_for<T>());
-  new (slot.get()) T{std::forward<T>(item)};
-  return slot;
-}
-
 }
 
 template <typename T, typename... Args>
@@ -30,8 +22,9 @@ gc::managed_ptr alloc(Args&&... args)
   static_assert(!std::is_same<T, value::nil>(),       "unspecialized for nil");
   static_assert(!std::is_same<T, value::integer>(),   "unspecialized for integer");
 
-  auto ptr = internal::emplace(T{std::forward<Args>(args)...});
-  return ptr;
+  auto slot = internal::get_next_empty(tag_for<T>());
+  new (slot.get()) T{std::forward<Args>(args)...};
+  return slot;
 }
 
 // Optimized template overrides for alloc (warning: ugly) {{{
