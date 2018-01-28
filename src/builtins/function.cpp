@@ -24,11 +24,20 @@ size_t get_argc(gc::managed_ptr fn)
   }
 }
 
+bool takes_varargs(gc::managed_ptr fn)
+{
+  switch (fn.tag()) {
+  case tag::builtin_function: return value::get<value::builtin_function>(fn).takes_varargs;
+  case tag::function:         return value::get<value::function>(fn).takes_varargs;
+  default:                    return false;
+  }
+}
+
 }
 
 gc::managed_ptr function::bind(gc::managed_ptr self, gc::managed_ptr arg)
 {
-  if (get_argc(self) == 0) {
+  if (get_argc(self) == 0 && !takes_varargs(self)) {
     return throw_exception(type::range_error,
                            "Function takes no arguments to bind to");
   }
