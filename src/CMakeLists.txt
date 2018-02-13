@@ -24,7 +24,6 @@ add_library(vivaldi_lib
   ${vivaldi_SOURCE_DIR}/src/builtins/range.cpp
   ${vivaldi_SOURCE_DIR}/src/builtins/regex.cpp
   ${vivaldi_SOURCE_DIR}/src/builtins/string.cpp
-  ${vivaldi_SOURCE_DIR}/src/builtins/symbol.cpp
 
   ${vivaldi_SOURCE_DIR}/src/builtins.cpp
   ${vivaldi_SOURCE_DIR}/src/messages.cpp
@@ -88,7 +87,6 @@ add_library(vivaldi_lib
   ${vivaldi_SOURCE_DIR}/src/value/regex.cpp
   ${vivaldi_SOURCE_DIR}/src/value/string.cpp
   ${vivaldi_SOURCE_DIR}/src/value/string_iterator.cpp
-  ${vivaldi_SOURCE_DIR}/src/value/symbol.cpp
   ${vivaldi_SOURCE_DIR}/src/value/type.cpp
 
   ${vivaldi_SOURCE_DIR}/src/vm/call_frame.cpp

@@ -5,7 +5,6 @@
 #include "utils/string_helpers.h"
 #include "value/floating_point.h"
 #include "value/string.h"
-#include "value/symbol.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>

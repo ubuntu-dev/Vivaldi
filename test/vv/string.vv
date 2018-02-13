@@ -61,6 +61,8 @@ let conversion() = do
   assert(one_point_five.to_int() == 1, "\"1.5\".to_int() == 1")
   assert(one.to_flt() == 1.0, "\"1\".to_flt() == 1.0")
   assert(one_point_five.to_flt() == 1.5, "\"1.5\".to_flt() == 1.5")
+
+  assert("foo".to_sym() == 'foo, "\"foo\".to_sym() == 'foo")
 end
 
 section("Strings")
@@ -71,4 +73,4 @@ test(starts_with, "starts_with")
 test(case, "case-changing")
 test(ord, "ASCII ord and escaping")
 test(comparison, "comparison")
-test(conversion, "to_int and to_flt")
+test(conversion, "to_int, to_flt, and to_sym")

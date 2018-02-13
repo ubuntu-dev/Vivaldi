@@ -9,7 +9,6 @@
 #include "value/regex.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
-#include "value/symbol.h"
 
 using namespace vv;
 using namespace builtin;
@@ -129,6 +128,11 @@ gc::managed_ptr string::to_int(gc::managed_ptr self)
 gc::managed_ptr string::to_flt(gc::managed_ptr self)
 {
   return gc::alloc<value::floating_point>(std::stof(value::get<value::string>(self)));
+}
+
+gc::managed_ptr string::to_sym(gc::managed_ptr self)
+{
+  return gc::alloc<value::symbol>(std::string_view{value::get<value::string>(self)});
 }
 
 gc::managed_ptr string::at(gc::managed_ptr self, gc::managed_ptr arg)

@@ -24,7 +24,6 @@
 #include "value/range.h"
 #include "value/regex.h"
 #include "value/string.h"
-#include "value/symbol.h"
 #include "value/type.h"
 
 using namespace vv;

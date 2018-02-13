@@ -13,7 +13,6 @@
 #include "builtins/range.h"
 #include "builtins/regex.h"
 #include "builtins/string.h"
-#include "builtins/symbol.h"
 #include "builtins/type.h"
 #include "gc/alloc.h"
 #include "utils/lang.h"
@@ -28,7 +27,6 @@
 #include "value/range.h"
 #include "value/regex.h"
 #include "value/string.h"
-#include "value/symbol.h"
 #include "value/type.h"
 
 #include <iostream>
@@ -890,6 +888,8 @@ void init_string()
   const auto to_int = gc::alloc<value::opt_monop>( string::to_int );
   const auto to_flt = gc::alloc<value::opt_monop>( string::to_flt );
 
+  const auto to_sym = gc::alloc<value::opt_monop>( string::to_sym );
+
   const auto at = gc::alloc<value::opt_binop>( string::at );
   const auto start = gc::alloc<value::opt_monop>( string::start );
   const auto stop = gc::alloc<value::opt_monop>( string::stop );
@@ -922,6 +922,8 @@ void init_string()
 
         { {"to_int"}, to_int },
         { {"to_flt"}, to_flt },
+
+        { {"to_sym"}, to_sym },
 
         { {"at"}, at },
         { {"start"}, start },
@@ -978,17 +980,9 @@ void init_string_iterator()
 
 void init_symbol()
 {
-  const auto init = gc::alloc<value::opt_binop>( builtin::symbol::init );
-  const auto equals = gc::alloc<value::opt_binop>( builtin::symbol::equals );
-  const auto unequal = gc::alloc<value::opt_binop>( builtin::symbol::unequal );
-
   builtin::type::symbol = gc::alloc<value::type>(
-      gc::alloc<value::symbol>,
-      hash_map<vv::symbol, gc::managed_ptr> {
-        { {"init"}, init },
-        { {"equals"}, equals },
-        { {"unequal"}, unequal }
-      },
+      [] { return gc::managed_ptr{}; },
+      hash_map<vv::symbol, gc::managed_ptr> { },
       builtin::type::object,
       vv::symbol{"Symbol"} );
 }

@@ -19,6 +19,8 @@
 #include "value/type.h"
 #include "vm/call_frame.h"
 
+#include <iostream>
+
 using namespace vv;
 using namespace gc;
 

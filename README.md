@@ -130,9 +130,11 @@ Simple, immutable string class. Currently supports:
 * `ord()`&mdash; Equivalent to `self[0].ord()` (unless `self` is empty, which
   results in an exception).
 * `to_int()`&mdash; Parses the numerical string beginning `self`, and returns it
-as an Integer.
+  as an Integer.
 * `to_flt()`&mdash; Parses the numerical string beginning `self`, and returns it
-as an Float.
+  as an Float.
+* `to_sym()`&mdash; Returns the Symbol represented by the same sequence of
+  characters as `self`.
 * `split(x)`&mdash; Returns an Array of each substrings of `self` separated by
   the String `x`.
 * `replace(x, y)`&mdash; Returns a String with all occurrences of RegEx `x`
@@ -167,12 +169,7 @@ escape sequences).
 More methods, as well as proper Unicode support, to be added later.
 
 #### Symbols ####
-`'symbol_name` - as in Ruby or Lisp:
-
-* `init(x)`&mdash; Creates a new Symbol with the string value of `x`, where `x` is a
-  String or a Symbol.
-* `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a Symbol equal in value
-  to `self`, and `false` otherwise (vice versa for `unequal`).
+`'symbol_name` - as in Ruby or Lisp.
 
 #### RegExes ####
 Extremely basic regular expression class:

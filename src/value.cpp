@@ -21,7 +21,6 @@
 #include "value/regex.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
-#include "value/symbol.h"
 #include "value/type.h"
 
 #include <sstream>
@@ -237,7 +236,6 @@ void vv::destroy(gc::managed_ptr obj)
   case tag::regex_result:     call_dtor(static_cast<regex_result&>(*obj.get()));     break;
   case tag::string:           call_dtor(static_cast<string&>(*obj.get()));           break;
   case tag::string_iterator:  call_dtor(static_cast<string_iterator&>(*obj.get()));  break;
-  case tag::symbol:           call_dtor(static_cast<value::symbol&>(*obj.get()));    break;
   case tag::type:             call_dtor(static_cast<type&>(*obj.get()));             break;
   case tag::environment:      call_dtor(static_cast<vm::environment&>(*obj.get()));  break;
   default: break;

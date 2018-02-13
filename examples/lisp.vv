@@ -56,12 +56,12 @@ end
 // Parsing {{{
 
 let tokenize(str) = str.replace(`([\(\)])`, " $1 ").split(" ") ->
-                      filter(fn (x): x.size() != 0)
+                    filter(fn (x): x.size() != 0)
 
 let parse_atom(x) = cond
   x == "nil":                                   nil,
   x.ord() >= "0".ord() && x.ord() <= "9".ord(): x.to_int(),
-  true:                                         new Symbol(x)
+  true:                                         x.to_sym()
 
 let parse(tokens) = do
   if tokens.at_end(): throw new Exception("premature end of file")

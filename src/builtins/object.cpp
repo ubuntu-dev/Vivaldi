@@ -4,7 +4,6 @@
 #include "messages.h"
 #include "gc/alloc.h"
 #include "utils/lang.h"
-#include "value/symbol.h"
 
 using namespace vv;
 using namespace builtin;

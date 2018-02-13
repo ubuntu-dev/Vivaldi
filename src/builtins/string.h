@@ -25,6 +25,8 @@ gc::managed_ptr times(gc::managed_ptr self, gc::managed_ptr arg);
 gc::managed_ptr to_int(gc::managed_ptr self);
 gc::managed_ptr to_flt(gc::managed_ptr self);
 
+gc::managed_ptr to_sym(gc::managed_ptr self);
+
 gc::managed_ptr at(gc::managed_ptr self, gc::managed_ptr arg);
 gc::managed_ptr start(gc::managed_ptr self);
 gc::managed_ptr stop(gc::managed_ptr self);
