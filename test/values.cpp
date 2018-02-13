@@ -77,7 +77,7 @@ void check_symbol(const vv::symbol orig)
   BOOST_CHECK_MESSAGE(ptr.type() == vv::builtin::type::symbol,
                       "incorrect type for " << orig);
 
-  const auto val = vv::value::get<vv::value::symbol>(ptr);
+  const auto val = vv::value::get<vv::symbol>(ptr);
   BOOST_CHECK_EQUAL(orig, val);
 }
 

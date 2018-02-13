@@ -110,7 +110,7 @@ void check_psym(const vv::symbol orig)
   const auto val = vm.top();
   BOOST_CHECK_EQUAL(val.tag(), vv::tag::symbol);
   BOOST_CHECK(val.type() == vv::builtin::type::symbol);
-  BOOST_CHECK_EQUAL(vv::value::get<vv::value::symbol>(val), orig);
+  BOOST_CHECK_EQUAL(vv::value::get<vv::symbol>(val), orig);
 }
 
 BOOST_AUTO_TEST_CASE(check_parr)
