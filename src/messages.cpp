@@ -28,22 +28,22 @@ std::string message::invalid_regex(const std::string& error)
 
 std::string message::no_such_variable(vv::symbol var)
 {
-  return "No such variable: " + to_string(var);
+  return "No such variable: " + std::string{to_string(var)};
 }
 
 std::string message::already_exists(vv::symbol var)
 {
-  return "Variable " + to_string(var) += " already exists";
+  return "Variable " + std::string{to_string(var)} += " already exists";
 }
 
 std::string message::has_no_member(gc::managed_ptr obj, vv::symbol mem)
 {
-  return value_for(obj) += " has no member " + to_string(mem);
+  return value_for(obj) += " has no member " + std::string{to_string(mem)};
 }
 
 std::string message::has_no_method(gc::managed_ptr obj, vv::symbol mem)
 {
-  return value_for(obj) += " has no method " + to_string(mem);
+  return value_for(obj) += " has no method " + std::string{to_string(mem)};
 }
 
 std::string message::not_callable(gc::managed_ptr callee)

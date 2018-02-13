@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(check_default_string)
 
 void check_symbol(const vv::symbol orig)
 {
-  const auto ptr = vv::gc::alloc<vv::value::symbol>( orig );
+  const auto ptr = orig.ptr();//vv::gc::alloc<vv::value::symbol>( orig );
   BOOST_CHECK_EQUAL(ptr.tag(), vv::tag::symbol);
   BOOST_CHECK_MESSAGE(ptr.type() == vv::builtin::type::symbol,
                       "incorrect type for " << orig);

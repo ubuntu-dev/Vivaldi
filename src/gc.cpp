@@ -55,6 +55,7 @@ void mark_sweep()
   const auto old_sz = g_allocated.size();
 
   g_vm->mark();
+  symbol::mark();
 
   const auto last = remove_if(std::begin(g_allocated), std::end(g_allocated),
                               [](auto i)
@@ -82,12 +83,12 @@ void mark_sweep()
 // }}}
 // External functions {{{
 
-gc::managed_ptr gc::internal::get_next_empty(const tag type)
+gc::managed_ptr gc::internal::get_next_empty(const tag type, const size_t sz)
 {
-  auto ptr = g_blocks.allocate(size_for(type));
+  auto ptr = g_blocks.allocate(sz);
   if (!ptr) {
     mark_sweep();
-    ptr = g_blocks.allocate(size_for(type));
+    ptr = g_blocks.allocate(sz);
   }
 
   ptr.m_tag = type;

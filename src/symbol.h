@@ -1,8 +1,10 @@
 #ifndef VV_SYMBOL_H
 #define VV_SYMBOL_H
 
-#include <string>
-#include <unordered_set>
+#include "gc/managed_ptr.h"
+
+#include <string_view>
+#include <unordered_map>
 
 namespace vv {
 
@@ -12,25 +14,33 @@ namespace vv {
 // variable/member lookup.
 class symbol {
 public:
-  symbol(const std::string& str = "");
+  symbol(std::string_view str = "");
+  explicit symbol(gc::managed_ptr ptr);
 
-  friend bool operator==(symbol first, symbol second);
+  gc::managed_ptr ptr() const noexcept { return m_ptr; }
 
-  friend const std::string& to_string(symbol sym);
+  friend bool operator==(symbol first, symbol second) noexcept;
+
+  friend std::string_view to_string(symbol sym);
+
+  static void mark();
 
 private:
-  const std::string* m_ptr;
-  static std::unordered_set<std::string> s_symbol_table;
+  gc::managed_ptr m_ptr;
+  static std::unordered_map<std::string_view, gc::managed_ptr> s_symbol_table;
 
   friend struct std::hash<vv::symbol>;
+
+  template <typename T, typename... Args>
+  friend gc::managed_ptr gc::alloc(Args&&...);
 };
 
-inline bool operator==(symbol lhs, symbol rhs)
+inline bool operator==(symbol lhs, symbol rhs) noexcept
 {
   return lhs.m_ptr == rhs.m_ptr;
 }
 
-inline bool operator!=(symbol lhs, symbol rhs)
+inline bool operator!=(symbol lhs, symbol rhs) noexcept
 {
   return !(lhs == rhs);
 }

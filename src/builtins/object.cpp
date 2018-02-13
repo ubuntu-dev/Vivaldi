@@ -41,7 +41,7 @@ gc::managed_ptr object::member(gc::managed_ptr self, gc::managed_ptr arg)
   }
   return throw_exception(type::name_error,
                          "Member variable " +
-                         to_string(value::get<value::symbol>(arg)) +
+                         std::string{to_string(value::get<value::symbol>(arg))} +
                          " does not exist");
 }
 

@@ -63,7 +63,7 @@ size_t vv::size_for(const tag type)
   case tag::regex_result:     return sizeof(value::regex_result);
   case tag::string:           return sizeof(value::string);
   case tag::string_iterator:  return sizeof(value::string_iterator);
-  case tag::symbol:           return sizeof(value::symbol);
+  case tag::symbol:           return sizeof(vv::symbol);
   case tag::type:             return sizeof(value::type);
   case tag::environment:      return sizeof(vm::environment);
   }
@@ -138,9 +138,8 @@ std::string vv::value_for(gc::managed_ptr ptr)
   case tag::regex_result:    return "<regex result>";
   case tag::string:          return '"' + escape_chars(get<string>(ptr)) + '"';
   case tag::string_iterator: return "<string iterator>";
-  case tag::symbol:          return '\'' + to_string(get<value::symbol>(ptr));
-  case tag::type:            return to_string(get<type>(ptr).name);
-
+  case tag::symbol:          return '\'' + std::string{to_string(get<value::symbol>(ptr))};
+  case tag::type:            return std::string{to_string(get<type>(ptr).name)};
   case tag::blob:
   case tag::environment:
   case tag::object:          return "<object>";

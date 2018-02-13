@@ -60,6 +60,11 @@ struct result_type<character> {
   using type = character;
 };
 
+template <>
+struct result_type<vv::symbol> {
+  using type = vv::symbol;
+};
+
 template <typename T>
 inline typename result_type<T>::type get(gc::managed_ptr ptr)
 {
@@ -86,6 +91,12 @@ inline result_type<integer>::type get<integer>(gc::managed_ptr ptr)
   // directly from uint16_t to int64_t.
   return (static_cast<int64_t>(static_cast<int32_t>(ptr.m_block)) << 16) |
           static_cast<int64_t>(ptr.m_offset);
+}
+
+template <>
+inline result_type<vv::symbol>::type get<vv::symbol>(gc::managed_ptr ptr)
+{
+  return vv::symbol{ptr};
 }
 
 }

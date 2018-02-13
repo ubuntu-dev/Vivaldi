@@ -14,17 +14,18 @@ managed_ptr managed_ptr::type() const
   case tag::boolean:   return builtin::type::boolean;
   case tag::character: return builtin::type::character;
   case tag::integer:   return builtin::type::integer;
+  case tag::symbol:    return builtin::type::symbol;
   default:             return get()->type;
   }
 }
 
-bool gc::operator==(managed_ptr lhs, managed_ptr rhs)
+bool gc::operator==(managed_ptr lhs, managed_ptr rhs) noexcept
 {
   return lhs.m_block == rhs.m_block && lhs.m_offset == rhs.m_offset
       && lhs.m_tag == rhs.m_tag     && lhs.m_flags == rhs.m_flags;
 }
 
-bool gc::operator!=(managed_ptr lhs, managed_ptr rhs)
+bool gc::operator!=(managed_ptr lhs, managed_ptr rhs) noexcept
 {
   return !(lhs == rhs);
 }

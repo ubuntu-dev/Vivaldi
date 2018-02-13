@@ -66,7 +66,7 @@ gc::managed_ptr alloc(Args&&... args);
 namespace internal {
 
 extern block_list g_blocks;
-gc::managed_ptr get_next_empty(tag type);
+gc::managed_ptr get_next_empty(tag type, size_t sz);
 
 }
 
@@ -108,17 +108,17 @@ private:
   friend typename value::result_type<T>::type value::get(managed_ptr);
   template <typename T, typename... Args>
   friend managed_ptr gc::alloc(Args&&... args);
-  friend managed_ptr internal::get_next_empty(vv::tag);
+  friend managed_ptr internal::get_next_empty(vv::tag, size_t);
   friend class gc::block_list;
 
-  friend bool operator==(managed_ptr, managed_ptr);
+  friend bool operator==(managed_ptr, managed_ptr) noexcept;
   friend struct std::hash<managed_ptr>;
 };
 
 static_assert(sizeof(managed_ptr) == 8, "improper padding in managed_ptr");
 
-bool operator==(managed_ptr lhs, managed_ptr rhs);
-bool operator!=(managed_ptr lhs, managed_ptr rhs);
+bool operator==(managed_ptr lhs, managed_ptr rhs) noexcept;
+bool operator!=(managed_ptr lhs, managed_ptr rhs) noexcept;
 
 };
 

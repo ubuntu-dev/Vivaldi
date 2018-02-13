@@ -722,7 +722,7 @@ parse_res<> parse_type_definition(token_string tokens)
 
   symbol parent{"Object"};
   if (tokens.front().which == token::type::colon) {
-    parent = tokens[1].str;
+    parent = std::string_view{tokens[1].str};
     tokens = tokens.subvec(2); // ':' parent
   }
 
@@ -947,7 +947,7 @@ parse_res<std::pair<std::vector<symbol>, boost::optional<symbol>>>
 
   std::vector<symbol> args;
   while (tokens.front().which == token::type::name) {
-    args.push_back(tokens.front().str);
+    args.push_back(std::string_view{tokens.front().str});
     tokens = ltrim_if(tokens.subvec(1), newline_test); // arg
     if (tokens.empty() || tokens.front().which != token::type::comma)
       return {{ {move(args), {}}, tokens }};
@@ -956,7 +956,7 @@ parse_res<std::pair<std::vector<symbol>, boost::optional<symbol>>>
   boost::optional<symbol> vararg;
   if (!tokens.empty() && tokens.front().which == token::type::open_bracket) {
     tokens = ltrim_if(tokens.subvec(1), newline_test); // '['
-    vararg = tokens.front().str;
+    vararg = std::string_view{tokens.front().str};
     tokens = ltrim_if(tokens.subvec(1), newline_test); // 'argname'
     tokens = ltrim_if(tokens.subvec(1), newline_test); // ']'
   }

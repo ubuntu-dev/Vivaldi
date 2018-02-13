@@ -59,7 +59,7 @@ const vv_object_t vv_null{cast_to({})};
 
 vv_symbol_t vv_make_symbol(const char* string)
 {
-  return { to_string(symbol{string}).c_str() };
+  return { to_string(symbol{string}).data() };
 }
 
 int vv_get_int(vv_object_t obj, int64_t* readinto)
@@ -99,7 +99,7 @@ int vv_get_symbol(vv_object_t obj, vv_symbol_t* readinto)
   if (cast_from(obj).tag() != tag::symbol)
     return -1;
   const auto cpp_sym = value::get<value::symbol>(cast_from(obj));
-  readinto->string = to_string(cpp_sym).c_str();
+  readinto->string = to_string(cpp_sym).data();
   return 0;
 }
 

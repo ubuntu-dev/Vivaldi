@@ -141,7 +141,8 @@ void vm::machine::pstr(const std::string& val)
 
 void vm::machine::psym(symbol val)
 {
-  push(gc::alloc<value::symbol>( val ));
+  assert(val.ptr().tag() == tag::symbol);
+  push(val.ptr());
 }
 
 void vm::machine::pre(const std::string& val)
@@ -214,6 +215,7 @@ void vm::machine::read(const symbol sym)
       return;
     }
   }
+  assert(sym.ptr().tag() == tag::symbol);
   except(builtin::type::name_error, message::no_such_variable(sym));
 }
 
