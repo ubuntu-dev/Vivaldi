@@ -50,7 +50,7 @@ gc::managed_ptr regex::init(vm::machine& vm)
   }
   else {
     return throw_exception(type::type_error,
-                           "RegExes can only be constructed from Strings or other RegExes");
+                           "Regexes can only be constructed from Strings or other Regexes");
   }
   return regex;
 }
@@ -59,7 +59,7 @@ gc::managed_ptr regex::match(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::string) {
     return throw_exception(type::type_error,
-                           "RegExes can only be matched against Strings");
+                           "Regexes can only be matched against Strings");
   }
 
   const auto& regex = value::get<value::regex>(self).val;
@@ -75,7 +75,7 @@ gc::managed_ptr regex::match_index(gc::managed_ptr self, gc::managed_ptr arg)
 {
   if (arg.tag() != tag::string) {
     return throw_exception(type::type_error,
-                           "RegExes can only be matched against Strings");
+                           "Regexes can only be matched against Strings");
   }
 
   const auto& regex = value::get<value::regex>(self).val;

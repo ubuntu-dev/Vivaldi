@@ -850,7 +850,7 @@ void init_regex()
         { {"match_index"}, match_index },
       },
       builtin::type::object,
-      vv::symbol{"RegEx"} );
+      vv::symbol{"Regex"} );
 }
 
 void init_regex_result()
@@ -867,7 +867,7 @@ void init_regex_result()
         { {"size"}, size },
       },
       builtin::type::object,
-      vv::symbol{"RegExResult"} );
+      vv::symbol{"RegexResult"} );
 }
 
 void init_string()
@@ -1114,8 +1114,8 @@ void builtin::make_base_env(gc::managed_ptr base)
     { {"Nil"},                 builtin::type::nil },
     { {"Object"},              builtin::type::object },
     { {"Range"},               builtin::type::range },
-    { {"RegEx"},               builtin::type::regex },
-    { {"RegExResult"},         builtin::type::regex_result },
+    { {"Regex"},               builtin::type::regex },
+    { {"RegexResult"},         builtin::type::regex_result },
     { {"String"},              builtin::type::string },
     { {"StringIterator"},      builtin::type::string_iterator },
     { {"Symbol"},              builtin::type::symbol },

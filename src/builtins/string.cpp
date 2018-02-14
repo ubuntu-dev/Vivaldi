@@ -242,7 +242,7 @@ gc::managed_ptr string::replace(vm::machine& vm)
   vm.arg(0);
   if (vm.top().tag() != tag::regex)
     return throw_exception(type::type_error,
-                           "Strings can only be replaced by RegExes");
+                           "Strings can only be replaced by Regexes");
   const auto& re = value::get<value::regex>(vm.top()).val;
 
   vm.self();

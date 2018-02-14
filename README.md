@@ -137,7 +137,7 @@ Simple, immutable string class. Currently supports:
   characters as `self`.
 * `split(x)`&mdash; Returns an Array of each substrings of `self` separated by
   the String `x`.
-* `replace(x, y)`&mdash; Returns a String with all occurrences of RegEx `x`
+* `replace(x, y)`&mdash; Returns a String with all occurrences of Regex `x`
   replaced by String `y`.
 * `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a String equal in value
   to `self`, and `false` otherwise (vice versa for `unequal`).
@@ -171,23 +171,23 @@ More methods, as well as proper Unicode support, to be added later.
 #### Symbols ####
 `'symbol_name` - as in Ruby or Lisp.
 
-#### RegExes ####
+#### Regexes ####
 Extremely basic regular expression class:
 
     let regex = `foo.*bar`
     regex.match_index("no match") // nil
     regex.match_index("this string contains 'foobazbar'") // 22
 
-* `init(x)`&mdash; if `x` is a RegEx, creates a copy of `x`; if `x` is a String,
-  returns a RegEx made by compiling `x`; excepts otherwise.
-* `match(x)`&mdash; returns a RegExResult (see below) of the first match of
+* `init(x)`&mdash; if `x` is a Regex, creates a copy of `x`; if `x` is a String,
+  returns a Regex made by compiling `x`; excepts otherwise.
+* `match(x)`&mdash; returns a RegexResult (see below) of the first match of
 `self` in `x`.
 * `match_index(x)`&mdash; If `self` matches any substring of `x`, returns the
   index of the first matching substring within `x` as an Integer; otherwise,
   returns `nil`.
 
-RegExResult is a class for managing submatches. It can only be instantiated from
-appropriate RegEx methods (only `match` at the moment):
+RegexResult is a class for managing submatches. It can only be instantiated from
+appropriate Regex methods (only `match` at the moment):
 
 * `size()`: Number of submatches, plus one for the complete match.
 * `at(x)`: Returns the string value of the `x`th match, where 0 is the complete

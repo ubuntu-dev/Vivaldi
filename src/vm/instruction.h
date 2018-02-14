@@ -38,7 +38,7 @@ enum class instruction {
   // pushes the provided Symbol literal onto the stack.
   psym,
 
-  // creates a RegEx out of the provided string, and pushes it onto the stack.
+  // creates a Regex out of the provided string, and pushes it onto the stack.
   pre,
 
   // Pushes a Type with the pushed name, parent, and provided number of methods
