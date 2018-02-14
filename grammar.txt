@@ -9,6 +9,7 @@
                      | <cond_statement>
                      | <except>
                      | <for_loop>
+                     | <lambda>
                      | <function_definition>
                      | <literal>
                      | <new_obj>
@@ -26,6 +27,7 @@
           | <prec0> '.' <variable>
           | <prec0> '(' <expr_list> ')'
           | <prec0> '[' <expression> ']'
+          | <prec0> '->' <prec0>
 
 <prec1> ::= <prec0>
           | '!' <prec1>
@@ -89,8 +91,9 @@
 
 <for_loop> ::= 'for' <variable> 'in' <expression> ':' <expression>
 
-<function_definition> ::= 'fn' '(' <arg_list> ')' ':' <expression>
-                        | 'let' <variable> '(' <arg_list> ')' '=' <expression>
+<lambda> ::= 'fn' '(' <arg_list> ')' ':' <expression>
+
+<function_definition> ::= 'let' <variable> '(' <arg_list> ')' '=' <expression>
 
 <arg_list> ::= ''
              | <variable>
@@ -113,11 +116,17 @@
 
 <try_catch> ::= 'try' ':' <expression> <division 'catch' <variable> ':' <expression>
 
-<type_definition> ::= 'variable' <name> <method_list>
+<type_definition> ::= 'class' <name> <method_list> <end>
+
+<name> ::= <variable>
+         | <variable> ':' <variable>
+
+<method_list> ::= ''
+                | <function_definition> <method_list>
 
 <variable_declaration> ::= 'let' <variable> '=' <expression>
 
-<variable> ::= /\([^[:space:][:punct:]\|_\)+/
+<variable> ::= /[^[:punct:][:space:]\d][^[:punct:][:space:]]*/
 
 <member_variable> ::= '@' <variable>
 
@@ -127,13 +136,13 @@
 
 <symbol> ::= '\'' <variable>
 
-<integer> ::= /[1-9][0-9]* /
+<integer> ::= /[1-9]\d* /
             | /0[0-7]* /
-            | /0x[0-9a-fA-F]+/
+            | /0x[[:xdigit:]]+/
             | /0b[01]+/
 
-<float> ::= /[1-9][0-9]*\.[0-9]+/
-          | /0\.[0-9]+/
+<float> ::= /[1-9]\d*\.\d+/
+          | /0\.\d+/
 
 <bool> ::= 'true'
          | 'false'
