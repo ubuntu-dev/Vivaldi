@@ -38,6 +38,8 @@ gc::managed_ptr array::append(gc::managed_ptr self, gc::managed_ptr arg)
 gc::managed_ptr array::pop(gc::managed_ptr self)
 {
   auto& arr = value::get<value::array>(self);
+  if (arr.empty())
+    return throw_exception(type::range_error, "Attempted to pop from empty Array");
   const auto val = arr.back();
   arr.pop_back();
   return val;
