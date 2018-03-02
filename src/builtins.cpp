@@ -144,13 +144,8 @@ gc::managed_ptr fn_print(vm::machine& vm)
 {
   vm.arg(0);
   const auto arg = vm.top();
+  std::cout << pretty_print(arg, vm);
 
-  if (arg.tag() == tag::string)
-    std::cout << value::get<value::string>(arg);
-  else if (arg.tag() == tag::character)
-    std::cout << value::get<value::character>(arg);
-  else
-    std::cout << pretty_print(arg, vm);
   return gc::alloc<value::nil>( );
 }
 
@@ -872,7 +867,7 @@ void init_regex_result()
 
 void init_string()
 {
-  const auto init = gc::alloc<value::opt_binop>( string::init );
+  const auto init = gc::alloc<value::builtin_function>( string::init, size_t{1} );
   const auto size = gc::alloc<value::opt_monop>( string::size );
 
   const auto equals = gc::alloc<value::opt_binop>( string::equals );
@@ -1110,6 +1105,7 @@ void builtin::make_base_env(gc::managed_ptr base)
     { {"Exception"},           builtin::type::exception },
     { {"File"},                builtin::type::file },
     { {"Float"},               builtin::type::floating_point },
+    { {"Function"},            builtin::type::function },
     { {"Integer"},             builtin::type::integer },
     { {"Nil"},                 builtin::type::nil },
     { {"Object"},              builtin::type::object },

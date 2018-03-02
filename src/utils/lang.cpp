@@ -1,5 +1,6 @@
 #include "lang.h"
 
+#include "builtins.h"
 #include "gc/alloc.h"
 #include "utils/error.h"
 #include "value/exception.h"
@@ -25,14 +26,20 @@ vv::gc::managed_ptr vv::throw_exception(const gc::managed_ptr type,
 
 std::string vv::pretty_print(gc::managed_ptr object, vm::machine& vm)
 {
-  if (get_method(object.type(), {"str"})) {
+  const static symbol str{"str"};
+
+  if (get_method(object.type(), str)) {
     vm.push(object);
-    vm.opt_tmpm({"str"});
+    vm.opt_tmpm(str);
     vm.call(0);
     vm.run_cur_scope();
-    const auto str = vm.top();
+    const auto stringified = vm.top();
     vm.pop(1);
-    return value_for(str);
+    if (stringified.tag() == tag::string)
+      return value::get<value::string>(stringified);
+    else if (stringified.tag() == tag::character)
+      return {value::get<value::character>(stringified)};
+    return value_for(stringified);
   }
 
   return value_for(object);

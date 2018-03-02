@@ -36,14 +36,21 @@ auto fn_string_cmp(const F& cmp)
 
 // string
 
-gc::managed_ptr string::init(gc::managed_ptr self, gc::managed_ptr arg)
+gc::managed_ptr string::init(vm::machine& vm)
 {
+  vm.self();
+  const auto self = vm.top();
+  vm.pop(1);
+  vm.arg(0);
+  const auto arg = vm.top();
+  vm.pop(1);
+
   if (arg.tag() == tag::string)
     value::get<value::string>(self) = value::get<value::string>(arg);
   else if (arg.tag() == tag::symbol)
     value::get<value::string>(self) = to_string(value::get<value::symbol>(arg));
   else
-     value::get<value::string>(self) = value_for(arg);
+     value::get<value::string>(self) = pretty_print(arg, vm);
   return self;
 }
 
@@ -203,7 +210,7 @@ gc::managed_ptr string::ord(gc::managed_ptr self)
 gc::managed_ptr string::split(vm::machine& vm)
 {
   vm.self();
-  boost::string_ref str{value::get<value::string>(vm.top())};
+  std::string_view str{value::get<value::string>(vm.top())};
   vm.arg(0);
   if (vm.top().tag() != tag::string)
     return throw_exception(type::type_error,
@@ -219,7 +226,7 @@ gc::managed_ptr string::split(vm::machine& vm)
       break;
     }
     const auto next_sep = str.find(sep);
-    if (next_sep == boost::string_ref::npos) {
+    if (next_sep == std::string_view::npos) {
       vm.pstr({begin(str), end(str)});
       break;
     }
