@@ -54,7 +54,6 @@ add_library(vivaldi_lib
   ${vivaldi_SOURCE_DIR}/src/ast/member.cpp
   ${vivaldi_SOURCE_DIR}/src/ast/member_assignment.cpp
   ${vivaldi_SOURCE_DIR}/src/ast/method.cpp
-  ${vivaldi_SOURCE_DIR}/src/ast/object_creation.cpp
   ${vivaldi_SOURCE_DIR}/src/ast/require.cpp
   ${vivaldi_SOURCE_DIR}/src/ast/return_statement.cpp
   ${vivaldi_SOURCE_DIR}/src/ast/try_catch.cpp

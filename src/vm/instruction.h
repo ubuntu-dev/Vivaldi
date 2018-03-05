@@ -70,8 +70,6 @@ enum class instruction {
   writem,
   // calls the top of the stack, using the provided number of pushed arguments.
   call,
-  // creates new object of the type on top of the stack.
-  pobj,
 
   // pushes a (shallow) copy of the top of the stack onto the stack.
   dup,

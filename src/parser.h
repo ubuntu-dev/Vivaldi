@@ -60,7 +60,6 @@ struct token {
     to,
 
     key_let,
-    key_new,
 
     key_class,
     key_fn,

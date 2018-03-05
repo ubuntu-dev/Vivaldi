@@ -62,7 +62,6 @@ public:
   void readm(symbol sym);
   void writem(symbol sym);
   void call(value::integer args);
-  void pobj(value::integer args);
 
   void dup();
   void pop(value::integer num);
