@@ -986,9 +986,13 @@ void init_type()
 {
   // 'custom_' because the 'type' namespace is used for builtin types
   auto parent = gc::alloc<value::opt_monop>( custom_type::parent );
+  auto new_obj = gc::alloc<value::builtin_function>( custom_type::new_obj, size_t{}, true );
   builtin::type::custom_type = gc::alloc<value::type>(
       [] { return gc::managed_ptr{}; },
-      hash_map<vv::symbol, gc::managed_ptr> { { {"parent"}, parent }, },
+      hash_map<vv::symbol, gc::managed_ptr> {
+        { {"parent"}, parent },
+        { {"new_obj"}, new_obj }
+      },
       builtin::type::object,
       vv::symbol{"Type"} );
 }
