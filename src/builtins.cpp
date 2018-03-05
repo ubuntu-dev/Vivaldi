@@ -783,6 +783,7 @@ void init_nil()
 
 void init_object()
 {
+  const auto init = gc::alloc<value::opt_monop>( object::init );
   const auto equals = gc::alloc<value::opt_binop>( object::equals );
   const auto unequal = gc::alloc<value::opt_binop>( object::unequal );
   const auto op_not = gc::alloc<value::opt_monop>( object::op_not );
@@ -794,6 +795,7 @@ void init_object()
   builtin::type::object = gc::alloc<value::type>(
       gc::alloc<value::object>,
       hash_map<vv::symbol, gc::managed_ptr> {
+        { {"init"}, init },
         { {"equals"}, equals },
         { {"unequal"}, unequal },
         { {"not"}, op_not },
