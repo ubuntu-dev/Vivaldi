@@ -7,6 +7,6 @@ class Bar : Foo
   let baz(x) = self.bar(x + 1)
 end
 
-let i = new Bar()
+let i = Bar.new()
 i.baz(2)
 puts(i.b())

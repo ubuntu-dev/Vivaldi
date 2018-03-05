@@ -52,4 +52,4 @@ class Brainfuck
 end
 
 let hello_world = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
-new Brainfuck(hello_world).run(false)
+Brainfuck.new(hello_world).run(false)
