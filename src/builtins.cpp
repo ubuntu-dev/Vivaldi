@@ -991,7 +991,7 @@ void init_type()
       [] { return gc::managed_ptr{}; },
       hash_map<vv::symbol, gc::managed_ptr> {
         { {"parent"}, parent },
-        { {"new_obj"}, new_obj }
+        { {"new"}, new_obj }
       },
       builtin::type::object,
       vv::symbol{"Type"} );

@@ -254,7 +254,7 @@ parse_res<> parse_prec9(token_string tokens)
     args.emplace_back(move(right));
 
     auto range = std::make_unique<variable>( symbol{"Range"} );
-    auto new_obj = std::make_unique<method>( move(range), symbol{"new_obj"} );
+    auto new_obj = std::make_unique<method>( move(range), symbol{"new"} );
 
     left_res = {{std::make_unique<function_call>(move(new_obj), move(args)), tokens}};
   }

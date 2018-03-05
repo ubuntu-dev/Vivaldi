@@ -160,7 +160,7 @@ vv_object_t vv_new_object(vv_object_t type, vv_object_t* args, size_t argc)
 
   cvm().push(cast_from(type));
   try {
-    cvm().opt_tmpm({"new_obj"});
+    cvm().opt_tmpm({"new"});
     cvm().call(static_cast<int>(argc));
     cvm().run_cur_scope();
   } catch (const vm_error& e) {

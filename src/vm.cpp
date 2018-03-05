@@ -784,7 +784,7 @@ void vm::machine::except_until(const size_t stack_pos)
     pop(1);
     pstr("Only objects of types descended from Exception can be thrown");
     push(builtin::type::type_error);
-    opt_tmpm({"new_obj"});
+    opt_tmpm({"new"});
     call(1);
     run_cur_scope();
     except_until(stack_pos);
@@ -821,7 +821,7 @@ void vm::machine::except(gc::managed_ptr type, const std::string& message)
 {
   pstr(message);
   push(type);
-  opt_tmpm({"new_obj"});
+  opt_tmpm({"new"});
   call(1);
   run_cur_scope();
   exc();
