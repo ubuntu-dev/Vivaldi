@@ -6,10 +6,20 @@ let arr_size() = do
   assert([1, 2].size() == 2, "[1, 2].size() == 2")
 end
 
-let arr = [1, 2, 3, 4, 5]
+let arr = [1, 2, 3, 4, 5, 6]
+
+let arr_pop() = do
+  assert(arr.pop() == 6, "arr.pop() == 6")
+  assert(arr.size() == 5, "arr.size() == 5")
+  let sentinel = false
+  try: [].pop()
+  catch RangeError _: sentinel = true
+  assert(sentinel, "popping from empty Array")
+end
+
 let arr_order() = do
   for i in 0 to 5: do
-    let str = new String(i)
+    let str = String.new(i)
     assert(arr[i] == i + 1, "arr[" + str + "] == " + str + " + 1")
   end
 end
@@ -46,8 +56,8 @@ let arr_comp() = do
     let equals(x) = false
   end
 
-  assert([new Foo(), 56] == [new Foo(), 56], "[new Foo(), 56] == [new Foo(), 56]")
-  assert([new Bar(), 56] != [new Bar(), 56], "[new Bar(), 56] != [new Bar(), 56]")
+  assert([Foo.new(), 56] == [Foo.new(), 56], "[Foo.new(), 56] == [Foo.new(), 56]")
+  assert([Bar.new(), 56] != [Bar.new(), 56], "[Bar.new(), 56] != [Bar.new(), 56]")
 end
 
 let arr_iter() = do
@@ -63,6 +73,7 @@ end
 
 section("Arrays")
 test(arr_size, "size")
+test(arr_pop, "pop")
 test(arr_order, "order")
 test(arr_indexing, "indexing")
 test(arr_addition, "addition")

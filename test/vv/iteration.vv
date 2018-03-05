@@ -17,18 +17,18 @@ class Inverted
 
   let greater(y) =
     try:
-      throw new Exception("hello")
+      throw Exception.new("hello")
     catch Exception e:
       @x < y.get_x()
 
-  let add(x) = new Inverted(@x - x)
+  let add(x) = Inverted.new(@x - x)
 
   let get_x() = @x
 end
 
 let for_loop() = do
   let arr = []
-  for i in new Decrementer(5): arr.append(i)
+  for i in Decrementer.new(5): arr.append(i)
   assert(arr[0] == 5, "arr[0] == 5")
   assert(arr[1] == 4, "arr[1] == 4")
   assert(arr[2] == 3, "arr[2] == 3")
@@ -39,7 +39,7 @@ end
 let range_test() = do
   let inv_arr = []
   try:
-    for i in new Inverted(10) to new Inverted(5): inv_arr.append(i.get_x())
+    for i in Inverted.new(10) to Inverted.new(5): inv_arr.append(i.get_x())
   catch Exception e:
     assert(false, "failed to catch exception inside of Range")
 
@@ -57,7 +57,7 @@ let subclass_iteration() = do
     let at_end() = self.get() >= 12
   end
   let to_5 = reduce(1 to 5, 0, fn (a, b): a + b)
-  let to_12 = reduce(new StupidRange(1, 5), 0, fn (a, b): a + b)
+  let to_12 = reduce(StupidRange.new(1, 5), 0, fn (a, b): a + b)
   assert(to_5 == 10, "to_5 == 10")
   assert(to_12 == 66, "to_12 == 66")
 end

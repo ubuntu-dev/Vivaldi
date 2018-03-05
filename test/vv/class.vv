@@ -13,7 +13,7 @@ class Derived : Base
   let get_a() = @a
 end
 
-let obj = new Derived(1, 2)
+let obj = Derived.new(1, 2)
 
 let type_system() = do
   assert(obj.type() == Derived,       "obj.type() == Derived")
@@ -30,7 +30,7 @@ let instantiation() = do
 
   let instantiated = true
   let i = nil
-  try: new Uninstantiable()
+  try: Uninstantiable.new()
   catch Exception e: instantiated = false
   assert(!instantiated && i == nil, "returned object from exception in init")
 end
@@ -43,7 +43,7 @@ let self_wrapping() = do
   end
 
   let apply(f) = f()
-  let obj = new SelfWrapper()
+  let obj = SelfWrapper.new()
   let five = apply(obj.self_a_getter())
   assert(five == 5, "capturing self in lambdas")
 end

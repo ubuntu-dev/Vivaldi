@@ -78,7 +78,7 @@ let test_sort() = do
     let x() = @x
   end
 
-  let arr = map(1 to 5, fn (i): new Sortable(i))
+  let arr = map(1 to 5, fn (i): Sortable.new(i))
   let sorted_arr = sort(arr)
   let deboxed = map(sorted_arr, fn (i): i.x())
 

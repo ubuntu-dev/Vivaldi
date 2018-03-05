@@ -5,10 +5,8 @@ end
 
 let section(name) = puts("\033[94m===\033[39m " + name + " \033[94m===\033[39m")
 
-let test(code, name) = do
-  try: do
+let test(code, name) = try: do
     code()
     puts("\033[92m✓\033[39m " + name)
   end
-  catch Exception e: assert(false, "caught exception: " + new String(e))
-end
+  catch Exception e: assert(false, "caught exception: " + String.new(e))
