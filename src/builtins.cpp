@@ -144,7 +144,12 @@ gc::managed_ptr fn_print(vm::machine& vm)
 {
   vm.arg(0);
   const auto arg = vm.top();
-  std::cout << pretty_print(arg, vm);
+  if (arg.tag() == tag::string)
+    std::cout << value::get<value::string>(arg);
+  else if (arg.tag() == tag::character)
+    std::cout << value::get<value::character>(arg);
+  else
+    std::cout << pretty_print(arg, vm);
 
   return gc::alloc<value::nil>( );
 }
