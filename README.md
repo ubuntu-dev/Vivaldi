@@ -62,6 +62,7 @@ The root of the inheritance tree; every type in Vivaldi inherits from Object
 (which in turn inherits from... itself; it really is turtles all the way down!)
 Objects support a few universal methods:
 
+* `init()` &mdash; Does nothing; this is the default initialization method.
 * `type()` &mdash; Returns the type of `self`.
 * `member(x)`&mdash; Returns the member with the name `x` (where `x` is a
 Symbol); if member `x` doesn't exist, throws an exception.
@@ -110,8 +111,8 @@ apply to Integers.
 Simple, immutable string class. Currently supports:
 
 * `init(x)`&mdash; if `x` is a String or a Symbol, copies its string value;
-  otherwise, creates a String with `x`'s display value. For instance, `new
-  String(12)` will return `"12"`.
+  otherwise, creates a String with `x`'s display value. For instance,
+  `String.new(12)` will return `"12"`.
 * `size()`&mdash; returns the size of the string.
 * `at(x)`&mdash; Returns the Char at index `x` in `self` (unless `x` is either
   negative or past the end of `self`, which results in an exception).
@@ -254,7 +255,7 @@ Provides a range over any pair of objects that can be
 
 A range covers [start, end):
 
-    >>> for i in 1 to 5: puts(i) // "<x> to <y>" is sugar for "new Range(x, y)"
+    >>> for i in 1 to 5: puts(i) // "<x> to <y>" is sugar for "Range.new(x, y)"
     1
     2
     3
@@ -281,7 +282,7 @@ File support right now is pretty minimal. Files are valid ranges (and iterators;
     hello
     world
     $ ./vivaldi
-    >>> let file = new File("myfile.txt")
+    >>> let file = File.new("myfile.txt")
     >>> for i in file: puts("line: " + i)
     line: hello
     line: world
@@ -394,7 +395,7 @@ Everything in Vivaldi is an object, and has
           let get_bar() = @bar
         end
 
-        let a = new Foo()
+        let a = Foo.new()
         a.set_foo(5)
         let five = a.member('foo)
         a.set_member('bar, "hello")
@@ -412,7 +413,7 @@ Everything in Vivaldi is an object, and has
           end
         end
 
-        let a = new Foo()
+        let a = Foo.new()
         a.say_hi_twice()
 
   Accessing a method without calling it results in a new function bound to the
@@ -433,10 +434,12 @@ Defining custom types is simple:
       let x_is_equal_to(y) = @x == y
     end
 
-    let my_obj = new MyType(5)
+    let my_obj = MyType.new(5)
     let yes = my_obj.x_is_equal_to(5)
     let no = my_obj.x_is_equal_to(47)
 
+* `new(...)`&mdash; Creates a new object of type `self`; the provided arguments
+  are passed to `init`.
 * `parent()`&mdash; Returns the parent type of `self`.
 
 #### Iterators and Ranges ####
@@ -563,14 +566,14 @@ Vivaldi exceptions follow a fairly typical hierarchy based on the class
 (this should be fixed pretty soon).  Otherwise they work pretty much as
 you'd expect:
 
-    let i = try: throw new Exception("foo")
+    let i = try: throw Exception.new("foo")
     catch Exception e: e.message() + "bar"
     i == "foobar"
 
 To specify more than one type, just stick a comma after each successive catch
 statement:
 
-    let i = try: throw new RuntimeError("hello")
+    let i = try: throw RuntimeError.new("hello")
     catch TypeError t: "wut",
           RangeError r: "wat",
           RuntimeError r: r.message() + " world!"
@@ -618,8 +621,8 @@ In addition to the above types, Vivaldi has a select few miscellaneous builtins:
 
 #### I/O ####
 
-* `puts(x)`&mdash; as in Ruby, write the passed value plus a newline. Takes only one
-  argument.
+* `puts(x)`&mdash; as in Ruby, write the passed value plus a newline. Takes only
+  one argument.
 
   To pretty-print your custom types through `puts`, `print`, or on the REPL,
   just define a method `str()`; whatever value that returns will be used as the

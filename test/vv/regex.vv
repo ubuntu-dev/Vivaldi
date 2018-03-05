@@ -21,7 +21,7 @@ end
 
 let test_regex_result() = do
   let excepted = false
-  try: new RegexResult()
+  try: RegexResult.new()
   catch Exception _: excepted = true
   assert(excepted, "nonconstructability in RegexResult")
 end

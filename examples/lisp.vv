@@ -38,9 +38,9 @@ class Lambda
   end
 
   let eval(args, env) = do
-    let nenv = new Dictionary(env)
+    let nenv = Dictionary.new(env)
     if args.length() != @args.length():
-      throw new RangeError("wrong number of arguments")
+      throw RangeError.new("wrong number of arguments")
 
     let argnames = @args
     while argnames: do
@@ -64,16 +64,16 @@ let parse_atom(x) = cond
   true:                                         x.to_sym()
 
 let parse(tokens) = do
-  if tokens.at_end(): throw new Exception("premature end of file")
+  if tokens.at_end(): throw Exception.new("premature end of file")
 
   let token = tokens.get()
   tokens.increment()
 
   if token == "(": do
-    let list = new ConsCell(nil, nil)
+    let list = ConsCell.new(nil, nil)
     let cur = list
     while tokens.get() != ")": do
-      cur.set_cdr(new ConsCell(parse(tokens), nil))
+      cur.set_cdr(ConsCell.new(parse(tokens), nil))
       cur = cur.cdr()
     end
     tokens.increment() // ')'
@@ -81,7 +81,7 @@ let parse(tokens) = do
   end
 
   if token == ")":
-    throw new Exception("unexpected ')'")
+    throw Exception.new("unexpected ')'")
 
   parse_atom(token)
 end
@@ -118,7 +118,7 @@ let print_lisp_obj(x) = do
     return nil
   end
   cond
-    x.type() == Symbol: print(new String(x)),
+    x.type() == Symbol: print(String.new(x)),
     x.type() == Lambda: print("<lambda>"),
     true:               print(x)
 end
@@ -136,7 +136,7 @@ let ev2(args, env) = eval(args.cdr().car(), env)
 
 let argmap(arglist, env) = cond
   !arglist: nil,
-  true:     new ConsCell(eval(arglist.car(), env), argmap(arglist.cdr(), env))
+  true:     ConsCell.new(eval(arglist.car(), env), argmap(arglist.cdr(), env))
 
 let eval(expr, env) = do
   if expr.type() == Symbol: return env[expr]
@@ -149,7 +149,7 @@ let eval(expr, env) = do
     x == 'quote:   args.car(),
     x == 'car:     ev1(args, env).car(),
     x == 'cdr:     ev1(args, env).cdr(),
-    x == 'cons:    new ConsCell(ev1(args, env), ev2(args, env)),
+    x == 'cons:    ConsCell.new(ev1(args, env), ev2(args, env)),
     x == 'nullp:   ev1(args, env) == nil,
     x == 'eqp:     ev1(args, env) == ev2(args, env),
     x == 'length:  ev1(args, env).length(),
@@ -162,7 +162,7 @@ let eval(expr, env) = do
     x == 'if:      eval((cond ev1(args, env): args.cdr().car(),
                          true:                args.cdr().cdr().car()),
                         env),
-    x == 'fn:      new Lambda(args.car(), args.cdr().car()),
+    x == 'fn:      Lambda.new(args.car(), args.cdr().car()),
     x == 'prn:     puts_lisp_obj(ev1(args, env)),
     true:          eval(x, env).eval(argmap(args, env), env)
 end
@@ -171,8 +171,8 @@ end
 // Running files {{{
 
 if argv.size() != 1:
-  throw new Exception("expected one file as command-line argument")
-let file = new File(argv[0])
+  throw Exception.new("expected one file as command-line argument")
+let file = File.new(argv[0])
 let exprs = []
 let raw = ""
 for line in file: raw = raw + " " + line

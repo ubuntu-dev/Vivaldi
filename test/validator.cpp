@@ -176,15 +176,6 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
     "@foo = bar + baz",
     "@foo =\n\n\n\n\nbaz",
 
-    // Object creation
-    "new Foo()",
-    "new Foo(bar)",
-    "new Foo(bar, baz, 1, 2, [], {{}:{}})",
-    "new (1 + 2 + 3 + bar + baz / nil)(bar)",
-    "new Foo(\n\n\n)",
-    "new Foo(\n\nbar\n\n)",
-    "new Foo(\n\nbar,\n\nbaz\n\n)",
-
     // Requires
     "require \"foobar\"",
 
@@ -388,12 +379,7 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char** argv)
 
     // Object creation
     "new Foo",
-    "new 1 + 2(3)",
-    "new\nFoo()",
-    "new Foo\n()",
-    "new Foo(a,)",
-    "new Foo)",
-    "new Foo(",
+    "new Foo()",
 
     // Requires
     "require",

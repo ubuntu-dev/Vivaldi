@@ -788,6 +788,7 @@ void init_nil()
 
 void init_object()
 {
+  const auto init = gc::alloc<value::opt_monop>( object::init );
   const auto equals = gc::alloc<value::opt_binop>( object::equals );
   const auto unequal = gc::alloc<value::opt_binop>( object::unequal );
   const auto op_not = gc::alloc<value::opt_monop>( object::op_not );
@@ -799,6 +800,7 @@ void init_object()
   builtin::type::object = gc::alloc<value::type>(
       gc::alloc<value::object>,
       hash_map<vv::symbol, gc::managed_ptr> {
+        { {"init"}, init },
         { {"equals"}, equals },
         { {"unequal"}, unequal },
         { {"not"}, op_not },
@@ -991,9 +993,13 @@ void init_type()
 {
   // 'custom_' because the 'type' namespace is used for builtin types
   auto parent = gc::alloc<value::opt_monop>( custom_type::parent );
+  auto new_obj = gc::alloc<value::builtin_function>( custom_type::new_obj, size_t{}, true );
   builtin::type::custom_type = gc::alloc<value::type>(
       [] { return gc::managed_ptr{}; },
-      hash_map<vv::symbol, gc::managed_ptr> { { {"parent"}, parent }, },
+      hash_map<vv::symbol, gc::managed_ptr> {
+        { {"parent"}, parent },
+        { {"new"}, new_obj }
+      },
       builtin::type::object,
       vv::symbol{"Type"} );
 }

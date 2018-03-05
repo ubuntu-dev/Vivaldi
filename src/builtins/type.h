@@ -11,6 +11,8 @@ namespace custom_type {
 
 gc::managed_ptr parent(gc::managed_ptr self);
 
+gc::managed_ptr new_obj(vm::machine& vm);
+
 }
 
 }

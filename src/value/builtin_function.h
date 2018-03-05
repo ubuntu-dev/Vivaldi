@@ -11,7 +11,8 @@ namespace value {
 struct builtin_function : public basic_object {
 public:
   builtin_function(const std::function<gc::managed_ptr(vm::machine&)>& body,
-                   size_t argc);
+                   size_t argc,
+                   bool takes_varargs = false);
 
   struct value_type {
     std::function<gc::managed_ptr(vm::machine&)> body;

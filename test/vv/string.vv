@@ -44,7 +44,7 @@ let ord() = do
   assert(ascii.size() == 128, "ascii.size() == 128")
   for i in 0 to ascii.size():
     assert(ascii[i].ord() == i,
-           "incorrect ord for ASCII character " + new String(i))
+           "incorrect ord for ASCII character " + String.new(i))
 end
 
 let comparison() = do

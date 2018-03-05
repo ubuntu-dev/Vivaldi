@@ -9,6 +9,8 @@ namespace builtin {
 
 namespace object {
 
+gc::managed_ptr init(gc::managed_ptr self);
+
 gc::managed_ptr equals(gc::managed_ptr self, gc::managed_ptr arg);
 gc::managed_ptr unequal(gc::managed_ptr self, gc::managed_ptr arg);
 gc::managed_ptr op_not(gc::managed_ptr self);

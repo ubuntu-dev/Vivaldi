@@ -8,6 +8,12 @@
 using namespace vv;
 using namespace builtin;
 
+// shim method called by Object.new()
+gc::managed_ptr object::init(gc::managed_ptr self)
+{
+  return self;
+}
+
 gc::managed_ptr object::equals(gc::managed_ptr self, gc::managed_ptr arg)
 {
   return gc::alloc<value::boolean>( vv::equals(self, arg) );

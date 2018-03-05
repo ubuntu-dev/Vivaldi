@@ -41,7 +41,6 @@ val_res val_for_loop(token_string tokens);
 val_res val_function_definition(token_string tokens);
 val_res val_lambda(token_string tokens);
 val_res val_member_assignment(token_string tokens);
-val_res val_object_creation(token_string tokens);
 val_res val_require(token_string tokens);
 val_res val_return(token_string tokens);
 val_res val_try_catch(token_string tokens);
@@ -277,7 +276,6 @@ val_res val_nonop_expression(const token_string tokens)
                     val_function_definition,
                     val_lambda,
                     val_member_assignment,
-                    val_object_creation,
                     val_require,
                     val_return,
                     val_try_catch,
@@ -484,34 +482,6 @@ val_res val_member_assignment(const token_string tokens)
   if (expr_res || expr_res.invalid())
     return expr_res;
   return {expr_str, "expected expression"};
-}
-
-val_res val_object_creation(const token_string tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::key_new)
-    return {};
-  const auto type_str = tokens.subvec(1); // 'new'
-  const auto type_res = val_nonop_expression(type_str);
-  if (type_res.invalid())
-    return type_res;
-  if (!type_res)
-    return {type_str, "expected expression"};
-
-  const auto arglist_str = *type_res;
-  const auto arglist_res = val_delimited_expression(arglist_str,
-                                                    token::type::open_paren,
-                                                    token::type::close_paren,
-                                                    [](const auto inner_str)
-  {
-    return val_separated_list(inner_str, val_single_comma, val_expression);
-  }, "comma-separated list of expressions enclosed in parentheses");
-
-  if (arglist_res || arglist_res.invalid())
-    return arglist_res;
-  return {
-    arglist_str,
-    "expected comma-separated list of expressions enclosed in parentheses"
-  };
 }
 
 val_res val_require(const token_string tokens)

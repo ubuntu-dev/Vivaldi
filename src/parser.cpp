@@ -16,7 +16,6 @@
 #include "ast/member.h"
 #include "ast/member_assignment.h"
 #include "ast/method.h"
-#include "ast/object_creation.h"
 #include "ast/require.h"
 #include "ast/return_statement.h"
 #include "ast/try_catch.h"
@@ -88,7 +87,6 @@ parse_res<> parse_function_definition(token_string tokens);
 parse_res<> parse_lambda(token_string tokens);
 parse_res<> parse_literal(token_string tokens);
 parse_res<> parse_member(token_string tokens);
-parse_res<> parse_new_obj(token_string tokens);
 parse_res<> parse_require(token_string tokens);
 parse_res<> parse_return(token_string tokens);
 parse_res<> parse_try_catch(token_string tokens);
@@ -256,8 +254,9 @@ parse_res<> parse_prec9(token_string tokens)
     args.emplace_back(move(right));
 
     auto range = std::make_unique<variable>( symbol{"Range"} );
+    auto new_obj = std::make_unique<method>( move(range), symbol{"new"} );
 
-    left_res = {{std::make_unique<object_creation>(move(range), move(args)), tokens}};
+    left_res = {{std::make_unique<function_call>(move(new_obj), move(args)), tokens}};
   }
   return left_res;
 }
@@ -439,7 +438,6 @@ parse_res<> parse_nonop_expression(token_string tokens)
   if ((res = parse_function_definition(tokens)))  return res;
   if ((res = parse_lambda(tokens)))               return res;
   if ((res = parse_literal(tokens)))              return res;
-  if ((res = parse_new_obj(tokens)))              return res;
   if ((res = parse_require(tokens)))              return res;
   if ((res = parse_return(tokens)))               return res;
   if ((res = parse_throw(tokens)))                return res;
@@ -628,23 +626,6 @@ parse_res<> parse_member(token_string tokens)
               res->second }};
   }
   return {{ std::make_unique<member>( mem_name ), tokens }};
-}
-
-parse_res<> parse_new_obj(token_string tokens)
-{
-  if (tokens.empty() || tokens.front().which != token::type::key_new)
-    return {};
-  tokens = tokens.subvec(1); // 'new'
-
-  std::unique_ptr<ast::expression> type;
-  tie(type, tokens) = *parse_nonop_expression(tokens);
-
-  auto args_res = parse_function_call(tokens);
-  auto args = move(args_res->first);
-  tokens = args_res->second;
-
-  return {{ std::make_unique<object_creation>( move(type), move(args) ),
-            tokens }};
 }
 
 parse_res<> parse_require(token_string tokens)

@@ -404,51 +404,6 @@ void vm::machine::call(const value::integer argc)
   }
 }
 
-void vm::machine::pobj(const value::integer argc)
-{
-  if (top().tag() != tag::type) {
-    except(builtin::type::type_error, message::construction_type_err);
-    return;
-  }
-
-  const auto type = top();
-
-  auto ctor_type = type;
-  while (!value::get<value::type>(ctor_type).constructor)
-    ctor_type = value::get<value::type>(ctor_type).parent;
-  m_stack.pop_back();
-  push(value::get<value::type>(ctor_type).constructor());
-  // Hack--- nonconstructible types (e.g. Integer) have constructors that return
-  // nullptr
-  if (!top()) {
-    m_stack.pop_back();
-    except(builtin::type::type_error, message::nonconstructible(ctor_type));
-    return;
-  }
-  top().get()->type = type;
-
-  const auto init = get_method(type, {"init"});
-  if (init) {
-    const auto self = m_transient_self = top();
-    m_stack.pop_back();
-    push(init);
-    try {
-      call(argc);
-      run_cur_scope();
-    } catch (const vm_error& err) {
-      push(err.error());
-      exc();
-      return;
-    }
-    m_stack.pop_back();
-    push(self);
-    m_transient_self = {};
-  }
-  else if (argc != 0) {
-    except(builtin::type::range_error, message::wrong_argc(0, argc));
-  }
-}
-
 void vm::machine::dup()
 {
   push(top());
@@ -767,7 +722,6 @@ void vm::machine::run_single_command(const vm::command& command)
   case instruction::readm:  readm(arg.as_sym());     break;
   case instruction::writem: writem(arg.as_sym());    break;
   case instruction::call:   call(arg.as_int());      break;
-  case instruction::pobj:   pobj(arg.as_int());      break;
 
   case instruction::eblk: eblk();             break;
   case instruction::lblk: lblk();             break;
@@ -830,7 +784,9 @@ void vm::machine::except_until(const size_t stack_pos)
     pop(1);
     pstr("Only objects of types descended from Exception can be thrown");
     push(builtin::type::type_error);
-    pobj(1);
+    opt_tmpm({"new"});
+    call(1);
+    run_cur_scope();
     except_until(stack_pos);
     return;
   }
@@ -865,7 +821,9 @@ void vm::machine::except(gc::managed_ptr type, const std::string& message)
 {
   pstr(message);
   push(type);
-  pobj(1);
+  opt_tmpm({"new"});
+  call(1);
+  run_cur_scope();
   exc();
 }
 

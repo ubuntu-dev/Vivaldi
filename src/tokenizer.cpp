@@ -327,7 +327,6 @@ token::type type_for(const std::string& name)
   if (name == "to") return token::type::to;
 
   if (name == "let") return token::type::key_let;
-  if (name == "new") return token::type::key_new;
 
   if (name == "class") return token::type::key_class;
   if (name == "fn")    return token::type::key_fn;
